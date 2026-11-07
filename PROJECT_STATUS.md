@@ -283,7 +283,7 @@ Verification on 2026-10-11 at `96aeda4`. Host: Intel i7-10610U (8 threads), 15 G
 ## Next tasks
 
 1. The user's physical checks, ranked in `docs/SESSION_HANDOFF.md`: runs C (table data) and D (objects), Markdown, the Documents folder, Esc and the rail, IME, the update check against a later release, crash recovery after `kill -9`, First line bold, the status bar Face/Size fix.
-2. Phase 6 remaining: fuzzing of the readers, large-document tests, the compatibility matrix; `docs/KNOWN_LIMITATIONS.md` is written and is kept current.
+2. Phase 6 remaining: the compatibility matrix (fuzzing and large-document tests dropped by the user, 2026-11-07; the live pass of the new features passed); `docs/KNOWN_LIMITATIONS.md` is written and is kept current.
 3. Open layout and view items: Window › New View and the Vertical Ruler (CK11), Draft's frame markers (CK10), FG3 and FG5 wrap differences.
 4. Mining Ami Pro's `.hlp` files for a packaged Help (F1) and as a behaviour oracle for unbuilt dialogs.
 5. Accessibility of the page surface stays blocked by the pinned iced_winit.

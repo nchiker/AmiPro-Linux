@@ -18,7 +18,7 @@ They share three foundations:
   "Text streams"), shared with Find & Replace.
 - Generation into a document.
 
-**State today.** Every control here is kept as a zero-width legacy mark
+**Superseded (2026-11-07):** fields, notes, bookmarks, footnotes and endnotes are built (runs 4 and 10). **State then.** Every control here is kept as a zero-width legacy mark
 and written back verbatim (`FORMAT_COMPATIBILITY.md`): nothing is shown
 where Ami Pro shows a date, a field's result, a note mark, or a footnote.
 The page-number field (`<:P…>`) and floating headers are done. The

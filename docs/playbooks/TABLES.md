@@ -14,7 +14,9 @@ Both kinds share one grid model (`TableSpacing`, spans, cells as flows,
 pictures in cells) and one layout path, so every table run builds on the
 last one.
 
-**State today** (`TB-01` PARTIAL; the table editing run, 2026-10-24, made
+**Superseded (2026-11-07):** this state is from before the table runs; tables across pages (run 2), table editing (run 8) and table data (run C) are built (`TB-01`). Open items are under "known gaps" at the end of this file.
+
+**State then** (`TB-01` PARTIAL; the table editing run, 2026-10-24, made
 every Table command but the table-data run's; before it:
 - Tables continue across columns and pages as Ami Pro continues them
   (whole rows, headings repeated, page breaks on rows, Rows span pages),
@@ -218,8 +220,8 @@ check pending; `UI_SPEC.md` §41):
 Learned for later runs: a calculated cell is F3 `0x40` with two bodies
 (the result, then the formula text as typed); the `[nfmt]` flag word is
 0x08 thousands, 0x10 leading minus, 0x20 trailing minus, 0x40
-parentheses, 0x80 red, 0x100 leading currency symbol. Not built: Sort's
-3186 (DDE escape) and 3215 (too large); Paste and Cut into a formula cell
+parentheses, 0x80 red, 0x100 leading currency symbol. Known gaps (Tools › Sort… itself is built): Sort's
+3186 (DDE escape) and 3215 (too large) refusals; Paste and Cut into a formula cell
 are not refused yet (TD.7 open item).
 
 ## Related runs elsewhere

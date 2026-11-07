@@ -16,7 +16,7 @@ document between the app and the world outside it:
 Both runs need pictures drawn first (Graphics, `pictures`), so a printed
 or exported page carries its pictures.
 
-**State today.** Nothing is built. `IO-03` (Printing and PDF) is
+**Superseded (2026-11-07):** print, PDF, export and import are built (runs 5-7). **State then.** Nothing is built. `IO-03` (Printing and PDF) is
 UNVERIFIED. The registry has File › Print… (Ctrl+P) and Export PDF…
 (Ctrl+Shift+E) as Future commands. The SAM writer and the native format
 are done. `PROJECT_PLAN.md` Phase 5: "If possible add RTF export or

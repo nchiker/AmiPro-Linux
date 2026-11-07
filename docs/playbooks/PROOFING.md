@@ -18,7 +18,7 @@ thesaurus share three things:
 Find & Replace is built first, and the language tools reuse its walk and
 its review interface.
 
-**State today.** None of these is built. `ED-02` (Find and replace, P0)
+**Superseded (2026-11-07):** find and replace and proofing are built (runs 3 and 11). **State then.** None of these is built. `ED-02` (Find and replace, P0)
 and `PR-01` (spellcheck, language tools) are UNVERIFIED. The registry
 has Find…, Find Next, Find Previous, Spelling…, Check Spelling as You
 Type, Thesaurus…, and Language… as Future commands. Hyphenation already

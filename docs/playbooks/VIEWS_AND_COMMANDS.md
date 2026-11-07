@@ -10,7 +10,9 @@ formats, rulers, page layouts, the session). The items are small and
 mostly independent, so each run is short and can be pulled forward
 between large runs.
 
-**State today.**
+**Superseded (2026-11-07).** The state below was written before the run; runs A and B built everything listed as Future or as a gap (Revert to Saved, Special Character, Paragraph, Preferences, Keyboard Shortcuts, Compatibility, Fast Format, Face/Size lists, Mark Text, Line Numbering, inserted rulers, passwords, outline mode), and Page Setup and the Status Bar toggle followed. Still open: Window › New View and the Vertical Ruler (CK11), Draft's frame markers (CK10), F1 Help; Move Document to New Window was removed from the registry. See `docs/COMMANDS_PROGRESS.md`. Kept as the record of the starting point.
+
+**State then.**
 - **Outline levels are done:** Promote and Demote, outline numbering,
   and Outline Numbering….
 - **Already built:** zoom, View › Ruler, the toolbar, the Styles panel,

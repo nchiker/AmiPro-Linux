@@ -3,7 +3,7 @@
 From 2026-11-04 (SU1), each run adds one line here; its details are in its docs/*_PROGRESS.md.
 
 - 2026-11-04, run A (`commands`), first session: CA.1–CA.11 done, CA.12 partial (New View and the Vertical Ruler open); next CA.13 line numbering, CA.14 passwords, CA.15–CA.16 (`docs/COMMANDS_PROGRESS.md`). First physical check passed 2026-11-05.
-- 2026-11-05, run A (`commands`) finished: CA.13 line numbering and CA.14 password-protected files (full weight: decompile, VM fixtures, twins), CA.15 measures (corpora unchanged; Draft typing equal), CA.16 exit; physical check of CA.13–CA.14 and Move Up/Down passed 2026-11-05. Run B (`outline-mode`) finished 2026-11-06: OB.2–OB.7 built, measured (Outline typing +0.1–0.15 ms) and live-checked, gate green; physical check pending (`docs/OUTLINE_MODE_PROGRESS.md`).
+- 2026-11-05, run A (`commands`) finished: CA.13 line numbering and CA.14 password-protected files (full weight: decompile, VM fixtures, twins), CA.15 measures (corpora unchanged; Draft typing equal), CA.16 exit; physical check of CA.13–CA.14 and Move Up/Down passed 2026-11-05. Run B (`outline-mode`) finished 2026-11-06: OB.2–OB.7 built, measured (Outline typing +0.1–0.15 ms) and live-checked, gate green; physical check passed 2026-11-06 (`docs/OUTLINE_MODE_PROGRESS.md`).
 
 **Owner:** User sets priorities and performs physical COSMIC checks. **Implementer:** the coding agent proceeds autonomously within `AGENTS.md`, including direct operation of original Ami Pro in the `Windows XP` VM (authorized 2026-10-11).
 
@@ -133,7 +133,7 @@ Ami Pro's document is a sequence of pages. Each page has one page layout: margin
 - [ ] **2.7 Physical COSMIC acceptance** of the page surface and frame workflows, plus original-compatibility comparison against the VM fixtures.
 
 - Linked text flow between frames does not exist in 3.1: the Frame menu and Modify Frame Layout have no linking command (VM, 2026-10-11).
-- **Next:** 2.7 (frame interaction and creating frames passed their physical checks 2026-10-17). The record is `docs/PHASE2_PROGRESS.md`.
+- **Done:** 2.7 (frame interaction and creating frames passed their physical checks 2026-10-17); Phase 5 is complete (see below). The record is `docs/PHASE2_PROGRESS.md`.
   **Exit:** Editable multipage documents with page layouts, headers/footers, and text/picture frames that import from representative SAM files and lay out comparably to Ami Pro.
 
 ## UI pass on the page surface (moved ahead of the rest of Phase 3, user decision 2026-10-12)
@@ -286,7 +286,7 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 - [x] Map and proposal (prepared overnight 2026-10-19): `docs/research/FIND_NOTES.md` (Edit › Find & Replace `0x1c3`, its four dialogs in `AMIPROUI.DLL`, the user's guide ch. 20, VM fixtures FR1–FR7), `docs/Design/UI_SPEC.md` §27; the user's answers F1–F4 (2026-10-19).
 - [x] **A straight run** (2026-10-20; `docs/FIND_RUNBOOK.md`, record `docs/FIND_PROGRESS.md`, tag `find-run-start`): the search in `amipro_editing::find` (Ami Pro's patterns, streams, options, capitals rule, attributes, styles; Replace All as one step); the find bar on the page surface with highlights, a count, Options ▾, and recent searches; twins: Ami Pro's input files give Ami Pro's results; every paragraph of both corpora found in its stream.
 - [x] The user's physical check (`docs/Design/UI_ACCEPTANCE.md`, "Find & Replace"): passed 2026-10-20; the bar then moved above the ruler, styled as the toolbar, its fields aligned (the user's visual notes). The user's look at its new place passed the same day.
-- [ ] Next in the Phase 5 queue: fields (run 4).
+- [x] Phase 5 queue: fields (run 4), done.
 
 ## Fields (Phase 5, queue run 4)
 
@@ -300,7 +300,7 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 - [x] Map and proposal (2026-10-20): `docs/research/PRINT_NOTES.md` (the decompiled `AMIPRO.EXE` and `AMIPROUI.DLL`; the user's guide ch. 13; Ami Pro printing VM fixtures to a PostScript file; the desktop's print portal and GTK's CUPS backend), `docs/Design/UI_SPEC.md` §29; the user's answers PO1–PO6 (2026-10-20: as recommended, but no bulk export).
 - [x] **A straight run** (2026-10-20; `docs/PRINT_RUNBOOK.md`, record `docs/PRINT_PROGRESS.md`, tag `print-pdf-run-start`): File › Export PDF…, Print…, Print Current Page…, and Print Options… (the Print panel in the rail, the pages shown as they print); the PDF drawn by the page surface itself through krilla (fonts embedded and subset, text selectable, vector pictures, each page at its layout's size); Ami Pro's Crop marks, Without pictures, With doc description, On preprinted form, Update fields; bookmarks, Doc Info properties, page labels, PDF/A-2b; printing through the XDG print portal.
 - [x] The user's physical check passed (the user, 2026-10-20: "printing works correctly", "pdf works correctly"; the Print panel "looks good", no issues with Print Current Page…); the panel's buttons span the rail since (the user's choice).
-- [ ] Next in the Phase 5 queue: export (run 6).
+- [x] Phase 5 queue: export (run 6), done.
 
 ## Export (Phase 5, queue run 6)
 
@@ -353,7 +353,7 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 
 - [x] **A straight run** (2026-11-03; `docs/MERGE_RUNBOOK.md`, record `docs/MERGE_PROGRESS.md`, tag `merge-run-start`; MG1–MG11, MC1–MC13): `[recfile]` typed and written as Ami Pro writes it, conditions native; data files of every kind (Ami Pro's, tables, DIF, fixed, comma, CSV/TSV, DBF, XLSX, ODS); the merge by Ami Pro's rules (MGM1–MGM7 reproduced); the Merge panel (fields, preview, conditions, labels, Start from); every output (New Document, PDF one or per record, Printer…, View & Print, Ami Pro File…); the record editor; labels on the app's Avery sheets; File › Print Envelope… and the Envelope panel; twins in Ami Pro (Ami Pro merges the app's letter to the app's result). **Physical check pending.**
 - [x] **Run D, `objects`** (2026-11-07; `docs/OBJECTS_RUNBOOK.md`, record `docs/OBJECTS_PROGRESS.md`; DO.1-DO.12, OD1-OD12): OLE objects drawn and kept, Paste Special, image processing, charts, equations; gate green; physical check pending.
-- [ ] Next: the closing pass (accessibility, IME), then Phase 6 packaging; no run E is planned.
+- [x] Closing pass: IME (CP.1) automated; accessibility of the page surface is blocked by the pinned iced_winit. Phase 6 packaging started (P6.1-P6.3 below); no run E is planned.
   - CP.1 (2026-11-07): IME preedit is drawn at the caret and a commit is one undo step (automated; physical IME check pending). Accessibility of the page surface is blocked by the pinned iced_winit, which never sends widget a11y trees to the adapter (evidence in `UI_ACCEPTANCE.md` under the editor gate); icon-button names added.
 
 ## Phase 5 — Advanced Ami Pro functionality
@@ -363,17 +363,19 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 - [ ] Outline mode (user's guide ch. 11; user decision 2026-10-17): the outline view with level icons, collapse and expand, moving sections. (Levels, Promote and Demote, outline numbering, and Quick Numbering were pulled forward into the outline levels run, 2026-10-17.)
 - [x] (done 2026-11-06, awaiting the physical check) After run B (user, 2026-11-05; `DECISIONS.md` DF1, MD1–MD3): a Documents folder in Preferences › Folders where the file choosers start, and Markdown (CommonMark + GFM) opened, inserted, exported, and saved as an exchange format.
 - [x] Implement print/PDF from shared layout output; expand parity tests (the print-pdf run, 2026-10-20; physical check pending).
-- [ ] If possible add RTF export or DOC/DOCX whichever is most feasible (queue runs 6 and 7): export DONE 2026-10-20 (DOCX, ODT, RTF, text); import DONE 2026-10-24 (the same four formats).
+- [x] If possible add RTF export or DOC/DOCX whichever is most feasible (queue runs 6 and 7): export DONE 2026-10-20 (DOCX, ODT, RTF, text); import DONE 2026-10-24 (the same four formats).
   **Exit:** Each verified feature has evidence and passing acceptance checks.
 
 ## Phase 6 — Quality and release
 
-- [ ] Performance, accessibility, crash recovery, large-document tests, fuzzing and compatibility matrix.
-- [ ] Produce COSMIC package and installation instructions; validate on user's machine.
+- [ ] Performance, accessibility, crash recovery, large-document tests, fuzzing and compatibility matrix. Crash recovery is built (P6.3); remaining: large-document tests, fuzzing, the compatibility matrix; accessibility is blocked by the toolkit.
+- [ ] Produce COSMIC package and installation instructions; validate on user's machine. The repository is public (MPL-2.0, `LICENSE`, 2026-11-07) and release v0.1.0 is published.
   - P6.1 (2026-11-07): `tools/package-deb.sh` builds `dist/amipro-linux_<version>_amd64.deb`; `docs/INSTALL.md`. Package checked off-host (contents, ldd, lintian); the real install on the user's machine is pending.
   - P6.2 (2026-11-07): Help › Check for Updates… (`UI_SPEC.md` §43; `app/cosmic/src/updates*.rs`): GitHub Releases of the public repository, the `.deb` verified against `SHA256SUMS`, installed with `pkexec apt-get install -y` after a confirmation; optional once-a-day check at start (Preferences, off by default). `tools/release.sh` and `docs/RELEASING.md` prepare a release (nothing publishes by itself). Automated checks pass; physical check and the first real release pending.
   - P6.3 (2026-11-07): crash recovery (`UI_SPEC.md` §44; `app/cosmic/src/recovery*.rs`): open documents with unsaved changes are copied every 1/2/5/10 minutes (default 2; Preferences › General) in the lossless native format to `$XDG_DATA_HOME/amipro-linux/recovery/<session>/`, never over the user's file; removed on save, discard-close, and clean exit; after a crash the next start offers them in the rail (File › Recover Documents…), a recovered tab being an unsaved "name (recovered)" whose original is a Save As source. Live sessions (pid and start time) are not offered to another instance; sessions over 30 days old are deleted; password-protected documents are not copied. Automated checks pass; physical check (kill -9, two instances) pending.
-- [ ] Publish accurate coverage and known limitations; defer macros until separately scheduled.
+  - Release (2026-11-07): the repository became public (MPL-2.0 `LICENSE`, fresh one-commit history after an audit) and release v0.1.0 is published; the update check against a later release is not yet exercised.
+  - After P6.3 (2026-11-07): File › Page Setup… (opens Page Layout) and the View › Status Bar toggle; the dead Section Break and Move Document to New Window entries removed; status bar Face/Size no longer reset other font parts; First line bold built (bit 4096 of `[fnt]`, Style Properties check box). Scenario modules `drawing`, `crash_recovery`, `update_check` added.
+- [ ] Publish accurate coverage and known limitations (`docs/KNOWN_LIMITATIONS.md` written 2026-11-07; the compatibility matrix remains); defer macros until separately scheduled.
   **Exit:** Stable release with transparent parity status.
 
 ## Execution and reporting
@@ -385,7 +387,7 @@ and update `docs/research/REFERENCE_FEATURE_MATRIX.md`. Use focused original-VM
 comparisons and reuse research only when they can affect the next decision; do
 not repeat broad architecture audits.
 
-## Current status (2026-10-11)
+## Historical status (2026-10-11; superseded, kept for the record)
 
 Phase 0 is complete and the initial COSMIC application is host-verified.
 

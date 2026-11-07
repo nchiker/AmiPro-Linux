@@ -775,7 +775,7 @@ style; OK, Cancel, and Save As (a new style from these settings). Save
 | Lines             | rule above and below, line style, spacing, length Text, Margins, or Other, colour (`modlines.png`)                                     |
 | Hyphenation       | a check box, enabled once decision D2 is made                                                                                          |
 
-Ami Pro's Table format panel is not offered until the model has it. **1st
+Ami Pro's Table format panel is built (§41, TD.5; it was not offered when this section was written). **1st
 line bold** (2026-11-07; Ami Pro's Modify Style › Font check box beside
 Initial caps) is a check box after the Caps list: checking it unchecks Bold
 and the reverse, one undo step, live in the document (the page is the sample).
@@ -855,7 +855,7 @@ shaping, on paper white.
   text before the paragraph as Ami Pro does: the number with what is typed
   before and after it, then Text, then the bullet (VM fixture BN4); a
   text in another order is kept unless the panel is used. Ami Pro's
-  Table format panel and Space for are not offered (not in the model);
+  Space for is not offered (not in the model; the Table format panel is built, §41);
   1st line bold is on the Font panel. Screenshots: `window-modify-*`.
 - **Styles panel** (both builds): the header's **+** opens Create Style…;
   a style stored in the document shows Ami Pro's bullet (• Name), a name
@@ -1261,7 +1261,7 @@ dialogs), `lengths.rs`; the rules are `amipro_editing::layout_setup`.
 - **Lengths** in all three panels (Style, Frame, Page Layout Properties)
   read as Ami Pro's boxes read them: two decimals, truncated, 567 twips a
   centimetre (`lengths.rs`).
-- **Not built:** Line Numbering, the Ruler submenu, and Ami Pro's units
+- **Not built when written** (Line Numbering and the Ruler submenu were built in run A, §39): Ami Pro's units
   button (inches only, as Style Properties).
 - **Screenshots** (`page_layout_properties_screenshots`, light and dark):
   `window-pagelayout-page`, `-margins`, `-tabs`, `-lines`, `-header`,
@@ -1456,7 +1456,7 @@ shows them as its own).
 
 ## 20. Creating frames — approved 2026-10-17 (F1–F4), built
 
-Insert › Frame… is still Future: frames can be selected, moved, resized,
+(Superseded: Insert › Frame… is built, as this section proposed.) Insert › Frame… was Future when written: frames can be selected, moved, resized,
 and changed (§11), but only frames read from a file exist. This section
 proposes how frames are created, by Ami Pro's rules from the decompiled
 `AMIPRO.EXE` and `AMIPROUI.DLL` and the VM fixtures FC1–FC11
@@ -1639,7 +1639,7 @@ own).
 
 ## 21. Bullets and numbering — approved 2026-10-17 (B1–B5)
 
-Format › Bullets (Ctrl+Shift+L) and Format › Numbering are Future. Bullets
+(Superseded: both commands are built.) Format › Bullets (Ctrl+Shift+L) and Format › Numbering were Future when written. Bullets
 and numbers already work as Ami Pro's do, through paragraph styles
 (Phase 3.2e and 3.6: imported, counted, drawn, edited in Style Properties,
 written back). This section proposes the two commands, Ami Pro's Insert
@@ -1976,7 +1976,7 @@ using."
 | Page Layout Properties › Lines | the page's lines and the line between columns (one colour, as Ami Pro's Lines panel) | the same row |
 | Frame Properties | line, shadow, background | `#RRGGBB` text fields (Ami Pro's Modify Frame Layout › Lines & shadows has a colour bar for each: dialog 1036, controls 25590, 25593, 25591) |
 | Frame Properties › Columns | line between columns | none: it takes the frame's line colour when turned on (Ami Pro's Columns & tabs panel has its own colour bar, 25592) |
-| (not built) Table › Lines & Color | table lines and shading | Ami Pro's dialog 3052; waits for table formatting |
+| (built since: Table Properties, `table_properties.rs`) Table › Lines & Color | table lines and shading | Ami Pro's dialog 3052; waits for table formatting |
 
 ### Ami Pro (VM, 2026-10-18; `AMIUICNT.DLL`'s COLORBAR, COLORPALETTE)
 
@@ -2186,7 +2186,7 @@ Status: This cell holds a picture; Delete removes it.
   Backspace there (paste goes the same way); Edit › Delete is enabled
   there; the outline is `cell_outline` (four 43-twip bands in the accent
   colour); the status note is `cell_frame_note`.
-- **Not built:** putting a picture into a cell (T3: Insert › Image…, the
+- **Not built when written; pictures are built since (§25) and go into cells:** putting a picture into a cell (T3: Insert › Image…, the
   pictures run), moving pictures between cells (Cut, Copy, Paste, and Drag
   & Drop of cells, with table editing), pictures drawn (placeholders until
   picture decoding), rows of a table that continues on later pages (tables
@@ -2397,8 +2397,8 @@ Image Processing (their own runs), and the text-editor build.
   centred in its tall line (COSMIC Text centres), now on the baseline;
   Insert Layout copied a repeating table's cells without their pictures.
 - **Not built:** Ami Pro's other import filters (CGM, HPGL, DrawPerfect,
-  Freelance, PIC, AutoCAD, EPS), drawings, charts, equations, and OLE
-  objects as more than their screen image (their runs), eight-bit screen
+  Freelance, PIC, AutoCAD, EPS). (Drawings, charts, equations, and OLE
+  objects are built since: §33, §42.) eight-bit screen
   images (the writing screen's palette is not kept), the picture area's
   exact clamp (`1530:0892` mode 2; the frame's interior is used), Insert ›
   Image… with the caret in a header, footer, or frame's text.
@@ -2496,8 +2496,8 @@ behaviour and cheap to change.
   is `page_editing::row_break_command`, checked by `row_has_break` (TP1).
 - **Measures** (TP.8): `docs/research/LAYOUT_COMPARISON.md`, "Tables across
   pages"; twins ATP2, ATP5, ATP6 (`TABLE_PAGES_NOTES.md`).
-- **Not built** (TP2): Table › Headings, Modify Table Layout's Automatic
-  and Rows span pages; they come with the table editing run.
+- **Not built when written** (TP2): Table › Headings (built since, `CommandId::TableHeadings`), Modify Table Layout's Automatic
+  and Rows span pages (not checked in this pass).
 
 ## 27. Find & Replace — proposed 2026-10-19; APPROVED by the user 2026-10-19 as recommended (F1–F4); built 2026-10-20
 
@@ -2656,7 +2656,7 @@ instead of the Insert Field dialog. The proposal below is as approved
 run 4 (`docs/playbooks/FIELDS_AND_REFERENCES.md`) from the decompiled
 `AMIPRO.EXE`, `AMIPROUI.DLL`, and `AMIMACRO.DLL`, the user's guide ch. 5,
 23, and 32, and VM fixtures FD1–FD6 (`docs/research/FIELDS_NOTES.md`).
-Registered today as Future: Insert › Field…, File › Document
+(Superseded: Insert › Field… and File › Document Properties… are built; the others were not checked in this pass.) Registered as Future when written: Insert › Field…, File › Document
 Properties… (Alt+Enter), Tools › Update Fields (F9), Tools › Word Count.
 
 ### What Ami Pro 3.1 does
@@ -2917,7 +2917,7 @@ running macros (not planned).
   undo step. The caret and selection move with the swapped text (a
   selected result becomes the selected code). Fields whose result spans
   paragraphs or holds a frame's anchor keep their result.
-- **Not built** (recorded): bookmarks, merge, and macros (their runs);
+- **Not built when written** (recorded; bookmarks §34 and merge §38 are built since; macros are deferred):
   Include of a bookmark in another file.
 
 ## 29. Print and PDF — proposed 2026-10-20; APPROVED by the user 2026-10-20 (PO1–PO6)
@@ -3009,7 +3009,7 @@ Future: File › Export PDF… (Ctrl+Shift+E) and File › Print… (Ctrl+P).
   Ami Pro's drawings' screen images as vectors where they are vectors; a
   picture the app cannot draw (a labelled box on screen) prints nothing,
   as an empty frame.
-- **Not built**: Printer Setup (the desktop's dialog chooses the printer;
+- **Not built (decided)**: Printer Setup (the desktop's dialog chooses the printer;
   `[prn]` and `[port]` are kept as read), Ami Pro's Print Orientation
   dialog (each page goes out at its own size), AmiPrint (printing is always
   in the background), the /P switch.
@@ -3966,7 +3966,7 @@ RNB1–RNB3, RNF1–RNF6, RNF71S–RNF74S
 (`docs/research/NOTES_BOOKMARKS_FOOTNOTES.md`). Today all three are kept
 marks written back verbatim: nothing shows where Ami Pro shows a note mark
 or a footnote, a document's footnotes are invisible, and Insert ›
-Footnote and Endnote are Future commands.
+(Superseded: Insert › Footnote and Endnote are built.)
 
 ### What Ami Pro 3.1 does
 
@@ -4186,8 +4186,7 @@ Built as approved (`docs/NOTES_PROGRESS.md`; the run's choices NK1–NK10 in
 (`docs/playbooks/PROOFING.md`, "Run 2"), from the decompiled `AMIPRO.EXE`,
 `AMIPROUI.DLL`, and Lotus's proofing modules (`LTSSPL1.DLL`,
 `LTSTHES1.DLL`, `LTSGRM1.DLL`), and Ami Pro 3.1 fixtures PSP1–PSP4B, PGR1,
-PLN1 (`docs/research/PROOFING_NOTES.md`). Today Tools › Spelling…, Check
-Spelling as You Type, Thesaurus…, and Language… are Future commands;
+PLN1 (`docs/research/PROOFING_NOTES.md`). (Superseded: Spelling…, Spelling as You Type, Thesaurus…, and Language… are built.) When written they were Future commands;
 `[lang]` and `[GramStyle]` are kept and written back as read.
 
 ### What Ami Pro 3.1 does

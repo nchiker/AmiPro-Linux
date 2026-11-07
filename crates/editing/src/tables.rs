@@ -367,7 +367,7 @@ pub enum TableEdit {
     /// The rows below the table's leading heading rows sorted by their text
     /// in `column` (numbers by value, other text without regard to case,
     /// equal rows keeping their order): Table › Sort Ascending and Sort
-    /// Descending (MR1; Ami Pro's Tools › Sort is not built).
+    /// Descending (MR1; Tools › Sort… is the separate `sort.rs`).
     SortRows {
         column: usize,
         descending: bool,

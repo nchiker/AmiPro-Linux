@@ -1,5 +1,6 @@
-//! The placeholder page estimate the status bar uses until the layout engine
-//! replaces it (Phase 2.5c). It estimates lines from character counts.
+//! The early placeholder page estimate (Phase 2.5c), from character counts.
+//! The layout engine replaced it; it is still exported but nothing in the app
+//! uses it.
 
 use amipro_document::Document;
 

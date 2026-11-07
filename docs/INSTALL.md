@@ -74,11 +74,13 @@ Your documents are never touched. Settings (below) stay until you delete them.
 
 ## Known limitations
 
-See `FEATURE_PARITY.md` (evidence per feature) and the "Known open items" in
-`CLAUDE.md`. Notably: no accessibility nodes for page text (blocked by the
-pinned toolkit), IME preedit not yet checked on a real input method, no chart
-editing, Page Setup, Fast Format, or macros, and no revision marking. Run C
-(table data) and the closing pass still await physical checks.
+See `docs/KNOWN_LIMITATIONS.md` for what is not built, decided against,
+or different from Ami Pro, and `FEATURE_PARITY.md` for the evidence per
+feature. Notably: no accessibility nodes for page text (blocked by the pinned
+toolkit), IME preedit not yet checked on a real input method, no macros, no
+revision marking or Doc Compare, no live OLE editing, and no Window › New
+View or vertical ruler. Runs C (table data) and D (objects) and the new
+packaging, update, and crash-recovery features still await physical checks.
 
 ## Reporting problems
 

@@ -58,7 +58,7 @@ pulled forward between large ones.
 | 13 | `master`: master documents | Fields and references | run 12 | master documents in 50 user and 56 ISO files (the user's guide is one) | DONE 2026-11-03 (tag `master-run-start`; `docs/MASTER_PROGRESS.md`; MS1–MS11 answered 2026-11-03; MQ1–MQ6; physical check passed 2026-11-03) |
 | 14 | `merge`: merge, envelopes, labels | Merge and templates | runs 4, 5 | merge data files named in 33 files of both corpora | DONE 2026-11-03 for its automated parts (tag `merge-run-start`; `docs/MERGE_PROGRESS.md`; MG1–MG11 answered 2026-11-03; MC1–MC13; physical check passed 2026-11-04, after the rework) |
 | A | `commands` (light; SU1): templates (15: File › New from style sheets, With contents, Run macro), the remaining commands (16: text, style, page, file), and views (21: Draft mode, Facing Pages, View Preferences, Clean Screen) | Merge and templates; Views and commands | STY writer | 255 style sheets in both corpora; small, basic gaps | DONE 2026-11-05 (`docs/COMMANDS_PROGRESS.md`; New View and the Vertical Ruler open, CK11) |
-| B | `outline-mode` (light; 17): Outline mode | Views and commands | outline levels run | PROJECT_PLAN Phase 5 item | IN PROGRESS from 2026-11-05: OB.1–OB.2 done (`docs/OUTLINE_MODE_RUNBOOK.md`, `docs/OUTLINE_MODE_PROGRESS.md`) |
+| B | `outline-mode` (light; 17): Outline mode | Views and commands | outline levels run | PROJECT_PLAN Phase 5 item | DONE 2026-11-06, physical check passed (`docs/OUTLINE_MODE_RUNBOOK.md`, `docs/OUTLINE_MODE_PROGRESS.md`) |
 | C | `table-data` (full; 20): formulas, Quick Add, forms; numbers in table cells merged as numbers (MERGE_NOTES §13) | Tables | run 8 | | DONE 2026-11-06 (tag `table-data-start`; `docs/TABLE_DATA_PROGRESS.md`; TN1–TN11 answered 2026-11-06; physical check pending) |
 | D | `objects` (full; SU2: full editors): charts (18), equations (19), image processing and Paste Special (22); OLE objects drawn from their renderings and kept | Graphics | runs 1, 8, 9 | charts 107 in 34 user files (7 distinct data records), OLE objects 34 in 17 files, equations 0, `.tgf` images 0 (corrected 2026-11-06; the earlier "4 and 4" were table-cell hints) | DONE 2026-11-07 for its automated parts (`docs/OBJECTS_PROGRESS.md`; OD1-OD12 answered 2026-11-06; physical check pending) |
 
@@ -130,6 +130,9 @@ not from the decompile.
 - **File Management** (ch. 29): the desktop's file manager does this.
 - **SmartIcons sets**: the editable toolbar covers them.
 - **The WordPerfect SwitchKit** (App. D).
+- **Window › Tile and Cascade**: tabs replace them (DECISIONS CM11).
+- **Printer Setup**: the desktop's print portal chooses the printer.
+- **Paste Link, New Object, OLE Update/Unlink/Edit** (run D decisions OD): no live OLE.
 
 ## The recipe for every run
 

@@ -22,7 +22,7 @@ where the file has one (16-bit as 5-6-5 or 5-5-5 by the top bit; 4 planes;
 writing screen's palette). `Picture` has typed scaling, pan, rotation, and
 a description; Insert › Image…, Frame Properties › Picture, picture mode,
 paste, and drop exist; Save As SAM converts other formats to bitmaps.
-Insert › Drawing… is still Future.
+Insert › Drawing… was still Future then; it is built (run 9, `docs/DRAWING_PROGRESS.md`).
 
 **Learned for the later runs.**
 - A chart is a drawing whose `[isd]` names the `.sct` driver after its

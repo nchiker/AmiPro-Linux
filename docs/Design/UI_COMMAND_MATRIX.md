@@ -39,7 +39,7 @@ submenu may be a single specifically named disabled item rather than a generic
 | Close Document | Ctrl+W | Tab close only | Active tab exists; dirty tab opens Save/Discard/Cancel | UI-1 I | UI-1 |
 | Save | Ctrl+S | Icon, always visible | Dirty active document or no native target; imported SAM routes to protected native Save As | UI-1 I | UI-1 |
 | Save As… | Ctrl+Shift+S | Menu only | Active document exists; only project-native target accepted today | UI-1 I | UI-1 |
-| Revert to Saved… | — | Hidden | Native saved target exists and differs from memory; confirmation required | No | P2 |
+| Revert to Saved… | — | Hidden | Native saved target exists and differs from memory; confirmation required | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 | Export PDF… (File › Export ▸) | Ctrl+Shift+E | Hidden; a button in the Print panel | A document is open: the desktop's save dialog, the pages as a PDF made in the background | Yes, page surface (2026-10-20) | §29 (PO1, PO2) |
 | Export Word Document (.docx)… (File › Export ▸) | — | Hidden; offered in Customize Toolbar | A document is open: the desktop's save dialog, the export made in the background, the loss dialog when something is lost, Open in the status bar | Yes, page surface (2026-10-20) | §30 (EX1, EX2, EX7, EX10) |
 | Export OpenDocument Text (.odt)… (File › Export ▸) | — | Hidden | As above | Yes, page surface (2026-10-20) | §30 |
@@ -101,14 +101,14 @@ bindings already work. This directly closes the memorized-shortcut defect.
 | Show Power Fields | Alt+F9 | Menu only | Checked; the codes in red in place of the results, typed over as text and read back when off (since 2026-10-20 after the run); one undo step; off before a save | Yes, page surface (2026-10-20) | §28 (FL6) |
 | Field Shading | — | Menu only | Checked, on by default (settings); fields' shown text light grey on screen | Yes, page surface (2026-10-20) | §28 (FL6) |
 | Status Bar | — | Hidden | Active document exists; checked while the bar shows; saved in the preferences (default shown); hidden, the bar still appears while the message is a failure, so no error is concealed | Yes, page surface (2026-11-07) | UI-2 optional toggle |
-| Zoom In | Ctrl++ | Right status control | Active document exists and below maximum zoom | No | UI-2/shared transform |
-| Zoom Out | Ctrl+- | Right status control | Active document exists and above minimum zoom | No | UI-2/shared transform |
-| Actual Size | Ctrl+0 | Zoom menu/status | Active document exists | No | UI-2/shared transform |
+| Zoom In | Ctrl++ | Right status control | Active document exists and below maximum zoom | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | UI-2/shared transform |
+| Zoom Out | Ctrl+- | Right status control | Active document exists and above minimum zoom | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | UI-2/shared transform |
+| Actual Size | Ctrl+0 | Zoom menu/status | Active document exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | UI-2/shared transform |
 | Fit Page Width | — | Zoom menu/status | Active document exists | Current fit is automatic, not a mode | UI-2 |
 | Single Page | — | View-mode group | Active document; selected default; real pagination required for final semantics | Approximate one page | P3 |
-| Continuous Pages | — | View-mode group | Shaped pagination exists | No | P3 |
-| Two Pages | — | View-mode group | Shaped pagination exists and viewport permits | No | P3 |
-| Full Screen | F11 | Menu only | Always; native full-screen behavior | No | P2 |
+| Continuous Pages | — | View-mode group | Shaped pagination exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P3 |
+| Two Pages | — | View-mode group | Shaped pagination exists and viewport permits | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P3 |
+| Full Screen | F11 | Menu only | Always; native full-screen behavior | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 
 View grouping: panels/chrome; zoom; page view; full screen. No zoom percentage
 appears in the action bar; the status bar owns view and zoom.
@@ -127,7 +127,7 @@ appears in the action bar; the status bar owns view and zoom.
 | Draw menu: Line and Fill…, Extract/Apply Line & Fill, Rotate Left/Right 90°, Rotate by Step, Flip ▸ Horizontal/Vertical, Group, Ungroup, Bring to Front, Send to Back, Bring Forward, Send Backward, Align ▸ (six), Distribute ▸ Across/Down, Duplicate, Snap To ✓, Show Grid ✓, Select All Objects ✓, Import Drawing…, Save Drawing As…, Done Drawing | — | The draw bar (in the toolbar's place in Draw mode); the selection's items in the right-click menu in Draw mode | Draw mode open; each with Ami Pro's rule (Extract one object, Group two, Align two, Distribute three, Flip a flippable object) | Yes, page surface (2026-10-25) | §33 (DW2–DW6) |
 | Image… | Ctrl+Shift+I | Hidden | A caret in the main text, an empty table cell, or one empty text frame or picture frame selected; the portal's chooser (BMP, WMF, PNG, JPEG, GIF, TIFF, PCX, SVG) with Link to file; the picture into the empty frame or cell, a new Flow with text frame at the caret the picture's size, or replacing the selected picture; one undo step (VM PI1–PI9) | Yes, page surface (2026-10-18) | §25 (P1–P3) |
 | File… (Insert) | — | Hidden | A document is open: the portal's chooser for the formats read, Import Options, the file at the caret (or the selection's start) in any flow, one undo step | Yes, page surface (2026-10-24) | §31 (IM1, IM3) |
-| Drawing… | — | Hidden | Drawing/object model exists | No | P5 |
+| Drawing… | — | Hidden | Drawing/object model exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P5 |
 | Floating Header/Footer… | — | Hidden | Caret in the main text; a small dialog: insert one for all, right, or left pages, or remove the one at the caret (VM FH1–FH3) | Yes, page surface (2026-10-13) | §18 (L3) |
 | Page Number… | — | Hidden | A caret (any text); a small dialog: style, Start on page, Start with number, leading text; inserts Ami Pro's field or changes the one at the caret (VM PN1) | Yes, page surface (2026-10-13) | §18 (L3) |
 | Footnote | Ctrl+Alt+F | Hidden | The caret in the main text or a table's cell: the reference there and the caret in the new footnote at the page's foot (in a cell, Ami Pro's joined row at the table's end); one undo step | Yes, page surface (2026-10-26) | §34 (NR8) |
@@ -150,7 +150,7 @@ appears in the action bar; the status bar owns view and zoom.
 | Field… | — | Hidden | A document is open: the Fields panel at Power field | Yes, page surface (2026-10-20) | §28 (FL2) |
 | Merge Field… | — | Hidden | A document is open: the Merge panel at its fields; a click inserts `MergeField NAME` at the caret, one undo step | Yes, page surface (2026-11-03) | §38 (MG1, MG10) |
 | Edit Field… | — | Edit › Power Fields ▸; a field's right-click menu | The caret is in a field: the Fields panel's This field | Yes, page surface (2026-10-20) | §28 |
-| Special Character… | — | Hidden | Character chooser/insert path exists; do not intercept the platform's Ctrl+Shift+U Unicode entry | No | P2 |
+| Special Character… | — | Hidden | Character chooser/insert path exists; do not intercept the platform's Ctrl+Shift+U Unicode entry | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 
 Insert grouping: breaks; objects; page regions/notes; fields/characters. The
 listed shortcuts are modern product proposals, not verified Ami Pro shortcuts;
@@ -161,7 +161,7 @@ the Unicode-entry conflict must be resolved before assigning Ctrl+Shift+U.
 | Command | Shortcut | Action bar | Enabled when / behavior | Current | Milestone |
 |---|---|---|---|---|---|
 | Styles | — | Quick-apply field + panel | Active document exists; menu opens/focuses the single owner panel | Style apply I | UI-2 |
-| Modify Current Style… | — | Hidden | One uniform style is selected and style editing semantics exist | No | P2 |
+| Modify Current Style… | — | Hidden | One uniform style is selected and style editing semantics exist | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 | 1st line bold (Style Properties › Font) | — | Check box after Caps | Exclusive with Bold; the first line of each paragraph in the style is bold, later lines regular; live, one undo step | I with `page-surface` (2026-11-07) | FIRST_LINE_BOLD_NOTES.md |
 | Bold | Ctrl+B | Toggle icon | Page surface: a selection, or a caret, where it formats the text typed next (VM C1, `UI_SPEC.md` §13); checked when the whole selection, or a character beside the caret, looks bold. Text editor: a selection | I (caret since 2026-10-12) | UI-1 then E-GATE |
 | Italic | Ctrl+I | Toggle icon | Same rule as Bold, check mark included | I | UI-1 then E-GATE |
@@ -171,7 +171,7 @@ the Unicode-entry conflict must be resolved before assigning Ctrl+Shift+U.
 | Special Effects… | — | Menu only | Selection or caret; Superscript, Subscript, Double underline, Strikethrough, Overstrike character (since Phase 3.3); OK switches the changed boxes, one undo step | I with `page-surface` (2026-10-12) | §13 |
 | Font… | — | Menu only | Selection or caret; face, size, colour, Revert to style; OK writes all three | I with `page-surface` (2026-10-12) | §13 |
 | Normal | Ctrl+M (Ami Pro's Ctrl+N is New) | Offered by Customize Toolbar | Selection or caret; character and paragraph formatting back to the styles (VM C1) | I with `page-surface` (2026-10-12) | §13 |
-| Paragraph… | — | Hidden | Selection maps to paragraphs and paragraph-property model exists | No | P2/P3 |
+| Paragraph… | — | Hidden | Selection maps to paragraphs and paragraph-property model exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2/P3 |
 | Align Left | Ctrl+L | Paragraph group, selected when the selected paragraphs share it | The selected paragraphs or the caret's, over their styles' (`SetParagraphAlignment`, one undo step); none while frames are selected; menu check when every selected paragraph has it | I with `page-surface` (2026-10-12) | UI pass (gap A2) |
 | Center | Ctrl+E | Paragraph group | As Align Left | I with `page-surface` | UI pass (gap A2) |
 | Align Right | Ctrl+R | Paragraph group | As Align Left | I with `page-surface` | UI pass (gap A2) |
@@ -182,9 +182,9 @@ the Unicode-entry conflict must be resolved before assigning Ctrl+Shift+U.
 | Demote | Alt+Right | Icon (`format-indent-more-symbolic`), list group | One level down: an item of a Number List run nests it (the run List 1, the items List 2), List n to List n+1, a levelled style to the level below, None to one below the previous levelled paragraph | I with `page-surface` (2026-10-18) | §22, O1, O2 |
 | Bullet and Number Style… | — | Menu and text right-click menu | Style Properties for the caret paragraph's style at Bullets and numbers | I with `page-surface` (2026-10-17) | §21, B5 |
 | Outline Numbering… (Format › Styles ▸) | — | Menu only | A dialog of four schemes for the document's levelled styles (1. A. i. a.; Ami Pro's I. A. 1. i. a.; Ami Pro's 1, 1.1, 1.1.1; none), Apply as one undo step; disabled Apply without levelled styles | I with `page-surface` (2026-10-18) | §22, O3 |
-| Increase Indent | Ctrl+] | Overflow after implementation | Paragraph indentation supported | No | P2/P3 |
-| Decrease Indent | Ctrl+[ | Overflow after implementation | Paragraph indentation supported | No | P2/P3 |
-| Frame Properties… | — | Hidden; future inspector | One frame selected and frame model exists | No | P3 |
+| Increase Indent | Ctrl+] | Overflow after implementation | Paragraph indentation supported | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2/P3 |
+| Decrease Indent | Ctrl+[ | Overflow after implementation | Paragraph indentation supported | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2/P3 |
+| Frame Properties… | — | Hidden; future inspector | One frame selected and frame model exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P3 |
 | Graphics Scaling… | — | Hidden; Format › Frame ▸ and the frame's right-click menu | One picture frame selected; opens Frame Properties, whose Picture section is first (Ami Pro's Frame › Graphics Scaling…) | Yes, page surface (2026-10-18) | §25 (P5) |
 | Page Layout… | — | Hidden; margin double-click and right-click | A document is open; Page Layout Properties in the rail, following the caret's page; each change one undo step | Yes, page surface (2026-10-13) | `UI_SPEC.md` §18 (L1, L2, L4) |
 
@@ -219,7 +219,7 @@ the focused VM comparison.
 | Update All Fields | Ctrl+F9 | Edit › Power Fields ▸ | Every field but locked and mark kinds, Seq renumbered (Ami Pro's Update All; codes switched off), one undo step | Yes, page surface (2026-10-20) | §28 (FL4) |
 | Lock Field | — | Edit › Power Fields ▸ and a field's right-click menu | The caret is in a power field; checked while locked | Yes, page surface (2026-10-20) | §28 |
 | Customize Toolbar… | — | Menu only | Always; edits the one toolbar (add, remove, move, separators, Reset to Standard), shows the bar, saves each change (`UI_SPEC.md` §12) | I | UI pass, 2026-10-12 |
-| Preferences… | Ctrl+, | Menu only | Always; application settings dialog exists | No | P2 |
+| Preferences… | Ctrl+, | Menu only | Always; application settings dialog exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 
 Tools grouping: language tools; document calculation; application preferences.
 Macro commands are deliberately absent from the main approval-candidate
@@ -242,9 +242,9 @@ They are recorded in the comparison rather than presented as inert commands.
 
 | Command | Shortcut | Action bar | Enabled when / behavior | Current | Milestone |
 |---|---|---|---|---|---|
-| AmiPro-Linux Help | F1 | Hidden | Packaged/current help exists | No | P2 |
-| Keyboard Shortcuts | — | Hidden | Generated from the authoritative command registry | No | UI-1/P2 |
-| Compatibility and Fidelity | — | Hidden | Report UI exists; explains SAM/STY protection and unsupported content | No | P2 |
+| AmiPro-Linux Help | F1 | Hidden | Packaged/current help exists | No (not built; Ami Pro's help files are the planned source) | P2 |
+| Keyboard Shortcuts | — | Hidden | Generated from the authoritative command registry | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | UI-1/P2 |
+| Compatibility and Fidelity | — | Hidden | Report UI exists; explains SAM/STY protection and unsupported content | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 | About AmiPro-Linux | — | Hidden | Always; native COSMIC About dialog | UI-1 I | UI-1 |
 | Check for Updates… (Help) | — | Hidden | Always; opens the Updates panel in the rail and checks GitHub Releases of the public repository; the panel shows the installed version, the state, the release notes' first 20 lines, Check again, Download and Install (download, SHA-256 check, then a confirmation showing `pkexec apt-get install -y <file>`), and Restart; without `pkexec` or `apt-get` it shows the command instead; Esc closes | Yes, page surface (2026-11-07, P6.2) | §43 |
 | Recover Documents… (File, after Revert to Saved…) | — | Hidden | Always; opens the Recover documents panel in the rail (also at start when recovery copies of an earlier crashed session exist): each copy with its original path, time and size, Recover (opens it as an unsaved tab "name (recovered)" whose original is a Save As source, never overwritten silently), Discard, Discard all; Esc closes and keeps the copies | Yes, page surface (2026-11-07, P6.3) | §44 |

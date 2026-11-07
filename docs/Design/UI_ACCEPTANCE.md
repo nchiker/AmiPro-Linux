@@ -523,7 +523,7 @@ clicked into frames and cells:
 - [ ] `README31.SAM` and `AP31NAV.SAM` open with text, frames, headers,
   footers, pictures, and tables on the expected pages; Save As `.amipro` and
   reopen keep the edits; the SAM files are unchanged.
-- [ ] Known gaps, to confirm rather than fail: pictures are labelled
+- [ ] (Superseded 2026-11-07: pictures and the Frame Properties inspector are built; see the Pictures and Frame sections and `UI_SPEC.md` §25.) Known gaps, to confirm rather than fail: pictures are labelled
   placeholders (no BMP or `.X3` decoder among the app's dependencies); the page
   surface has no accessibility nodes yet; with the caret in frame text the
   action bar's Bold, Italic, and style state shows the last main-text

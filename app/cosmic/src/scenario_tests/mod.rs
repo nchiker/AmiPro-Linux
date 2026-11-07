@@ -36,6 +36,7 @@ use super::*;
 
 mod commands;
 mod contents;
+mod crash_recovery;
 mod documents;
 mod fields;
 mod files;

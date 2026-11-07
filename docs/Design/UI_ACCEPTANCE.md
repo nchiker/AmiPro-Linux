@@ -1419,6 +1419,20 @@ Physical checklist, ranked (about ten minutes; needs a test release, e.g. a vers
 - [ ] Preferences › General: "Check for updates when the program starts" is off by default; switched on, the next start opens the panel only if a newer version exists, and not again for a day.
 - [ ] Esc closes the panel; opening another rail panel closes it; the Help menu lists the command before About.
 
+### Crash recovery (`UI_SPEC.md` §44, P6.3)
+
+**Result (2026-11-07): AUTOMATED PASS** (the store with a fake clock and process table: live and gone sessions, whole-file writes, caps, 30-day cleanup, damaged notes and copies; and scenarios through the window's message path: edit, autosave tick, crash by dropping the window, a new window that lists and recovers, the original file byte-for-byte untouched, Save asking for a place, saved/undone/discarded documents leaving no copy, a clean exit leaving none, two windows not offering each other's, recovery off, a password document not copied), **PHYSICAL PENDING**.
+
+Physical checklist, ranked (about ten minutes; use a scratch copy of a document):
+
+- [ ] Open a saved document, type a few words, wait over 2 minutes (or set Preferences › General to 1 min), then `kill -9 $(pidof amipro-cosmic)`. Start the program: the Recover documents panel opens by itself, listing the document with its path, the time and the size; Recover opens a tab "name (recovered)" with your words, marked changed.
+- [ ] Ctrl+S on the recovered tab opens Save As, not a silent save; the original file on disk is unchanged until you choose to replace it (then the usual overwrite question, loss list and `.bak` apply). After saving, "(recovered)" is gone and the copy is deleted (`ls ~/.local/share/amipro-linux/recovery/`).
+- [ ] Two instances: start a second window while the first has unsaved changes and has autosaved; the second does not offer the first's copies. Kill the first (`kill -9`); File › Recover Documents… in the second now lists them.
+- [ ] A never-saved document is listed as "Never saved" and recovers as an unsaved tab; Discard and Discard all delete the copies; Esc closes the panel and keeps them (they are listed again at the next start).
+- [ ] A normal quit (File › Quit, answering the unsaved-changes question) leaves no files in the recovery folder; closing a changed tab with Discard removes its copy.
+- [ ] Preferences › General: "Keep recovery copies while editing" is on by default; with it off nothing is written; the interval buttons (1, 2, 5, 10 min) take effect at once. Typing stays smooth during an autosave of a large document (try an imported 18-page file).
+- [ ] The File menu lists Recover Documents… after Revert to Saved…; the panel looks right in light and dark themes.
+
 ### Objects (`UI_SPEC.md` §42, DO.3-DO.11)
 
 **Result (2026-11-07): AUTOMATED PASS, VM PASS (OLE drawn 34 of 34; image state words 12 of 12; chart records 104 of 104 corpus and 18 of 18 VM; equations 27 of 27 byte equal; twins CHT1, EQT2, the adjusted `.tgf` and an OLE round trip opened in Ami Pro), PHYSICAL PENDING** (`docs/OBJECTS_PROGRESS.md`).
@@ -1471,6 +1485,7 @@ Physical checklist, ranked (about fifteen minutes):
 | Run A commands and views (§10, `UI_SPEC.md` §39) | AUTOMATED PASS; VM PASS (New… for nine sheets; line numbering LN1–LN20 and twins LNT1, LNT2; passwords PWA–PWEMP byte for byte and twins PWT1, PWT2; twin CAT1) / PHYSICAL PASS (CA.1–CA.12, then line numbering, passwords, and Move Up/Down: the user, 2026-11-05, "all test passed") | 2026-11-05, `docs/COMMANDS_PROGRESS.md` | New View, Vertical Ruler, Draft's frame markers not built (CK10, CK11) |
 | Table data (§10, `UI_SPEC.md` §41) | AUTOMATED PASS; VM PASS (engine and storage; twins ATD1–ATD5) / PHYSICAL PENDING | 2026-11-06, `docs/TABLE_DATA_PROGRESS.md` | Physical checklist above |
 | Updates (`UI_SPEC.md` §43, P6.2) | AUTOMATED PASS / PHYSICAL PENDING | 2026-11-07 | Physical checklist above; needs a published release |
+| Crash recovery (`UI_SPEC.md` §44, P6.3) | AUTOMATED PASS / PHYSICAL PENDING | 2026-11-07 | Physical checklist above |
 | Objects (§10, `UI_SPEC.md` §42) | AUTOMATED PASS; VM PASS (twins CHT1, EQT2, the adjusted `.tgf`, an OLE round trip) / PHYSICAL PENDING | 2026-11-07, `docs/OBJECTS_PROGRESS.md` | Physical checklist above |
 | Pictures (§10, `UI_SPEC.md` §25) | AUTOMATED PASS; VM PASS (twelve twins: API1, API2, API5, API7, API8, APIRT, APNG, AJPG, APCX, ATIF, ACELL, AFRM; re-saves API8S, ACELLS) / PHYSICAL PASS (paste and drop after two fixes) | 2026-10-18, `docs/PICTURES_PROGRESS.md` | None |
 

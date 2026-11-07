@@ -68,6 +68,11 @@ impl ViewSetting {
     ];
 }
 
+/// The minutes between recovery copies that Preferences offers (P6.3), and
+/// the default.
+pub const RECOVERY_INTERVALS: [u32; 4] = [1, 2, 5, 10];
+pub const RECOVERY_DEFAULT: u32 = 2;
+
 /// The dialog while it is open: its page and the number fields as typed.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PreferencesState {
@@ -89,6 +94,11 @@ pub enum PreferencesAction {
     KeepBackup(bool),
     /// Check for updates when the program starts (P6.2).
     CheckUpdates(bool),
+    /// Keep recovery copies while editing (P6.3).
+    KeepRecovery(bool),
+    /// The minutes between recovery copies, one of
+    /// [`RECOVERY_INTERVALS`].
+    RecoveryMinutes(u32),
     /// The style sheet File › New… selects when none was used yet.
     DefaultSheet(String),
     /// Folders › Add…: the desktop's folder chooser.
@@ -111,6 +121,8 @@ pub enum PreferencesAction {
 pub struct Shown<'a> {
     pub keep_backup: bool,
     pub check_updates: bool,
+    pub keep_recovery: bool,
+    pub recovery_minutes: u32,
     pub default_sheet: &'a str,
     /// The remembered style-sheet folders, which Remove can take.
     pub style_folders: &'a [PathBuf],
@@ -180,6 +192,40 @@ fn toggle_row<'a>(
     .into()
 }
 
+/// The minutes between recovery copies: one button for each interval.
+fn recovery_interval_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
+    let mut buttons: Vec<Element<'a, Message>> = vec![
+        widget::text::body("Write a recovery copy every")
+            .width(Length::Fill)
+            .into(),
+    ];
+    for minutes in RECOVERY_INTERVALS {
+        let label = if minutes == 1 {
+            "1 min".to_owned()
+        } else {
+            format!("{minutes} min")
+        };
+        let button = if minutes == shown.recovery_minutes {
+            widget::button::suggested(label)
+        } else {
+            widget::button::standard(label)
+        };
+        buttons.push(
+            button
+                .on_press_maybe(
+                    shown
+                        .keep_recovery
+                        .then(|| send(PreferencesAction::RecoveryMinutes(minutes))),
+                )
+                .into(),
+        );
+    }
+    widget::row::with_children(buttons)
+        .spacing(4)
+        .align_y(cosmic::iced::Alignment::Center)
+        .into()
+}
+
 fn general<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
     vec![
         number_field(
@@ -222,6 +268,12 @@ fn general<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a
             shown.check_updates,
             |on| send(PreferencesAction::CheckUpdates(on)),
         ),
+        toggle_row(
+            "Keep recovery copies while editing",
+            shown.keep_recovery,
+            |on| send(PreferencesAction::KeepRecovery(on)),
+        ),
+        recovery_interval_row(shown),
     ]
 }
 

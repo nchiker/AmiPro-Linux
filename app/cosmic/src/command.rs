@@ -329,6 +329,8 @@ pub enum CommandId {
     Links,
     /// Help › Check for Updates…: the Updates panel (P6.2).
     CheckForUpdates,
+    /// File › Recover Documents…: the Recover documents panel (P6.3).
+    RecoverDocuments,
     /// Edit › Bookmarks…: the Bookmarks panel (NR4).
     Bookmarks,
     /// Tools › Footnote Options…: the Footnotes panel (NR10).
@@ -1493,6 +1495,13 @@ pub const COMMANDS: &[CommandMetadata] = &[
         EnableRule::HasDocument,
     ),
     page_surface_command(
+        CommandId::RecoverDocuments,
+        "Recover Documents…",
+        MenuRoot::File,
+        None,
+        EnableRule::Always,
+    ),
+    page_surface_command(
         CommandId::CheckForUpdates,
         "Check for Updates…",
         MenuRoot::Help,
@@ -2194,6 +2203,7 @@ const FILE_MENU: &[MenuSlot] = &[
     Item(C::Save),
     Item(C::SaveAs),
     Item(C::RevertToSaved),
+    Item(C::RecoverDocuments),
     Item(C::Password),
     Divider,
     Folder("Export", EXPORT_MENU),
@@ -2750,6 +2760,7 @@ mod tests {
                 C::Save,
                 C::SaveAs,
                 C::RevertToSaved,
+                C::RecoverDocuments,
                 C::Password,
                 C::ExportPdf,
                 C::ExportDocx,

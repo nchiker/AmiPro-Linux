@@ -150,6 +150,12 @@ mod rail_panel_tests;
 #[cfg(feature = "page-surface")]
 mod rail_panels;
 #[cfg(feature = "page-surface")]
+mod recovery;
+#[cfg(feature = "page-surface")]
+mod recovery_commands;
+#[cfg(feature = "page-surface")]
+mod recovery_panel;
+#[cfg(feature = "page-surface")]
 mod reference_commands;
 #[cfg(feature = "page-surface")]
 mod references_panel;
@@ -772,6 +778,12 @@ struct DocumentSession {
     /// Help › Check for Updates… in the rail (P6.2), when it is open.
     #[cfg(feature = "page-surface")]
     updates_panel: Option<updates_panel::UpdatesPanel>,
+    /// File › Recover Documents… in the rail (P6.3), when it is open.
+    #[cfg(feature = "page-surface")]
+    recovery_panel: Option<recovery_panel::RecoveryPanel>,
+    /// Opened from a recovery copy and not saved since: the tab says so.
+    #[cfg(feature = "page-surface")]
+    recovered: bool,
     /// Edit › Paste Special… in the rail (DO.4), when it is open.
     #[cfg(feature = "page-surface")]
     paste_special: Option<paste_special::PasteSpecial>,
@@ -1068,6 +1080,10 @@ impl DocumentSession {
             #[cfg(feature = "page-surface")]
             updates_panel: None,
             #[cfg(feature = "page-surface")]
+            recovery_panel: None,
+            #[cfg(feature = "page-surface")]
+            recovered: false,
+            #[cfg(feature = "page-surface")]
             paste_special: None,
             #[cfg(feature = "page-surface")]
             sort_panel: None,
@@ -1090,6 +1106,15 @@ impl DocumentSession {
     }
 
     fn display_name(&self) -> String {
+        let name = self.location_name();
+        #[cfg(feature = "page-surface")]
+        if self.recovered {
+            return format!("{name} (recovered)");
+        }
+        name
+    }
+
+    fn location_name(&self) -> String {
         match &self.location {
             DocumentLocation::Untitled => self.document.title.clone(),
             DocumentLocation::LegacySource(path)
@@ -2491,6 +2516,10 @@ struct Preferences {
     /// of the last check, so that it runs once a day at most.
     check_updates_on_start: bool,
     last_update_check: u64,
+    /// Preferences › General › Keep recovery copies while editing (P6.3),
+    /// and how often they are written, in minutes.
+    keep_recovery: bool,
+    recovery_minutes: u32,
 }
 
 impl Default for Preferences {
@@ -2555,6 +2584,8 @@ impl Default for Preferences {
             outline_styles: false,
             check_updates_on_start: false,
             last_update_check: 0,
+            keep_recovery: true,
+            recovery_minutes: preferences_dialog::RECOVERY_DEFAULT,
         }
     }
 }
@@ -2798,6 +2829,12 @@ impl Settings {
             last_update_check: config
                 .get("last_update_check")
                 .unwrap_or(defaults.last_update_check),
+            keep_recovery: config
+                .get("keep_recovery")
+                .unwrap_or(defaults.keep_recovery),
+            recovery_minutes: config
+                .get("recovery_minutes")
+                .unwrap_or(defaults.recovery_minutes),
         };
         let styles_visible = config.get("styles_visible").ok();
         let settings = Self {
@@ -2901,6 +2938,8 @@ impl Settings {
         transaction.set("outline_styles", preferences.outline_styles)?;
         transaction.set("check_updates_on_start", preferences.check_updates_on_start)?;
         transaction.set("last_update_check", preferences.last_update_check)?;
+        transaction.set("keep_recovery", preferences.keep_recovery)?;
+        transaction.set("recovery_minutes", preferences.recovery_minutes)?;
         transaction.set(
             "recent_characters",
             preferences.recent_characters.iter().collect::<String>(),
@@ -3046,6 +3085,9 @@ struct AmiProApp {
     updates: updates_panel::UpdatesState,
     #[cfg(feature = "page-surface")]
     update_backend: Arc<dyn updates::Backend>,
+    /// File › Recover Documents… and the autosave behind it (P6.3).
+    #[cfg(feature = "page-surface")]
+    recovery: recovery_panel::RecoveryState,
     /// Tools › Customize Toolbar…, while it is open.
     toolbar_editor: Option<ToolbarEditor>,
     /// Tools › Preferences…, while it is open (CM6).
@@ -3479,6 +3521,9 @@ enum Message {
     /// The Updates panel in the rail (P6.2).
     #[cfg(feature = "page-surface")]
     Updates(updates_panel::UpdatesAction),
+    /// The Recover documents panel and the autosave (P6.3).
+    #[cfg(feature = "page-surface")]
+    Recovery(recovery_panel::RecoveryAction),
     /// The Paste Special panel in the rail (DO.4).
     #[cfg(feature = "page-surface")]
     PasteSpecial(paste_special::PasteSpecialAction),
@@ -3716,6 +3761,8 @@ impl cosmic::Application for AmiProApp {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::RealBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -3752,6 +3799,14 @@ impl cosmic::Application for AmiProApp {
             page_surface: true,
         };
         application.sync_tab_model();
+        #[cfg(feature = "page-surface")]
+        if let Some(root) = recovery::default_root() {
+            application.recovery = recovery_panel::RecoveryState::with_store(recovery::Store::new(
+                root,
+                Arc::new(recovery::SystemProbe),
+            ));
+            application.recovery_at_start();
+        }
         #[cfg(feature = "page-surface")]
         let startup_check = application.startup_update_check();
         #[cfg(not(feature = "page-surface"))]
@@ -4150,6 +4205,7 @@ impl cosmic::Application for AmiProApp {
                     links_panel::WIDTH,
                 )
             }
+            RailPanel::Recovery => (recovery_panel::panel(&self.recovery), recovery_panel::WIDTH),
             RailPanel::Updates => (
                 updates_panel::panel(&self.updates, &updates::installed_version().to_string()),
                 updates_panel::WIDTH,
@@ -4284,57 +4340,69 @@ impl cosmic::Application for AmiProApp {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        event::listen_with(|event, status, _window| {
-            if matches!(event, Event::Window(cosmic::iced::window::Event::Focused)) {
-                return Some(Message::RefreshClipboard);
-            }
-            if let Event::Window(cosmic::iced::window::Event::Resized(size)) = event {
-                return Some(Message::WindowResized(size.width));
-            }
-            // The find bar's keys come whoever took them: Esc closes it from
-            // its fields, and Shift+Enter finds backwards.
-            #[cfg(feature = "page-surface")]
-            if let Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) = &event {
-                return Some(Message::Modifiers(*modifiers));
-            }
-            // Esc comes whoever took it (a dialog's text field does).
-            if let Event::Keyboard(keyboard::Event::KeyPressed {
-                key: keyboard::Key::Named(keyboard::key::Named::Escape),
-                ..
-            }) = &event
-            {
-                return Some(Message::Escape);
-            }
-            if status == event::Status::Captured {
-                return None;
-            }
-            let Event::Keyboard(keyboard::Event::KeyPressed {
-                key,
-                physical_key,
-                modifiers,
-                ..
-            }) = event
-            else {
-                return None;
-            };
-            let command = command::command_for_shortcut(modifiers, &key, Some(&physical_key))
-                .map(Message::Command);
-            // Plain arrows and Enter no widget took: the Outline navigator's
-            // while it holds the keys (OB.6).
-            #[cfg(feature = "page-surface")]
-            if command.is_none()
-                && modifiers.is_empty()
-                && let keyboard::Key::Named(
-                    named @ (keyboard::key::Named::ArrowUp
-                    | keyboard::key::Named::ArrowDown
-                    | keyboard::key::Named::ArrowLeft
-                    | keyboard::key::Named::ArrowRight),
-                ) = key
-            {
-                return Some(Message::NavigatorKey(named));
-            }
-            command
-        })
+        #[cfg(feature = "page-surface")]
+        let autosave = self
+            .recovery_interval()
+            .map_or_else(Subscription::none, |every| {
+                cosmic::iced::time::every(every)
+                    .map(|_| Message::Recovery(recovery_panel::RecoveryAction::Tick))
+            });
+        #[cfg(not(feature = "page-surface"))]
+        let autosave = Subscription::none();
+        Subscription::batch([
+            autosave,
+            event::listen_with(|event, status, _window| {
+                if matches!(event, Event::Window(cosmic::iced::window::Event::Focused)) {
+                    return Some(Message::RefreshClipboard);
+                }
+                if let Event::Window(cosmic::iced::window::Event::Resized(size)) = event {
+                    return Some(Message::WindowResized(size.width));
+                }
+                // The find bar's keys come whoever took them: Esc closes it from
+                // its fields, and Shift+Enter finds backwards.
+                #[cfg(feature = "page-surface")]
+                if let Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) = &event {
+                    return Some(Message::Modifiers(*modifiers));
+                }
+                // Esc comes whoever took it (a dialog's text field does).
+                if let Event::Keyboard(keyboard::Event::KeyPressed {
+                    key: keyboard::Key::Named(keyboard::key::Named::Escape),
+                    ..
+                }) = &event
+                {
+                    return Some(Message::Escape);
+                }
+                if status == event::Status::Captured {
+                    return None;
+                }
+                let Event::Keyboard(keyboard::Event::KeyPressed {
+                    key,
+                    physical_key,
+                    modifiers,
+                    ..
+                }) = event
+                else {
+                    return None;
+                };
+                let command = command::command_for_shortcut(modifiers, &key, Some(&physical_key))
+                    .map(Message::Command);
+                // Plain arrows and Enter no widget took: the Outline navigator's
+                // while it holds the keys (OB.6).
+                #[cfg(feature = "page-surface")]
+                if command.is_none()
+                    && modifiers.is_empty()
+                    && let keyboard::Key::Named(
+                        named @ (keyboard::key::Named::ArrowUp
+                        | keyboard::key::Named::ArrowDown
+                        | keyboard::key::Named::ArrowLeft
+                        | keyboard::key::Named::ArrowRight),
+                    ) = key
+                {
+                    return Some(Message::NavigatorKey(named));
+                }
+                command
+            }),
+        ])
     }
 
     fn dialog(&self) -> Option<Element<'_, Message>> {
@@ -4609,6 +4677,8 @@ impl cosmic::Application for AmiProApp {
             let shown = preferences_dialog::Shown {
                 keep_backup: self.preferences.keep_backup,
                 check_updates: self.preferences.check_updates_on_start,
+                keep_recovery: self.preferences.keep_recovery,
+                recovery_minutes: self.preferences.recovery_minutes,
                 default_sheet: &self.preferences.default_sheet,
                 style_folders: &self.preferences.style_folders,
                 documents_folder: self.preferences.documents_folder.as_deref(),
@@ -4822,6 +4892,8 @@ impl cosmic::Application for AmiProApp {
             None => task,
         };
         self.sync_tab_model();
+        #[cfg(feature = "page-surface")]
+        self.sync_recovery();
         let session = &mut self.sessions[self.active_session];
         session.words.refresh(&session.document);
         #[cfg(feature = "page-surface")]
@@ -4998,6 +5070,13 @@ impl AmiProApp {
         {
             self.close_chart();
             return Task::none();
+        }
+        // Esc closes the Recover documents panel and keeps the copies.
+        #[cfg(feature = "page-surface")]
+        if self.recovery_panel.is_some()
+            && self.find.as_ref().is_none_or(|bar| bar.focused.is_none())
+        {
+            return self.update_recovery(recovery_panel::RecoveryAction::Close);
         }
         // Esc closes the Updates panel (a transfer in flight finishes and
         // is dropped).
@@ -6016,6 +6095,8 @@ impl AmiProApp {
             Message::Links(action) => return self.update_links(action),
             #[cfg(feature = "page-surface")]
             Message::Updates(action) => return self.update_updates(action),
+            #[cfg(feature = "page-surface")]
+            Message::Recovery(action) => return self.update_recovery(action),
             #[cfg(feature = "page-surface")]
             Message::PasteSpecial(action) => return self.update_paste_special(action),
             #[cfg(feature = "page-surface")]
@@ -11404,6 +11485,8 @@ impl AmiProApp {
             #[cfg(feature = "page-surface")]
             CommandId::CheckForUpdates => return self.open_updates(),
             #[cfg(feature = "page-surface")]
+            CommandId::RecoverDocuments => self.open_recovery(),
+            #[cfg(feature = "page-surface")]
             CommandId::Charting => return self.open_charting(),
             #[cfg(feature = "page-surface")]
             CommandId::Equations => return self.open_equations(),
@@ -12048,6 +12131,8 @@ impl AmiProApp {
             self.pending_close = Some(index);
             self.activate_tab(index)
         } else {
+            #[cfg(feature = "page-surface")]
+            self.recovery_finish();
             cosmic::iced::exit()
         }
     }
@@ -14376,6 +14461,8 @@ impl AmiProApp {
             }
             A::KeepBackup(on) => self.preferences.keep_backup = on,
             A::CheckUpdates(on) => self.preferences.check_updates_on_start = on,
+            A::KeepRecovery(on) => self.preferences.keep_recovery = on,
+            A::RecoveryMinutes(minutes) => self.preferences.recovery_minutes = minutes,
             A::DefaultSheet(name) => self.preferences.default_sheet = name,
             A::AddFolder => {
                 return chosen_folder("Add a style-sheet folder", |folder| {
@@ -15522,6 +15609,11 @@ pub(crate) fn session_index_for_path(
     path: &std::path::Path,
 ) -> Option<usize> {
     sessions.iter().position(|session| {
+        // A recovered copy is not the file it came from.
+        #[cfg(feature = "page-surface")]
+        if session.recovered {
+            return false;
+        }
         matches!(
             &session.location,
             DocumentLocation::LegacySource(open)
@@ -15972,6 +16064,8 @@ mod tests {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18544,6 +18638,8 @@ mod tests {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18652,6 +18748,8 @@ mod tests {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18751,6 +18849,8 @@ mod tests {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18872,6 +18972,8 @@ mod tests {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -19037,6 +19139,8 @@ mod tests {
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
+            #[cfg(feature = "page-surface")]
+            recovery: recovery_panel::RecoveryState::default(),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,

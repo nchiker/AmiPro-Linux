@@ -27,6 +27,18 @@ launcher ("AmiPro-Linux") or run `amipro-linux [file.sam]`. It registers
 `.sam` and `.sty` as Ami Pro types but does not take over as default handler;
 set that in Files (Open With) if you want it.
 
+## Crash recovery
+
+While you edit, the program keeps hidden copies of documents with unsaved
+changes in `~/.local/share/amipro-linux/recovery/` (every 2 minutes by default;
+Preferences › General turns it off or sets 1, 2, 5, or 10 minutes). It never
+writes your own file. After a crash or power loss the next start opens the
+"Recover documents" panel (also File › Recover Documents…): Recover opens a
+copy as an unsaved tab, Discard deletes it. Copies are removed when you save,
+when you close a document without saving, and when the program exits normally;
+copies from sessions older than 30 days are deleted at start. Documents with a
+password are not copied.
+
 ## Updates
 
 Help › Check for Updates… looks at the project's GitHub Releases

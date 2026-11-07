@@ -247,6 +247,7 @@ They are recorded in the comparison rather than presented as inert commands.
 | Compatibility and Fidelity | — | Hidden | Report UI exists; explains SAM/STY protection and unsupported content | No | P2 |
 | About AmiPro-Linux | — | Hidden | Always; native COSMIC About dialog | UI-1 I | UI-1 |
 | Check for Updates… (Help) | — | Hidden | Always; opens the Updates panel in the rail and checks GitHub Releases of the public repository; the panel shows the installed version, the state, the release notes' first 20 lines, Check again, Download and Install (download, SHA-256 check, then a confirmation showing `pkexec apt-get install -y <file>`), and Restart; without `pkexec` or `apt-get` it shows the command instead; Esc closes | Yes, page surface (2026-11-07, P6.2) | §43 |
+| Recover Documents… (File, after Revert to Saved…) | — | Hidden | Always; opens the Recover documents panel in the rail (also at start when recovery copies of an earlier crashed session exist): each copy with its original path, time and size, Recover (opens it as an unsaved tab "name (recovered)" whose original is a Save As source, never overwritten silently), Discard, Discard all; Esc closes and keeps the copies | Yes, page surface (2026-11-07, P6.3) | §44 |
 
 The original QuickStart Tutorial is confirmed only as original behavior; it is
 not shown in the modern menu until an independently authored tutorial exists.

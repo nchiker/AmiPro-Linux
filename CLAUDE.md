@@ -64,7 +64,7 @@ cargo clippy --offline --manifest-path app/cosmic/Cargo.toml --all-features --al
 cargo run --offline --manifest-path app/cosmic/Cargo.toml                     # the app
 ```
 
-- Last counts (2026-11-07): core 790 (+29 ignored); COSMIC 694 default, 128 text editor, 701 all features (84, 8, 84 ignored). Run the test steps with `AMIPRO_STYLES` unset (the style-sheet tests count sheets); set it for corpus and layout runs only.
+- Last counts (2026-11-07): core 790 (+29 ignored); COSMIC 706 default, 128 text editor, 713 all features (84, 8, 84 ignored). Run the test steps with `AMIPRO_STYLES` unset (the style-sheet tests count sheets); set it for corpus and layout runs only.
 - `tools/verify.sh [--quick] [--release] [--corpus]`: fmt, Clippy, tests (logs in `target/verify/`). `tools/corpus.sh`: corpus audit. `tools/bench-ab.sh BASE_REV [ROUNDS]`: release A/B.
 - The ignored twin, benchmark, census, and comparison commands are in `docs/TEST_COMMANDS.md`.
 - Benchmark caution: the host runs other workloads (governor `powersave`); compare with interleaved A/B runs, not old numbers.

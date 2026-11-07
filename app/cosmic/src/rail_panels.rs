@@ -62,6 +62,8 @@ pub(crate) enum RailPanel {
     Equation,
     /// Help › Check for Updates… (P6.2).
     Updates,
+    /// File › Recover Documents… (P6.3).
+    Recovery,
     /// The default: the Styles list.
     Styles,
 }
@@ -69,7 +71,7 @@ pub(crate) enum RailPanel {
 impl RailPanel {
     /// Every panel but the default, in the view's order.
     #[cfg(test)]
-    pub(crate) const ALL: [RailPanel; 26] = [
+    pub(crate) const ALL: [RailPanel; 27] = [
         RailPanel::Drawing,
         RailPanel::Frame,
         RailPanel::StyleProperties,
@@ -96,6 +98,7 @@ impl RailPanel {
         RailPanel::Chart,
         RailPanel::Equation,
         RailPanel::Updates,
+        RailPanel::Recovery,
     ];
 }
 
@@ -130,6 +133,7 @@ impl DocumentSession {
             RailPanel::Chart => self.chart_panel.is_some(),
             RailPanel::Equation => self.equation_panel.is_some(),
             RailPanel::Updates => self.updates_panel.is_some(),
+            RailPanel::Recovery => self.recovery_panel.is_some(),
             RailPanel::Styles => false,
         }
     }
@@ -164,6 +168,7 @@ impl DocumentSession {
         self.chart_panel = None;
         self.equation_panel = None;
         self.updates_panel = None;
+        self.recovery_panel = None;
         if let Some(panel) = self.sort_panel.take() {
             self.sort_form = panel.form;
         }
@@ -181,7 +186,7 @@ impl AmiProApp {
         if self.drawing_open() {
             return RailPanel::Drawing;
         }
-        const CHAIN: [RailPanel; 25] = [
+        const CHAIN: [RailPanel; 26] = [
             RailPanel::Frame,
             RailPanel::StyleProperties,
             RailPanel::PageLayout,
@@ -207,6 +212,7 @@ impl AmiProApp {
             RailPanel::Chart,
             RailPanel::Equation,
             RailPanel::Updates,
+            RailPanel::Recovery,
         ];
         CHAIN
             .into_iter()

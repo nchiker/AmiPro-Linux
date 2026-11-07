@@ -98,7 +98,11 @@ impl AmiProApp {
                 let quiet = std::mem::take(&mut self.updates.quiet);
                 self.updates.checked(result);
                 if quiet {
-                    if matches!(self.updates.status, Status::Newer(_)) {
+                    // The Recover documents panel is not pushed aside; the
+                    // next check is Help › Check for Updates….
+                    if matches!(self.updates.status, Status::Newer(_))
+                        && self.sessions[self.active_session].recovery_panel.is_none()
+                    {
                         let session = &mut self.sessions[self.active_session];
                         session.close_rail_panels();
                         session.updates_panel = Some(UpdatesPanel);

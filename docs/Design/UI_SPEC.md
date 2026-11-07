@@ -5724,3 +5724,57 @@ nothing but the install line (and starts itself again for Restart).
 *Not done:* a byte-by-byte progress bar (the bar moves, the size is stated),
 signature verification beyond the checksum (the checksum and the package come
 from the same release), delta updates, other platforms.
+
+## 44. Crash recovery: File › Recover Documents… (P6.3) — decision taken 2026-11-07 (the user's)
+
+*Rule.* Autosave never writes the user's own file. Open documents with unsaved
+changes are copied, periodically, to a hidden recovery folder of the program's
+own; after a crash (power loss, `kill -9`) the next start offers them.
+
+*Where the copies live.* `$XDG_DATA_HOME/amipro-linux/recovery/<pid>-<start>/`
+(default `~/.local/share/...`), one 0700 folder per running instance (its
+session) holding a `lock` (the instance's pid and process start time), and for
+each document `<id>.amipro-recovery` (the lossless native v3 encoding, so
+nothing is lost even for an import or an Ami Pro document) and `<id>.meta`
+(title, original path, kind, time, size). Files are written whole beside their
+name and renamed into place. Logic and tests: `app/cosmic/src/recovery.rs`
+(the clock and the process probe are a trait, faked in tests).
+
+*When a copy is written.* Every N minutes (Preferences › General › "Keep
+recovery copies while editing", on by default, and "Write a recovery copy
+every" 1, 2, 5, or 10 min; default 2) each document that has unsaved changes
+and differs from its last copy is written; the encoding and the write run on a
+thread. A document with a password (File › Password…) is never copied, because
+the copy would hold it unprotected. A copy over 64 MB, or a session folder over
+512 MB, is refused with a status line.
+
+*When a copy goes.* When the document is saved (or undone back to the saved
+state), when its tab is closed with Discard, and at a clean exit (the whole
+session folder). Nothing else removes a live instance's copies.
+
+*Two instances.* A session whose process still runs (same pid and start time)
+is never offered, so two windows do not take each other's files. A session
+whose process is gone is stale: its copies are offered at the next start.
+Stale sessions with no copy are tidied, and stale sessions last written more
+than 30 days ago are deleted at start.
+
+*The panel.* File › Recover Documents… (after Revert to Saved…) opens the rail
+panel "Recover documents" (`RailPanel::Recovery`, single-panel rule), and it
+opens by itself at start when copies exist. For each copy: the file name (or
+the title of a never-saved document), its original path or "Never saved", the
+time of the last copy and its size, and the buttons Recover and Discard; below,
+Discard all (with two or more). Esc and the X close the panel and keep the
+copies. A copy that cannot be read (a damaged note or a document the reader
+refuses) shows a line saying so and is kept on disk.
+
+*Recover.* Opens the copy as a new tab named "name (recovered)", marked
+changed, whose location is the original file as a read-only source: Save goes
+to Save As (which proposes the original folder and name), so the original is
+never overwritten silently; saving over it goes through the usual overwrite
+confirmation, the loss check, and the `.bak` copy. The recovered tab keeps its
+recovery copy until the document has a copy of its own (the next autosave), or
+until it is saved or closed. The suffix goes when the document is saved.
+
+*Not done:* recovering a document's password, undo history, or scroll position;
+a recovery of the Merge or Master set windows (their documents are ordinary
+tabs).

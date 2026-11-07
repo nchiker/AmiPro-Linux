@@ -5678,3 +5678,49 @@ too. Typed where shown: no separate value boxes except the size (points).
   (the Data text holds all).
 
 **Status (2026-11-07).** Built: 42.1 to 42.6. Not built: Update, Unlink and Edit of OLE objects, Paste Link, New Object, Ami Pro's Pictures dialog for charts, colour-set reorder by drag, a live link from a table to a chart. The notes above are the as-built record; `OBJECTS_PROGRESS.md` has the choices OK-DO4 to OK-DO9.
+
+## 43. Help › Check for Updates… (P6.2) — decisions taken 2026-11-07 (the user's recommended defaults)
+
+*Where.* Updates are the GitHub Releases of the public repository
+(`nchiker/AmiPro-Linux`); no token is used. Help › Check for Updates… (before
+About) opens one rail panel, "Updates", under the single-panel rule
+(`rail_panels.rs`: `RailPanel::Updates`); Esc and the X close it. The state
+(`Status`) belongs to the program, the panel to the tab that opened it.
+
+*When.* Only when asked, plus an optional quiet check at start: Preferences ›
+General › "Check for updates when the program starts (once a day at most)",
+off by default. The quiet check says nothing unless a newer version exists, and
+then it opens the panel.
+
+*What it shows.* The installed version, then by state:
+
+- *Checking…* (Check again greyed).
+- *Up to date:* "You have the latest version (x.y.z)." and Check again. A
+  build's `+git…` metadata never counts: `0.1.0+git1a2b3c4` is current when
+  `0.1.0` is the latest; a pre-release is older than its release.
+- *Newer:* "Version X is available.", "What's new in X" with the release notes'
+  first 20 lines, Download and Install, Check again.
+- *Downloading* with a moving bar; then, verified, "downloaded and its checksum
+  matches", the exact command (`pkexec apt-get install -y <file>`) and Install /
+  Not now (the confirmation). Install shows "Installing… (enter your password
+  when asked)"; polkit asks once. Then "Version X is installed." and Restart:
+  the new version starts and this window closes the usual way (unsaved
+  documents are asked about first).
+- *No pkexec or apt-get:* the package is still downloaded and verified, and the
+  panel shows the command to run in a terminal.
+- *Failed:* the reason (no network, GitHub's rate limit, no release yet, a
+  release without a package or without `SHA256SUMS`, checksum mismatch, the
+  password declined) and Check again.
+
+*Safety.* HTTPS only (curl with `--proto =https`, timeouts, a size cap; each
+redirect is followed by hand and only to github.com and githubusercontent.com
+hosts). The package must be named `amipro-linux_<tag>_amd64.deb` and come from
+the repository's release downloads. The release's `SHA256SUMS` must list it and
+match, and its size must be the one the release states; otherwise the file is
+deleted and nothing runs. The download lives in a new 0700 directory under
+`$XDG_RUNTIME_DIR`, removed after the install or when declined. The program runs
+nothing but the install line (and starts itself again for Restart).
+
+*Not done:* a byte-by-byte progress bar (the bar moves, the size is stated),
+signature verification beyond the checksum (the checksum and the package come
+from the same release), delta updates, other platforms.

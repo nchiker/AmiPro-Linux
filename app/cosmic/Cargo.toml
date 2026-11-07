@@ -53,6 +53,11 @@ spellbook = "0.4.2"
 # (Apache-2.0); its own thesaurus is not used (SP7).
 harper-core = { version = "2.13.0", default-features = false, features = ["concurrent"] }
 
+# Help › Check for Updates… (P6.2): the release API's JSON and the package's
+# SHA-256 (both already in the build through other crates).
+serde_json = "1"
+sha2 = "0.10"
+
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic.git"
 rev = "dbc62f2d899cdbfbe43d170689ddc0290db663f4"

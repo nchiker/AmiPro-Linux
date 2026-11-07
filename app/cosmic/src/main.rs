@@ -171,6 +171,12 @@ mod table_formula;
 #[cfg(feature = "page-surface")]
 mod table_properties;
 #[cfg(feature = "page-surface")]
+mod updates;
+#[cfg(feature = "page-surface")]
+mod updates_commands;
+#[cfg(feature = "page-surface")]
+mod updates_panel;
+#[cfg(feature = "page-surface")]
 mod view_modes;
 // Until the right-click menus (RU.6) use every gesture.
 #[cfg_attr(
@@ -763,6 +769,9 @@ struct DocumentSession {
     /// Edit › Links… in the rail (DO.3), when it is open.
     #[cfg(feature = "page-surface")]
     links_panel: Option<links_panel::LinksPanel>,
+    /// Help › Check for Updates… in the rail (P6.2), when it is open.
+    #[cfg(feature = "page-surface")]
+    updates_panel: Option<updates_panel::UpdatesPanel>,
     /// Edit › Paste Special… in the rail (DO.4), when it is open.
     #[cfg(feature = "page-surface")]
     paste_special: Option<paste_special::PasteSpecial>,
@@ -1056,6 +1065,8 @@ impl DocumentSession {
             chart_replace: None,
             #[cfg(feature = "page-surface")]
             links_panel: None,
+            #[cfg(feature = "page-surface")]
+            updates_panel: None,
             #[cfg(feature = "page-surface")]
             paste_special: None,
             #[cfg(feature = "page-surface")]
@@ -2475,6 +2486,11 @@ struct Preferences {
     /// View › Outline ▸ Use Outline Styles (OB.5): Outline mode shows each
     /// level in `_OUTLINE.STY`'s font; the app's, as Ami Pro's INI bit.
     outline_styles: bool,
+    /// Preferences › General › Check for updates when the program starts
+    /// (P6.2; off until the user turns it on), and the time (Unix seconds)
+    /// of the last check, so that it runs once a day at most.
+    check_updates_on_start: bool,
+    last_update_check: u64,
 }
 
 impl Default for Preferences {
@@ -2537,6 +2553,8 @@ impl Default for Preferences {
             show_pictures: true,
             table_addresses: false,
             outline_styles: false,
+            check_updates_on_start: false,
+            last_update_check: 0,
         }
     }
 }
@@ -2774,6 +2792,12 @@ impl Settings {
             outline_styles: config
                 .get("outline_styles")
                 .unwrap_or(defaults.outline_styles),
+            check_updates_on_start: config
+                .get("check_updates_on_start")
+                .unwrap_or(defaults.check_updates_on_start),
+            last_update_check: config
+                .get("last_update_check")
+                .unwrap_or(defaults.last_update_check),
         };
         let styles_visible = config.get("styles_visible").ok();
         let settings = Self {
@@ -2875,6 +2899,8 @@ impl Settings {
         transaction.set("show_pictures", preferences.show_pictures)?;
         transaction.set("table_addresses", preferences.table_addresses)?;
         transaction.set("outline_styles", preferences.outline_styles)?;
+        transaction.set("check_updates_on_start", preferences.check_updates_on_start)?;
+        transaction.set("last_update_check", preferences.last_update_check)?;
         transaction.set(
             "recent_characters",
             preferences.recent_characters.iter().collect::<String>(),
@@ -3014,6 +3040,12 @@ struct AmiProApp {
     workspace: WorkspaceState,
     preferences: Preferences,
     settings: Option<Settings>,
+    /// Help › Check for Updates… (P6.2): where the update stands, and the
+    /// network and system it works through (a fake in tests).
+    #[cfg(feature = "page-surface")]
+    updates: updates_panel::UpdatesState,
+    #[cfg(feature = "page-surface")]
+    update_backend: Arc<dyn updates::Backend>,
     /// Tools › Customize Toolbar…, while it is open.
     toolbar_editor: Option<ToolbarEditor>,
     /// Tools › Preferences…, while it is open (CM6).
@@ -3444,6 +3476,9 @@ enum Message {
     /// The Links panel in the rail (DO.3).
     #[cfg(feature = "page-surface")]
     Links(links_panel::LinksAction),
+    /// The Updates panel in the rail (P6.2).
+    #[cfg(feature = "page-surface")]
+    Updates(updates_panel::UpdatesAction),
     /// The Paste Special panel in the rail (DO.4).
     #[cfg(feature = "page-surface")]
     PasteSpecial(paste_special::PasteSpecialAction),
@@ -3677,6 +3712,10 @@ impl cosmic::Application for AmiProApp {
             workspace: WorkspaceState::default(),
             preferences,
             settings,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::RealBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -3713,9 +3752,14 @@ impl cosmic::Application for AmiProApp {
             page_surface: true,
         };
         application.sync_tab_model();
+        #[cfg(feature = "page-surface")]
+        let startup_check = application.startup_update_check();
+        #[cfg(not(feature = "page-surface"))]
+        let startup_check = Task::none();
         let tasks = Task::batch([
             application.update_title(),
             Self::clipboard_availability_task(true),
+            startup_check,
         ]);
         (application, tasks)
     }
@@ -4106,6 +4150,10 @@ impl cosmic::Application for AmiProApp {
                     links_panel::WIDTH,
                 )
             }
+            RailPanel::Updates => (
+                updates_panel::panel(&self.updates, &updates::installed_version().to_string()),
+                updates_panel::WIDTH,
+            ),
             RailPanel::Outline => {
                 let entries = outline_navigator::entries(&self.document, &self.outline_state);
                 let focus = self.page_selection.focus;
@@ -4560,6 +4608,7 @@ impl cosmic::Application for AmiProApp {
         if let Some(state) = &self.preferences_dialog {
             let shown = preferences_dialog::Shown {
                 keep_backup: self.preferences.keep_backup,
+                check_updates: self.preferences.check_updates_on_start,
                 default_sheet: &self.preferences.default_sheet,
                 style_folders: &self.preferences.style_folders,
                 documents_folder: self.preferences.documents_folder.as_deref(),
@@ -4949,6 +4998,14 @@ impl AmiProApp {
         {
             self.close_chart();
             return Task::none();
+        }
+        // Esc closes the Updates panel (a transfer in flight finishes and
+        // is dropped).
+        #[cfg(feature = "page-surface")]
+        if self.updates_panel.is_some()
+            && self.find.as_ref().is_none_or(|bar| bar.focused.is_none())
+        {
+            return self.update_updates(updates_panel::UpdatesAction::Close);
         }
         // Esc closes the Sort panel when no field of the find bar takes it.
         #[cfg(feature = "page-surface")]
@@ -5957,6 +6014,8 @@ impl AmiProApp {
             }
             #[cfg(feature = "page-surface")]
             Message::Links(action) => return self.update_links(action),
+            #[cfg(feature = "page-surface")]
+            Message::Updates(action) => return self.update_updates(action),
             #[cfg(feature = "page-surface")]
             Message::PasteSpecial(action) => return self.update_paste_special(action),
             #[cfg(feature = "page-surface")]
@@ -11343,6 +11402,8 @@ impl AmiProApp {
             #[cfg(feature = "page-surface")]
             CommandId::Links => self.open_links(),
             #[cfg(feature = "page-surface")]
+            CommandId::CheckForUpdates => return self.open_updates(),
+            #[cfg(feature = "page-surface")]
             CommandId::Charting => return self.open_charting(),
             #[cfg(feature = "page-surface")]
             CommandId::Equations => return self.open_equations(),
@@ -14314,6 +14375,7 @@ impl AmiProApp {
                 state.recent_files = text;
             }
             A::KeepBackup(on) => self.preferences.keep_backup = on,
+            A::CheckUpdates(on) => self.preferences.check_updates_on_start = on,
             A::DefaultSheet(name) => self.preferences.default_sheet = name,
             A::AddFolder => {
                 return chosen_folder("Add a style-sheet folder", |folder| {
@@ -15906,6 +15968,10 @@ mod tests {
             workspace: WorkspaceState::default(),
             preferences: Preferences::default(),
             settings: None,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::OfflineBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18474,6 +18540,10 @@ mod tests {
             workspace: WorkspaceState::default(),
             preferences: Preferences::default(),
             settings: None,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::OfflineBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18578,6 +18648,10 @@ mod tests {
             workspace: WorkspaceState::default(),
             preferences: Preferences::default(),
             settings: None,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::OfflineBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18673,6 +18747,10 @@ mod tests {
             workspace: WorkspaceState::default(),
             preferences: Preferences::default(),
             settings: None,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::OfflineBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18790,6 +18868,10 @@ mod tests {
             workspace: WorkspaceState::default(),
             preferences: Preferences::default(),
             settings: None,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::OfflineBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,
@@ -18951,6 +19033,10 @@ mod tests {
             workspace: WorkspaceState::default(),
             preferences: Preferences::default(),
             settings: None,
+            #[cfg(feature = "page-surface")]
+            updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            update_backend: Arc::new(updates::OfflineBackend),
             toolbar_editor: None,
             preferences_dialog: None,
             new_document_dialog: None,

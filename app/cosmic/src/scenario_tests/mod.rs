@@ -56,6 +56,7 @@ mod styles;
 mod table_data;
 mod tables;
 mod templates;
+mod update_check;
 mod views;
 
 /// One scenario's window, its scratch folder, and what it allows.

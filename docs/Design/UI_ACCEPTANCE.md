@@ -1406,6 +1406,19 @@ Physical checklist, ranked (about ten minutes):
 - [ ] Paste or Cut into a formula cell: refused with "This cell holds a formula: use Table › Edit Formula… to change it" (built in the TD.7 follow-up); Copy still works.
 - [ ] Open a table with Ami Pro's formulas: results and formulas are unchanged.
 
+### Updates (`UI_SPEC.md` §43, P6.2)
+
+**Result (2026-11-07): AUTOMATED PASS** (the panel's state machine, the checksum refusal, the missing-`pkexec` command and the start-up gating through the window's message path with a scripted backend), **PHYSICAL PENDING**. The first real check needs a published release (`docs/RELEASING.md`); until then the panel says "There is no published release yet".
+
+Physical checklist, ranked (about ten minutes; needs a test release, e.g. a version above the installed one made with `tools/release.sh`):
+
+- [ ] Help › Check for Updates… opens the rail's Updates panel at once and checks; with no release, or the installed version published, it says so ("no published release yet" / "You have the latest version"); Check again repeats it.
+- [ ] With a newer release: the panel shows the version and the notes' first lines; Download and Install shows a moving bar, then "downloaded and its checksum matches" with the exact `pkexec apt-get install -y ...` line and Install / Not now. Not now removes the download.
+- [ ] Install asks for your password once (polkit); on success the panel says the version is installed; Restart opens the new version and this window closes, asking about unsaved documents first. Declining the password says "not authorised" and installs nothing.
+- [ ] A release whose `SHA256SUMS` does not match its package (make one by editing the list): the panel refuses it with "checksum does not match" and nothing is installed.
+- [ ] Preferences › General: "Check for updates when the program starts" is off by default; switched on, the next start opens the panel only if a newer version exists, and not again for a day.
+- [ ] Esc closes the panel; opening another rail panel closes it; the Help menu lists the command before About.
+
 ### Objects (`UI_SPEC.md` §42, DO.3-DO.11)
 
 **Result (2026-11-07): AUTOMATED PASS, VM PASS (OLE drawn 34 of 34; image state words 12 of 12; chart records 104 of 104 corpus and 18 of 18 VM; equations 27 of 27 byte equal; twins CHT1, EQT2, the adjusted `.tgf` and an OLE round trip opened in Ami Pro), PHYSICAL PENDING** (`docs/OBJECTS_PROGRESS.md`).
@@ -1457,6 +1470,7 @@ Physical checklist, ranked (about fifteen minutes):
 | Master documents (§10, `UI_SPEC.md` §37) | AUTOMATED PASS; VM PASS (MD2, MD3 reproduced; twins AMS, AMA–AMC) / PHYSICAL PASS | 2026-11-03, `docs/MASTER_PROGRESS.md` | None |
 | Run A commands and views (§10, `UI_SPEC.md` §39) | AUTOMATED PASS; VM PASS (New… for nine sheets; line numbering LN1–LN20 and twins LNT1, LNT2; passwords PWA–PWEMP byte for byte and twins PWT1, PWT2; twin CAT1) / PHYSICAL PASS (CA.1–CA.12, then line numbering, passwords, and Move Up/Down: the user, 2026-11-05, "all test passed") | 2026-11-05, `docs/COMMANDS_PROGRESS.md` | New View, Vertical Ruler, Draft's frame markers not built (CK10, CK11) |
 | Table data (§10, `UI_SPEC.md` §41) | AUTOMATED PASS; VM PASS (engine and storage; twins ATD1–ATD5) / PHYSICAL PENDING | 2026-11-06, `docs/TABLE_DATA_PROGRESS.md` | Physical checklist above |
+| Updates (`UI_SPEC.md` §43, P6.2) | AUTOMATED PASS / PHYSICAL PENDING | 2026-11-07 | Physical checklist above; needs a published release |
 | Objects (§10, `UI_SPEC.md` §42) | AUTOMATED PASS; VM PASS (twins CHT1, EQT2, the adjusted `.tgf`, an OLE round trip) / PHYSICAL PENDING | 2026-11-07, `docs/OBJECTS_PROGRESS.md` | Physical checklist above |
 | Pictures (§10, `UI_SPEC.md` §25) | AUTOMATED PASS; VM PASS (twelve twins: API1, API2, API5, API7, API8, APIRT, APNG, AJPG, APCX, ATIF, ACELL, AFRM; re-saves API8S, ACELLS) / PHYSICAL PASS (paste and drop after two fixes) | 2026-10-18, `docs/PICTURES_PROGRESS.md` | None |
 

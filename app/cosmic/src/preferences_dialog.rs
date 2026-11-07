@@ -87,6 +87,8 @@ pub enum PreferencesAction {
     /// Typed recent files; a number in [`RECENT_FILES`] applies at once.
     RecentFiles(String),
     KeepBackup(bool),
+    /// Check for updates when the program starts (P6.2).
+    CheckUpdates(bool),
     /// The style sheet File › New… selects when none was used yet.
     DefaultSheet(String),
     /// Folders › Add…: the desktop's folder chooser.
@@ -108,6 +110,7 @@ pub enum PreferencesAction {
 /// What the pages show, read from the preferences.
 pub struct Shown<'a> {
     pub keep_backup: bool,
+    pub check_updates: bool,
     pub default_sheet: &'a str,
     /// The remembered style-sheet folders, which Remove can take.
     pub style_folders: &'a [PathBuf],
@@ -213,6 +216,11 @@ fn general<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a
             "Keep the original as NAME.SAM.bak when saving over an Ami Pro document",
             shown.keep_backup,
             |on| send(PreferencesAction::KeepBackup(on)),
+        ),
+        toggle_row(
+            "Check for updates when the program starts (once a day at most)",
+            shown.check_updates,
+            |on| send(PreferencesAction::CheckUpdates(on)),
         ),
     ]
 }

@@ -327,6 +327,8 @@ pub enum CommandId {
     /// Edit › Links…: the read-only list of the document's links and OLE
     /// objects (`UI_SPEC.md` §42.1, DO.3).
     Links,
+    /// Help › Check for Updates…: the Updates panel (P6.2).
+    CheckForUpdates,
     /// Edit › Bookmarks…: the Bookmarks panel (NR4).
     Bookmarks,
     /// Tools › Footnote Options…: the Footnotes panel (NR10).
@@ -1491,6 +1493,13 @@ pub const COMMANDS: &[CommandMetadata] = &[
         EnableRule::HasDocument,
     ),
     page_surface_command(
+        CommandId::CheckForUpdates,
+        "Check for Updates…",
+        MenuRoot::Help,
+        None,
+        EnableRule::Always,
+    ),
+    page_surface_command(
         CommandId::Bookmarks,
         "Bookmarks…",
         MenuRoot::Edit,
@@ -2648,6 +2657,7 @@ const HELP_MENU: &[MenuSlot] = &[
     Item(C::KeyboardShortcuts),
     Item(C::Compatibility),
     Divider,
+    Item(C::CheckForUpdates),
     Item(C::About),
 ];
 
@@ -2949,7 +2959,13 @@ mod tests {
         );
         assert_eq!(
             command_order(MenuRoot::Help),
-            [C::Help, C::KeyboardShortcuts, C::Compatibility, C::About]
+            [
+                C::Help,
+                C::KeyboardShortcuts,
+                C::Compatibility,
+                C::CheckForUpdates,
+                C::About
+            ]
         );
     }
 

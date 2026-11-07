@@ -1,7 +1,7 @@
 #!/bin/sh
 # Builds dist/amipro-linux_<version>_amd64.deb from the existing release binary
 # (it does not build; run `cargo build --release -j1` in app/cosmic first).
-# Version = <Cargo.toml version>+git<short rev>[.dirty]. Needs dpkg-deb; uses
+# Version = $AMIPRO_VERSION, else <Cargo.toml version>+git<short rev>[.dirty]. Needs dpkg-deb; uses
 # dpkg-shlibdeps for Depends (falls back to ldd + dpkg -S).
 set -eu
 repo=$(cd "$(dirname "$0")/.." && pwd)
@@ -14,6 +14,9 @@ newer=$(git ls-files app crates Cargo.toml Cargo.lock | grep -v -E '(_tests?\.rs
 base=$(sed -n 's/^version *= *"\([0-9.]*\)".*/\1/p' app/cosmic/Cargo.toml | head -1)
 dirty=""; git diff --quiet HEAD -- || dirty=".dirty"
 version="$base+git$(git rev-parse --short HEAD)$dirty"
+# A release names its own version (tools/release.sh): the updater expects
+# amipro-linux_<tag without v>_amd64.deb.
+version=${AMIPRO_VERSION:-$version}
 work=$(mktemp -d "${TMPDIR:-/tmp}/amipro-deb.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 root=$work/pkg
@@ -28,7 +31,7 @@ install -m 644 docs/INSTALL.md "$root/usr/share/doc/amipro-linux/INSTALL.md"
 cat > "$root/usr/share/doc/amipro-linux/copyright" <<C
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: AmiPro-Linux
-Source: https://github.com/nchiker/AmiPro-Linux (private)
+Source: https://github.com/nchiker/AmiPro-Linux
 
 Files: *
 Copyright: the AmiPro-Linux authors

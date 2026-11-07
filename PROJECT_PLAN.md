@@ -371,6 +371,7 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 - [ ] Performance, accessibility, crash recovery, large-document tests, fuzzing and compatibility matrix.
 - [ ] Produce COSMIC package and installation instructions; validate on user's machine.
   - P6.1 (2026-11-07): `tools/package-deb.sh` builds `dist/amipro-linux_<version>_amd64.deb`; `docs/INSTALL.md`. Package checked off-host (contents, ldd, lintian); the real install on the user's machine is pending.
+  - P6.2 (2026-11-07): Help › Check for Updates… (`UI_SPEC.md` §43; `app/cosmic/src/updates*.rs`): GitHub Releases of the public repository, the `.deb` verified against `SHA256SUMS`, installed with `pkexec apt-get install -y` after a confirmation; optional once-a-day check at start (Preferences, off by default). `tools/release.sh` and `docs/RELEASING.md` prepare a release (nothing publishes by itself). Automated checks pass; physical check and the first real release pending.
 - [ ] Publish accurate coverage and known limitations; defer macros until separately scheduled.
   **Exit:** Stable release with transparent parity status.
 

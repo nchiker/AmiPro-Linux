@@ -246,6 +246,7 @@ They are recorded in the comparison rather than presented as inert commands.
 | Keyboard Shortcuts | — | Hidden | Generated from the authoritative command registry | No | UI-1/P2 |
 | Compatibility and Fidelity | — | Hidden | Report UI exists; explains SAM/STY protection and unsupported content | No | P2 |
 | About AmiPro-Linux | — | Hidden | Always; native COSMIC About dialog | UI-1 I | UI-1 |
+| Check for Updates… (Help) | — | Hidden | Always; opens the Updates panel in the rail and checks GitHub Releases of the public repository; the panel shows the installed version, the state, the release notes' first 20 lines, Check again, Download and Install (download, SHA-256 check, then a confirmation showing `pkexec apt-get install -y <file>`), and Restart; without `pkexec` or `apt-get` it shows the command instead; Esc closes | Yes, page surface (2026-11-07, P6.2) | §43 |
 
 The original QuickStart Tutorial is confirmed only as original behavior; it is
 not shown in the modern menu until an independently authored tutorial exists.

@@ -27,6 +27,20 @@ launcher ("AmiPro-Linux") or run `amipro-linux [file.sam]`. It registers
 `.sam` and `.sty` as Ami Pro types but does not take over as default handler;
 set that in Files (Open With) if you want it.
 
+## Updates
+
+Help › Check for Updates… looks at the project's GitHub Releases
+(`https://github.com/nchiker/AmiPro-Linux/releases`) when you ask. If a newer
+version exists it shows the release notes; Download and Install fetches the
+package and `SHA256SUMS`, checks the package's SHA-256 (a mismatch is refused
+and the file deleted), shows the command it will run, and on your confirmation
+runs `pkexec apt-get install -y <file>` (one password prompt), then offers to
+restart. Without `pkexec` or `apt-get` it shows the command for you to run. It
+needs `curl`. Preferences › General can check once a day at start (off by
+default; it only speaks up when a newer version exists). To update by hand
+instead, download the `.deb` from the Releases page and run
+`sudo apt install ./amipro-linux_<version>_amd64.deb`.
+
 ## Uninstall
 
 ```sh
@@ -57,7 +71,7 @@ editing, Page Setup, Fast Format, or macros, and no revision marking. Run C
 ## Reporting problems
 
 Open an issue in the project repository
-(`https://github.com/nchiker/AmiPro-Linux`, currently private) or tell the
+(`https://github.com/nchiker/AmiPro-Linux`) or tell the
 maintainer: give the package version (`dpkg -s amipro-linux | grep Version`),
 what you did, and, if possible, a small document that shows it (not one
 containing private or proprietary content).

@@ -37,6 +37,8 @@ pub(crate) fn page_app(document: Document) -> AmiProApp {
         workspace: WorkspaceState::default(),
         preferences: Preferences::default(),
         settings: None,
+        updates: crate::updates_panel::UpdatesState::default(),
+        update_backend: std::sync::Arc::new(crate::updates::OfflineBackend),
         toolbar_editor: None,
         preferences_dialog: None,
         new_document_dialog: None,

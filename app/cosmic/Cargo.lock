@@ -185,6 +185,8 @@ dependencies = [
  "libcosmic",
  "log",
  "resvg",
+ "serde_json",
+ "sha2 0.10.9",
  "spellbook",
  "tiny-skia 0.11.4",
 ]

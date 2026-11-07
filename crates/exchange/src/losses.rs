@@ -56,6 +56,9 @@ impl Format {
 pub enum Feature {
     /// Protected text (Edit › Mark Text): written as ordinary text.
     ProtectedText,
+    /// A style's 1st line bold: the first line's break depends on the layout,
+    /// so no format holds it; the text is written in the style's own weight.
+    FirstLineBold,
     /// Overstruck characters (Text › Special Effects).
     Overstrike,
     /// No hyphenation over part of a paragraph (it is kept per paragraph).
@@ -136,6 +139,7 @@ impl ExportLoss {
     pub fn message(&self) -> String {
         let what = match self.feature {
             Feature::ProtectedText => "protected text, written as ordinary text",
+            Feature::FirstLineBold => "1st line bold styles, written without the bold first line",
             Feature::Overstrike => "overstruck characters, written without the overstrike",
             Feature::PartlyUnhyphenated => "no hyphenation over part of a paragraph",
             Feature::Notes => "notes",

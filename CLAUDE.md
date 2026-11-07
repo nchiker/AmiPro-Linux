@@ -64,7 +64,7 @@ cargo clippy --offline --manifest-path app/cosmic/Cargo.toml --all-features --al
 cargo run --offline --manifest-path app/cosmic/Cargo.toml                     # the app
 ```
 
-- Last counts (2026-11-07): core 791 (+29 ignored); COSMIC 712 default, 128 text editor, 719 all features (84, 8, 84 ignored). Run the test steps with `AMIPRO_STYLES` unset (the style-sheet tests count sheets); set it for corpus and layout runs only.
+- Last counts (2026-11-07): core 802 (+30 ignored); COSMIC 714 default, 128 text editor, 721 all features (85, 9, 85 ignored). Run the test steps with `AMIPRO_STYLES` unset (the style-sheet tests count sheets); set it for corpus and layout runs only.
 - `tools/verify.sh [--quick] [--release] [--corpus]`: fmt, Clippy, tests (logs in `target/verify/`). `tools/corpus.sh`: corpus audit. `tools/bench-ab.sh BASE_REV [ROUNDS]`: release A/B.
 - The ignored twin, benchmark, census, and comparison commands are in `docs/TEST_COMMANDS.md`.
 - Benchmark caution: the host runs other workloads (governor `powersave`); compare with interleaved A/B runs, not old numbers.
@@ -133,4 +133,4 @@ Page- and frame-based, not a Word clone.
 - The page surface has no accessibility nodes for page text, and visible IME preedit has not been checked physically.
 - UI-1 checklist cases and the UI-2 tab tooltip and accessibility node remain open; Ctrl+Tab is intercepted before the app (Next Document is Ctrl+PageDown).
 - Layout open (VM FG3, FG5): a word wider than a gap beside a frame goes below it (Ami Pro breaks it there); a Wrap around frame beside a column's first lines adds the space above in Ami Pro even with When not at break.
-- Not implemented: Page Setup, Fast Format, the status bar's Face and Point Size buttons, inserted rulers, First line bold. Open from the merge run: Ami Pro's date parser (MC4), dBASE memo fields.
+- Not implemented: Page Setup, Fast Format, the status bar's Face and Point Size buttons, inserted rulers. Open from the merge run: Ami Pro's date parser (MC4), dBASE memo fields.

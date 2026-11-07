@@ -559,6 +559,7 @@ impl<'a, 'f> Realiser<'a, 'f> {
             bullets,
             origin: StyleOrigin::Document,
             both_sides: false,
+            first_line_bold: false,
             kept: StyleKept {
                 face_bits: face_bits(self.font_family(character.font.as_deref())),
                 ..StyleKept::default()

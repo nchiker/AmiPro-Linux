@@ -565,6 +565,7 @@ impl ShapeCache {
             tab: None,
         };
         shaped.words = vec![word];
+        shaped.first_line.clear();
         let shaped = Arc::new(shaped);
         self.numbers.insert(
             paragraph.id,
@@ -2097,13 +2098,25 @@ impl<'a> Engine<'a> {
         let mut column_break = false;
         let mut words_key = None;
         let mut words: Vec<ShapedWord> = Vec::new();
+        // 1st line bold: the paragraph's first line is broken and set with
+        // the bold words, the rest with the regular ones.
+        let bold_shaped = shaped.first_line_bold();
+        let mut plain: Vec<ShapedWord> = Vec::new();
+        let mut bold: Vec<ShapedWord> = Vec::new();
         loop {
             let column = self.column_on(cursor.page, cursor.column);
             let page_number = self.pages[cursor.page].number;
             // Objects take sizes that depend on the column and page.
             if words_key != Some((cursor.page, cursor.column)) {
                 words = self.words_for(paragraph, &shaped, &style, column, page_number);
+                if let Some(bold_shaped) = &bold_shaped {
+                    plain.clone_from(&words);
+                    bold = self.words_for(paragraph, bold_shaped, &style, column, page_number);
+                }
                 words_key = Some((cursor.page, cursor.column));
+            }
+            if bold_shaped.is_some() && start == 0 {
+                words.clone_from(&bold);
             }
             if words.is_empty() && !first_line {
                 break;
@@ -2184,6 +2197,10 @@ impl<'a> Engine<'a> {
                 zone,
                 breaks_after,
             );
+            if bold_shaped.is_some() && start == 0 {
+                // The words after the first line are regular.
+                words[line.end..].clone_from_slice(&plain[line.end..]);
+            }
             let (ascent, descent) = line_metrics(&words[start..line.end], &shaped);
             let (ascent, descent) = ruled_line(
                 &style.rules,
@@ -3568,10 +3585,14 @@ impl<'a> Engine<'a> {
         for (index, paragraph) in paragraphs.iter().enumerate() {
             let (shaped, style, _) = self.shaped_in_cell(flow, paragraph, alone);
             let mut words = shaped.words.clone();
+            let bold = shaped.first_line_bold().map(|bold| bold.words);
             let stops = tab_stops(&style, style.indents, &[], width);
             let bullet = self.bullet(flow, index, &style);
             let mut start = 0;
             loop {
+                if let Some(bold) = bold.as_ref().filter(|_| start == 0) {
+                    words.clone_from(bold);
+                }
                 let area = Bounds {
                     x: 0.0,
                     y: 0.0,
@@ -3597,6 +3618,9 @@ impl<'a> Engine<'a> {
                 let line = next_line(&words, start, line_width, shaped.hyphen_width, zone, |_| {
                     false
                 });
+                if bold.is_some() && start == 0 {
+                    words[line.end..].clone_from_slice(&shaped.words[line.end..]);
+                }
                 let (ascent, descent) = line_metrics(&words[start..line.end], &shaped);
                 let (ascent, descent) = ruled_line(
                     &style.rules,
@@ -3650,10 +3674,17 @@ impl<'a> Engine<'a> {
             let mut words =
                 self.words_for(paragraph, &shaped, &style, columns[column], page_number);
             let has_tabs = words.iter().any(|word| word.tab.is_some());
+            let bold_shaped = shaped.first_line_bold();
+            let plain = bold_shaped.is_some().then(|| words.clone());
+            let bold = bold_shaped
+                .map(|bold| self.words_for(paragraph, &bold, &style, columns[column], page_number));
             let bullet = self.bullet(flow, index, &style);
             let mut start = 0;
             let mut above_done = false;
             loop {
+                if let Some(bold) = bold.as_ref().filter(|_| start == 0) {
+                    words.clone_from(bold);
+                }
                 let bounds = indented(columns[column], style.indents, start == 0);
                 let estimate = shaped.ascent + shaped.descent;
                 let (x, width) = if wrap {
@@ -3689,6 +3720,9 @@ impl<'a> Engine<'a> {
                     zone,
                     |_| false,
                 );
+                if let Some(plain) = plain.as_ref().filter(|_| start == 0) {
+                    words[line.end..].clone_from_slice(&plain[line.end..]);
+                }
                 let (ascent, descent) = line_metrics(&words[start..line.end], &shaped);
                 let (ascent, descent) = ruled_line(
                     &style.rules,

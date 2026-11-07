@@ -72,9 +72,13 @@ fn indented_paragraph_lines(
     let bullet = bullet_box(&effective.bullets, number, &effective, shaper)
         .map_or(0.0, |bullet| (bullet.width - indents.first as f32).max(0.0));
     let mut words = shaped.words.clone();
+    let bold = shaped.first_line_bold().map(|bold| bold.words);
     let (mut lines, mut height) = (0, 0.0);
     let mut start = 0;
     while start < words.len() {
+        if let Some(bold) = bold.as_ref().filter(|_| start == 0) {
+            words.clone_from(bold);
+        }
         let width = if lines == 0 {
             (first - bullet).max(1.0)
         } else {
@@ -84,6 +88,9 @@ fn indented_paragraph_lines(
         size_tabs(&mut words, start, origin, width, &stops, &paragraph.text);
         let zone = f32::from(zone) * shaped.average_width;
         let end = next_line(&words, start, width, shaped.hyphen_width, zone, |_| false).end;
+        if bold.is_some() && start == 0 {
+            words[end..].clone_from_slice(&shaped.words[end..]);
+        }
         // As the engine: the line's characters, or the empty line's font
         // when nothing on it is measured (decompile `10d0:359b`).
         let measured = words[start..end]
@@ -1047,4 +1054,64 @@ fn detail(document: &Document, oracle: &LayoutOracle, layout: &DocumentLayout) {
             );
         }
     }
+}
+
+/// The text of each line of main-flow paragraph `index`, trailing blanks
+/// left out.
+fn line_texts(
+    document: &Document,
+    layout: &amipro_layout::DocumentLayout,
+    index: usize,
+) -> Vec<String> {
+    let paragraph = &document.paragraphs()[index];
+    layout
+        .pages
+        .iter()
+        .flat_map(|page| &page.lines)
+        .filter(|line| {
+            line.container == amipro_layout::Container::Main && line.paragraph_index == index
+        })
+        .map(|line| paragraph.text[line.bytes.clone()].trim_end().to_owned())
+        .collect()
+}
+
+/// VM fixtures FLB0 and FLB1 (1st line bold off and on, Ami Pro 3.1,
+/// `screens/flb_after.png`): the first line of the long paragraphs ends
+/// where the bold text fits, "quickly," and "can be" (FLB0: "quickly, and"),
+/// and the later lines break as regular text.
+#[test]
+#[ignore = "needs the VM folder (AMIPRO_VM_LAB)"]
+fn first_line_bold_breaks_where_ami_pro_breaks_it() {
+    let Some(lab) = std::env::var_os("AMIPRO_VM_LAB") else {
+        eprintln!("AMIPRO_VM_LAB is not set; skipping");
+        return;
+    };
+    let lines = |name: &str, index: usize| {
+        let path = Path::new(&lab).join("OUT").join(name);
+        let imported =
+            import_sam_path_with_style_directories(&path, &[]).expect("the fixture reads");
+        let mut pages = SessionPages::default();
+        pages.update(&imported.document);
+        line_texts(&imported.document, pages.layout(), index)
+    };
+    let off = lines("FLB0.SAM", 0);
+    assert!(off[0].ends_with("jump quickly, and"), "FLB0: {off:?}");
+    let on = lines("FLB1.SAM", 0);
+    assert!(on[0].ends_with("jump quickly,"), "{on:?}");
+    assert!(on[1].starts_with("and every good boy"), "{on:?}");
+    assert!(on[1].ends_with("runs over"), "{on:?}");
+    assert_eq!(on[2], "several lines of text.", "{on:?}");
+    assert_eq!(on.len(), 3, "{on:?}");
+    let short = lines("FLB1.SAM", 1);
+    assert_eq!(short, ["Short second paragraph."]);
+    let third = lines("FLB1.SAM", 2);
+    assert!(
+        third[0].ends_with("second and third lines can be"),
+        "{third:?}"
+    );
+    assert!(
+        third[1].starts_with("compared with the first line"),
+        "{third:?}"
+    );
+    assert_eq!(third.len(), 2, "{third:?}");
 }

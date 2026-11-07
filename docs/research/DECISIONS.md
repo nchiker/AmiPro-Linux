@@ -1138,7 +1138,9 @@ decompile; VM fixtures O1, PT1):
 
 - **Model:** `CharacterFormat` and `CharacterAttributes` gain `protected`,
   `no_hyphenation`, and `overstrike` (a character; no style has one). A
-  style's `[fnt]` 4096 is protected text. `Document::face_kinds` keeps each
+  style's `[fnt]` 4096 is protected text (**corrected 2026-11-07, see the
+  entry "1st line bold"**: it is Modify Style's 1st line bold; a style's
+  `attributes.protected` is never set from a file). `Document::face_kinds` keeps each
   face's Windows pitch and family byte, by name.
 - **Native v3:** `protected`, `nohyphenation`, and `overstrike` attribute
   records; `facekind` document records after `lineheight`.
@@ -3486,3 +3488,33 @@ their recommended options.
   non-destructive image adjustments; unreadable objects kept byte for byte;
   Paste Special lists formats; the extras set; one straight run.
 
+
+## 2026-11-07 — 1st line bold (Modify Style › Font)
+
+Research: `docs/research/FIRST_LINE_BOLD_NOTES.md` (decompile; VM fixtures
+FLB0, FLB1, FLB2). Decisions:
+
+- **Correction:** a style's `[fnt]` value 4, bit 4096 is Ami Pro's "1st line
+  bold", not protected text (the 2026-10-12 entry and `SAM_FORMAT_NOTES.md`
+  said otherwise; no corpus style has the bit, so the mistake never showed).
+  Protected text stays a run attribute (`<+*>`).
+- **Model:** `ParagraphStyle::first_line_bold`; native v3 record
+  `sfirstbold` (no fields) written only when true, after `skept`.
+  `StyleSpec`/reader take `flags & 4096`; the writer writes it; a style's
+  `attributes.protected` is not read from or written to a style.
+- **Layout:** `ShapedParagraph::first_line` holds the same words shaped bold
+  (`shape_with_first_line_bold`, both shapers); the engine breaks and sets
+  the paragraph's first line (main flow, frames and cells, headers, footnotes)
+  with them and the rest with the regular words. The first line is the first
+  laid-out line: a forced break ends it, a continuation after a page start
+  is regular. The page surface (screen, print, PDF share it) draws that
+  line bold whatever the runs say.
+- **Exchange:** no format carries it (the first line's break depends on the
+  layout): `Feature::FirstLineBold`, reported as not carried, text written in
+  the style's own weight.
+- **UI:** a "1st line bold" check box after Caps on the Style Properties
+  Font panel, exclusive with Bold (as Ami Pro's dialog); one undo step, live.
+  Deviations: the app has no all-attribute Normal radio (Caps' Normal is the
+  caps setting only), and Bold is never disabled for a face without a bold
+  (cosmic-text synthesises one), so neither is this box; the document is the
+  sample.

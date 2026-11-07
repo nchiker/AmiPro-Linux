@@ -592,8 +592,12 @@ impl Engine<'_> {
             } else {
                 None
             };
+            let bold = shaped.first_line_bold().map(|bold| bold.words);
             let mut start = 0;
             loop {
+                if let Some(bold) = bold.as_ref().filter(|_| start == 0) {
+                    words.clone_from(bold);
+                }
                 let slot = indented(area, style.indents, start == 0);
                 let (line_bullet, shift) =
                     first_line_bullet(bullet.as_ref(), start, slot.x, style.indents);
@@ -612,6 +616,9 @@ impl Engine<'_> {
                     false
                 });
                 let first = start == 0;
+                if bold.is_some() && first {
+                    words[line.end..].clone_from_slice(&shaped.words[line.end..]);
+                }
                 let last = line.end >= words.len();
                 let (ascent, descent) = line_metrics(&words[start..line.end], &shaped);
                 let (ascent, descent) = ruled_line(

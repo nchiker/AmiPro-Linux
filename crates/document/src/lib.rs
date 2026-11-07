@@ -136,6 +136,11 @@ pub struct ParagraphStyle {
     /// Modify Style › Alignment's Both sides (`[algn]` 16): the right
     /// indent follows All (`indents.right` holds it).
     pub both_sides: bool,
+    /// Modify Style › Font › "1st line bold" (`[fnt]` 4096 in a style): the
+    /// first laid-out line of each paragraph is set in bold and broken with
+    /// the bold widths; later lines are regular (decompile `10d0:0d82`,
+    /// `FIRST_LINE_BOLD_NOTES.md`).
+    pub first_line_bold: bool,
     /// The values of Ami Pro's style record that the model does not use,
     /// as read, so that a written style sheet says what the original said.
     pub kept: StyleKept,
@@ -444,7 +449,8 @@ pub struct CharacterAttributes {
     pub caps: Option<Caps>,
     /// A Windows `COLORREF`, `0x00BBGGRR`.
     pub colour: Colour,
-    /// Protected text (Edit › Mark Text; `[fnt]` 4096 in a style): the
+    /// Protected text (Edit › Mark Text, a run attribute `<+*>`; a style's `[fnt]` 4096 is
+    /// `ParagraphStyle::first_line_bold`, not this): the
     /// caret steps over it and a click in it lands at its end, but Delete
     /// and Backspace remove it (VM fixture PT1).
     pub protected: bool,
@@ -1742,6 +1748,7 @@ pub fn default_styles() -> BTreeMap<StyleId, ParagraphStyle> {
         bullets: Bullets::default(),
         origin: StyleOrigin::Document,
         both_sides: false,
+        first_line_bold: false,
         kept: StyleKept {
             face_bits: ROMAN_FACE,
             ..StyleKept::default()
@@ -1768,6 +1775,7 @@ pub fn default_styles() -> BTreeMap<StyleId, ParagraphStyle> {
         bullets: Bullets::default(),
         origin: StyleOrigin::Document,
         both_sides: false,
+        first_line_bold: false,
         kept: StyleKept {
             face_bits: SWISS_FACE,
             ..StyleKept::default()
@@ -1794,6 +1802,7 @@ pub fn default_styles() -> BTreeMap<StyleId, ParagraphStyle> {
         bullets: Bullets::default(),
         origin: StyleOrigin::Document,
         both_sides: false,
+        first_line_bold: false,
         kept: StyleKept {
             face_bits: SWISS_FACE,
             ..StyleKept::default()
@@ -3206,6 +3215,7 @@ impl Document {
                         bullets: Bullets::default(),
                         origin: StyleOrigin::Document,
                         both_sides: false,
+                        first_line_bold: false,
                         kept: StyleKept::default(),
                     };
                     if styles.insert(id, style).is_some() {
@@ -3632,6 +3642,27 @@ mod tests {
              rformat\toverstrike\t\\t\n"
         ));
         assert_eq!(Document::decode_native(&encoded).unwrap(), document);
+    }
+
+    #[test]
+    fn first_line_bold_is_a_native_record_only_when_set() {
+        let mut document = Document::empty("Bold", default_styles());
+        document.push_paragraph("Hello", StyleId(1));
+        let plain = document.encode_native().unwrap();
+        assert!(!plain.contains("sfirstbold"));
+        document
+            .styles_mut()
+            .get_mut(&StyleId(1))
+            .unwrap()
+            .first_line_bold = true;
+        let encoded = document.encode_native().unwrap();
+        assert_eq!(encoded.matches("\nsfirstbold\n").count(), 1);
+        let decoded = Document::decode_native(&encoded).unwrap();
+        assert!(decoded.styles()[&StyleId(1)].first_line_bold);
+        assert!(!decoded.styles()[&StyleId(2)].first_line_bold);
+        assert_eq!(decoded, document);
+        let twice = encoded.replace("\nsfirstbold\n", "\nsfirstbold\nsfirstbold\n");
+        assert!(Document::decode_native(&twice).is_err());
     }
 
     #[test]

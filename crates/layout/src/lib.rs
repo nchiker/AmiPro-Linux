@@ -30,5 +30,8 @@ pub use estimate::{Page, ParagraphBox, Rect, paginate};
 pub use hyphenation::hyphenation_points;
 pub use incremental::{IncrementalLayout, LayoutKind, LayoutStats};
 pub use line_numbers::{LineNumberBox, line_numbers};
-pub use shaper::{FixedShaper, ShapeRequest, ShapedParagraph, ShapedWord, Shaper, TextExtent};
+pub use shaper::{
+    FixedShaper, ShapeRequest, ShapedParagraph, ShapedWord, Shaper, TextExtent,
+    shape_with_first_line_bold,
+};
 pub use tabs::{size_tabs, tab_stops};

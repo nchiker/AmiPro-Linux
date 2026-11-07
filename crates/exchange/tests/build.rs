@@ -221,3 +221,37 @@ fn plain_text_lists_what_it_leaves_out() {
     );
     assert!(losses::losses(&built.features, Format::Docx).is_empty());
 }
+
+#[test]
+fn a_first_line_bold_style_is_reported_as_not_carried_by_every_format() {
+    let mut document = Document::with_paragraphs([("Text", StyleId(1))]);
+    document
+        .styles_mut()
+        .get_mut(&StyleId(1))
+        .unwrap()
+        .first_line_bold = true;
+    let built = build(&document, &BuildOptions::default(), &mut NoPictures);
+    for format in [
+        Format::Text,
+        Format::Markdown,
+        Format::Docx,
+        Format::Odt,
+        Format::Rtf,
+    ] {
+        let lost = losses::losses(&built.features, format);
+        assert_eq!(lost.len(), 1, "{format:?}");
+        assert!(
+            lost[0].message().starts_with("1st line bold"),
+            "{}",
+            lost[0].message()
+        );
+    }
+    // Protected text is a run attribute: a style never reports it.
+    document
+        .styles_mut()
+        .get_mut(&StyleId(1))
+        .unwrap()
+        .first_line_bold = false;
+    let built = build(&document, &BuildOptions::default(), &mut NoPictures);
+    assert!(losses::losses(&built.features, Format::Text).is_empty());
+}

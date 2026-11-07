@@ -1169,6 +1169,27 @@ pub(crate) fn drawn_page(
     drawn
 }
 
+/// The text each line of page `page` is drawn in, with its weight, for tests.
+#[cfg(test)]
+pub(crate) fn drawn_weights(
+    document: &Document,
+    layout: &DocumentLayout,
+    page: usize,
+) -> Vec<(String, u16)> {
+    let mut drawn = Vec::new();
+    draw_pages(
+        document,
+        layout,
+        None,
+        None,
+        &[page],
+        |_, renderer: &mut PdfRenderer| {
+            drawn = renderer.run_weights();
+        },
+    );
+    drawn
+}
+
 fn draw_pages(
     document: &Document,
     layout: &DocumentLayout,

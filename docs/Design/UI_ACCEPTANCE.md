@@ -1492,3 +1492,14 @@ Physical checklist, ranked (about fifteen minutes):
 Overall interface acceptance remains **FAIL / NOT ACCEPTED** until A–F required
 for the implemented slice pass. Pending G regressions must remain green, but
 the primary typing-responsiveness defect is closed.
+
+## 1st line bold (2026-11-07): physical item
+
+Automated (model, STY/SAM twins of VM FLB0-FLB2, layout, scenario, print
+and PDF draw): green. PENDING physical check, in the app with FLB1.SAM
+(`../AmiPro-Reference/vm-lab/OUT`, with `AMIPRO_STYLES` unset): the first
+line of each Body Text paragraph is bold and breaks where `screens/flb_after.png`
+breaks it ("quickly," ends the first paragraph's first line, "and" wraps),
+the later lines are regular, the one-line paragraph is wholly bold; Format ›
+Styles › Modify Style shows the 1st line bold box after Caps, checking it
+unchecks Bold and the reverse, each change is live and one Undo step.

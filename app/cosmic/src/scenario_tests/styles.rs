@@ -769,3 +769,153 @@ fn a_document_using_another_style_sheet_saves_as_sam_with_no_loss_list() {
     assert!(has_style(&s, "Sheeted"));
     s.save_sam("MINI.SAM");
 }
+
+/// Paragraph 0's lines of the page layout: the byte range and the width of
+/// each, for the first page.
+fn first_paragraph_lines(
+    layout: &amipro_layout::DocumentLayout,
+) -> Vec<(std::ops::Range<usize>, f32)> {
+    layout
+        .pages
+        .iter()
+        .flat_map(|page| &page.lines)
+        .filter(|line| {
+            line.container == amipro_layout::Container::Main && line.paragraph_index == 0
+        })
+        .map(|line| (line.bytes.clone(), line.width))
+        .collect()
+}
+
+/// The weight of the run drawn for the text holding `word` on page 1, as
+/// the print and PDF paths draw it.
+fn drawn_weight(s: &Scenario, word: &str) -> u16 {
+    let layout = s.app().pages.layout().clone();
+    let runs = crate::print::drawn_weights(s.document(), &layout, 0);
+    runs.iter()
+        .find(|(text, _)| text.contains(word))
+        .unwrap_or_else(|| s.fail("paint", &format!("no run draws {word:?}: {runs:?}")))
+        .1
+}
+
+#[test]
+fn a_1st_line_bold_style_sets_each_paragraphs_first_line_bold_through_edits_and_a_saved_file() {
+    let mut s = Scenario::new_document("styles-first-line-bold");
+    s.clean_folder();
+    let words = "Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi \
+                 and then some more words follow on the later lines of this paragraph until the very last Omega.";
+    s.type_text(words);
+    s.enter();
+    s.type_text("Short second paragraph.");
+    let main = s.main_flow();
+    s.caret(main, 0, 0, 1, false);
+
+    // A style of its own, applied to the first paragraph.
+    create_style(&mut s, "Lead");
+    let lead = style_id(&s, "Lead");
+    s.edit("apply Lead to paragraph 0", move |rt| {
+        rt.send(Message::ApplyStyle(lead));
+    });
+    let regular_lines = first_paragraph_lines(s.app().pages.layout());
+    assert!(regular_lines.len() >= 3, "{regular_lines:?}");
+    s.command_act(CommandId::ModifyCurrentStyle);
+    assert_eq!(properties_style(&s), lead);
+
+    // Bold first, then 1st line bold excludes it and the reverse.
+    property(
+        &mut s,
+        "Bold on",
+        StyleAction::Attribute(FontAttribute::Bold, true),
+    );
+    property(
+        &mut s,
+        "1st line bold on",
+        StyleAction::Attribute(FontAttribute::FirstLineBold, true),
+    );
+    let style = s.document().styles()[&lead].clone();
+    assert!(style.first_line_bold && !style.bold, "exclusive with Bold");
+    assert_eq!(
+        s.app().style_properties.as_ref().unwrap().draft,
+        style,
+        "the panel shows it"
+    );
+
+    // The first line is set bold and broken with the bold widths: it is the
+    // first line of the same style set bold throughout; the later lines are
+    // regular.
+    let lines = first_paragraph_lines(s.app().pages.layout());
+    let mut all_bold = s.document().clone();
+    {
+        let style = all_bold.styles_mut().get_mut(&lead).unwrap();
+        style.first_line_bold = false;
+        style.bold = true;
+    }
+    let mut pages = crate::page_layout::SessionPages::default();
+    pages.update(&all_bold);
+    let bold_lines = first_paragraph_lines(pages.layout());
+    assert_eq!(
+        lines[0], bold_lines[0],
+        "the first line is broken as bold text"
+    );
+    assert!(
+        lines[0].1 > regular_lines[0].1 * 0.9 && lines[0].0.end <= regular_lines[0].0.end,
+        "bold is no narrower: {lines:?} against {regular_lines:?}"
+    );
+    assert!(lines.len() >= 3);
+    assert!(
+        drawn_weight(&s, "Alpha") >= 700,
+        "the first line is drawn bold"
+    );
+    assert!(drawn_weight(&s, "Omega") < 600, "the last line is not");
+    assert!(
+        drawn_weight(&s, "Short") < 600,
+        "another style's paragraph is not"
+    );
+
+    // Edit the text so the wrapping changes: the first line is still bold
+    // and broken as bold text, the new text's lines are regular.
+    s.caret(main, 0, 0, 1, false);
+    s.type_text("Prelude with a few additional words in front of it, ");
+    let lines = first_paragraph_lines(s.app().pages.layout());
+    let mut all_bold = s.document().clone();
+    {
+        let style = all_bold.styles_mut().get_mut(&lead).unwrap();
+        style.first_line_bold = false;
+        style.bold = true;
+    }
+    let mut pages = crate::page_layout::SessionPages::default();
+    pages.update(&all_bold);
+    assert_eq!(
+        lines[0],
+        first_paragraph_lines(pages.layout())[0],
+        "after typing"
+    );
+    assert!(drawn_weight(&s, "Prelude") >= 700);
+    assert!(drawn_weight(&s, "Omega") < 600);
+
+    // Save as SAM (no loss) and reopen: the style and the look are back.
+    s.act("close Style Properties", |rt| {
+        rt.send(Message::StyleProperties(StyleAction::Close));
+    });
+    let path = s.save_sam("FLBOLD.SAM");
+    let mut s = s.reopen(&path);
+    let lead = style_id(&s, "Lead");
+    assert!(s.document().styles()[&lead].first_line_bold);
+    assert!(!s.document().styles()[&lead].bold);
+    assert!(!s.document().styles()[&lead].attributes.protected);
+    assert!(drawn_weight(&s, "Prelude") >= 700);
+    assert!(drawn_weight(&s, "Omega") < 600);
+
+    // Unchecking it (one undo step) sets the paragraph regular again.
+    s.command_act(CommandId::ModifyCurrentStyle);
+    property(
+        &mut s,
+        "1st line bold off",
+        StyleAction::Attribute(FontAttribute::FirstLineBold, false),
+    );
+    assert!(drawn_weight(&s, "Prelude") < 600);
+    s.act("Undo", |rt| {
+        rt.send(Message::Command(CommandId::Undo));
+    });
+    assert!(s.document().styles()[&lead].first_line_bold);
+    assert!(drawn_weight(&s, "Prelude") >= 700);
+}

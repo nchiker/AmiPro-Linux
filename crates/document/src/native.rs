@@ -277,6 +277,9 @@ pub(crate) fn encode(document: &Document) -> String {
             fields.push(kept.alignment_bits.to_string());
             out.record_owned(&fields);
         }
+        if style.first_line_bold {
+            out.record(&["sfirstbold"]);
+        }
     }
     for (key, height) in document.line_heights.iter() {
         out.record(&[
@@ -1505,7 +1508,7 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
             | "linenumbering" | "language" | "grammarset" | "toc" | "master" | "sequence"
             | "recfile" | "mergecondition" | "withconditions" => Section::StyleSheet,
             "style" | "sformat" | "sline" | "snext" | "stabs" | "shanging" | "shyphenation"
-            | "sbullets" | "sorigin" | "skept" => Section::Styles,
+            | "sbullets" | "sorigin" | "skept" | "sfirstbold" => Section::Styles,
             "lineheight" => Section::LineHeights,
             "facekind" => Section::FaceKinds,
             "doclegacy" => Section::DocLegacy,
@@ -1616,6 +1619,7 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
                     bullets: Bullets::default(),
                     origin: StyleOrigin::Document,
                     both_sides: false,
+                    first_line_bold: false,
                     kept: StyleKept::default(),
                 };
                 if styles.insert(id, style).is_some() {
@@ -1716,6 +1720,17 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
                     next_name: decoder.flag(15)?.then(|| decoder.text(16)).transpose()?,
                     alignment_bits: decoder.number(17)?,
                 };
+            }
+            "sfirstbold" => {
+                decoder.expect_len(1)?;
+                let style = last_style
+                    .and_then(|id| styles.get_mut(&id))
+                    .ok_or_else(|| decoder.error("sfirstbold without a style"))?;
+                if style_stage >= 9 {
+                    return Err(decoder.error("a style has one sfirstbold record, last"));
+                }
+                style_stage = 9;
+                style.first_line_bold = true;
             }
             "docinfo" => {
                 decoder.expect_len(14)?;

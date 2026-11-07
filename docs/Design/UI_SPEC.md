@@ -767,7 +767,7 @@ style; OK, Cancel, and Save As (a new style from these settings). Save
 
 | Panel             | Fields (all exist in the model)                                                                                                        |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Font              | face, size (list and points), colour swatches (the Font dialog's), Bold, Italic, Underline, Word underline, Double underline, caps     |
+| Font              | face, size (list and points), colour swatches (the Font dialog's), Bold, Italic, Underline, Word underline, Double underline, caps, 1st line bold (exclusive with Bold; the first line of each paragraph is set bold and broken with bold widths) |
 | Alignment         | Left, Center, Right, Justify; indents All, First, Rest, From right, Both sides; Hanging indent; the style's own tabs (a ruler)         |
 | Spacing           | line spacing Single, 1½, Double, Custom; space above and below; Add in Always or When not at break; Text Tightness                     |
 | Breaks            | page break before and after, allow breaks within, keep with previous and next, column break before and after, Next style with its list |
@@ -775,8 +775,12 @@ style; OK, Cancel, and Save As (a new style from these settings). Save
 | Lines             | rule above and below, line style, spacing, length Text, Margins, or Other, colour (`modlines.png`)                                     |
 | Hyphenation       | a check box, enabled once decision D2 is made                                                                                          |
 
-Ami Pro's Table format panel and its First line bold attribute are not
-offered until the model has them. The sample uses the page surface's
+Ami Pro's Table format panel is not offered until the model has it. **1st
+line bold** (2026-11-07; Ami Pro's Modify Style › Font check box beside
+Initial caps) is a check box after the Caps list: checking it unchecks Bold
+and the reverse, one undo step, live in the document (the page is the sample).
+Unlike Ami Pro the Normal choice of Caps does not clear it, and it is not
+disabled for a face without a bold (the app draws a synthesised bold). The sample uses the page surface's
 shaping, on paper white.
 
 ### Style Management and Use Another Style Sheet
@@ -851,8 +855,8 @@ shaping, on paper white.
   text before the paragraph as Ami Pro does: the number with what is typed
   before and after it, then Text, then the bullet (VM fixture BN4); a
   text in another order is kept unless the panel is used. Ami Pro's
-  Table format panel, First line bold, and Space for are not offered (not
-  in the model). Screenshots: `window-modify-*`.
+  Table format panel and Space for are not offered (not in the model);
+  1st line bold is on the Font panel. Screenshots: `window-modify-*`.
 - **Styles panel** (both builds): the header's **+** opens Create Style…;
   a style stored in the document shows Ami Pro's bullet (• Name), a name
   defined nowhere shows in the error colour with a tooltip ("Defined

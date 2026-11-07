@@ -596,8 +596,9 @@ impl CosmicShaper<'_> {
     }
 }
 
-impl Shaper for CosmicShaper<'_> {
-    fn shape(&mut self, request: ShapeRequest<'_>) -> ShapedParagraph {
+impl CosmicShaper<'_> {
+    /// Shapes `request` in the paragraph's own weight.
+    fn shape_plain(&mut self, request: ShapeRequest<'_>) -> ShapedParagraph {
         let text = request.text;
         let heights = request.line_heights;
         let tightness = request.style.spacing.tightness;
@@ -722,9 +723,16 @@ impl Shaper for CosmicShaper<'_> {
             average_width: average * base_size,
             ascent: end_metrics.ascent,
             descent: end_metrics.descent,
+            first_line: Vec::new(),
         };
         shaped.classify(&request);
         shaped
+    }
+}
+
+impl Shaper for CosmicShaper<'_> {
+    fn shape(&mut self, request: ShapeRequest<'_>) -> ShapedParagraph {
+        amipro_layout::shape_with_first_line_bold(request, |request| self.shape_plain(request))
     }
 
     fn measure(&mut self, text: &str, style: &ParagraphStyle) -> f32 {

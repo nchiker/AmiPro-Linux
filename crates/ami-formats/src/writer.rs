@@ -130,7 +130,7 @@ fn font_flags(style: &ParagraphStyle) -> u32 {
         (attributes.subscript, 512),
         (attributes.caps == Some(Caps::Lower), 1024),
         (attributes.caps == Some(Caps::Initial), 2048),
-        (attributes.protected, 4096),
+        (style.first_line_bold, 4096),
     ] {
         if on {
             flags |= bit;

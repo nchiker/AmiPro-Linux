@@ -357,8 +357,8 @@ impl<'a> Builder<'a> {
         {
             self.features.add(Feature::ShortRules);
         }
-        if style.attributes.protected {
-            self.features.add(Feature::ProtectedText);
+        if style.first_line_bold {
+            self.features.add(Feature::FirstLineBold);
         }
     }
 

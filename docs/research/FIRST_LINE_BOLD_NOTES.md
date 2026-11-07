@@ -1,6 +1,6 @@
 # First line bold (Modify Style › Font): research notes (2026-11-07)
 
-Research only; nothing implemented. Evidence: the decompile
+Research, then implemented 2026-11-07 (section 6). Evidence: the decompile
 (`ghidra-work/out/amipro.c`, `amiproui.c`), the dialog resources
 (`tools/ne_resources.py Binaries/amiproui.dll dialogs`), a corpus scan, and VM
 fixtures FLB0, FLB1, FLB2 (Windows XP, Ami Pro 3.1).
@@ -251,3 +251,22 @@ powered off with `acpipowerbutton`). VM left powered off.
    style.)
 3. Printing: the same font record is used for printing; a PostScript print of
    FLB1 would confirm, not expected to differ.
+
+## 6. Implemented (2026-11-07)
+
+As planned in section 5, with these details. Model `ParagraphStyle::first_line_bold`
+(native `sfirstbold`); `[fnt]` 4096 read and written as 1st line bold, never
+as a style's protected text; `Feature::FirstLineBold` (not carried by any
+export format). Layout: `shape_with_first_line_bold` shapes a bold twin of
+the words (`ShapedParagraph::first_line`); the engine breaks and sets the
+first line (`start == 0`) with them in the main flow, frames and cells,
+header/footer flows and footnotes, then continues with the regular words;
+the shape cache and incremental layout key on the style, which now includes
+the flag. The page surface draws that line bold (`first_line_bold` in
+`page_surface.rs`); print and PDF draw through the same surface. Tests:
+`crates/layout/tests/first_line_bold.rs`,
+`crates/ami-formats/tests/first_line_bold.rs` (FLB records byte for byte with
+`AMIPRO_VM_LAB`), `scenario_tests/styles.rs`, the layout comparison.
+Open: Fast Format does not carry it (it copies character formats and
+re-applies a style, which carries the flag with the style; not checked in
+Ami Pro), frames/cells/headers/PostScript remain VM questions.

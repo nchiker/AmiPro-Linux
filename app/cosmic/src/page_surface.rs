@@ -1015,6 +1015,22 @@ fn shaped_text<P: text::Paragraph<Font = Font>>(
     })
 }
 
+/// 1st line bold: a paragraph's first line (the line whose bytes start the
+/// paragraph) is drawn bold whatever its runs say, and italic and the rest
+/// combine with it; the layout broke it with the bold widths (decompile
+/// `10d0:0309`, `FIRST_LINE_BOLD_NOTES.md`).
+fn first_line_bold(
+    display: &mut [amipro_layout::DisplaySpan<'_>],
+    style: &ParagraphStyle,
+    line: &Range<usize>,
+) {
+    if style.first_line_bold && line.start == 0 && !line.is_empty() {
+        for span in display {
+            span.bold = true;
+        }
+    }
+}
+
 /// Shapes one line's runs between objects.
 fn build_line<P: text::Paragraph<Font = Font>>(
     document: &Document,
@@ -1068,7 +1084,8 @@ fn build_line<P: text::Paragraph<Font = Font>>(
     let style_font = display_font(&style.font_family, style.bold, style.italic);
     // The letters shown (caps) and the spans they are drawn in.
     let shown = display_text(&source.text, &style, &source.runs);
-    let display = display_spans(&source.text, &style, &source.runs);
+    let mut display = display_spans(&source.text, &style, &source.runs);
+    first_line_bold(&mut display, &style, &line.bytes);
     let text_runs =
         |range: Range<usize>, extra: &str| -> (Vec<Span<'static, (), Font>>, Vec<Decoration>) {
             let mut spans = Vec::new();

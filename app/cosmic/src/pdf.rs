@@ -163,6 +163,31 @@ impl PdfRenderer {
             .collect()
     }
 
+    /// The recorded text for tests: each run's text with the lightest weight
+    /// among the faces its glyphs are drawn in.
+    #[cfg(test)]
+    pub(crate) fn run_weights(&self) -> Vec<(String, u16)> {
+        let mut system = font_system().write().unwrap();
+        let mut out = Vec::new();
+        for item in self.layers.iter().flat_map(|layer| layer.text.iter()) {
+            for run in item.paragraph.buffer().layout_runs() {
+                let weight = run
+                    .glyphs
+                    .iter()
+                    .filter_map(|glyph| {
+                        system
+                            .raw()
+                            .db()
+                            .face(glyph.font_id)
+                            .map(|face| face.weight.0)
+                    })
+                    .min();
+                out.push((run.text.to_string(), weight.unwrap_or(0)));
+            }
+        }
+        out
+    }
+
     /// Writes what was recorded into `surface`, `to_page` taking the
     /// renderer's coordinates to the page's points.
     pub(crate) fn write(

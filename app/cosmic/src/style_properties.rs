@@ -84,6 +84,8 @@ pub enum FontAttribute {
     Underline,
     WordUnderline,
     DoubleUnderline,
+    /// 1st line bold: exclusive with Bold (Ami Pro, `FUN_11c8_026f`).
+    FirstLineBold,
 }
 
 /// Breaks panel check boxes: `Breaks` bits.
@@ -597,7 +599,18 @@ impl StyleProperties {
             }
             StyleAction::Colour(colour) => draft.attributes.colour = colour,
             StyleAction::Attribute(attribute, on) => match attribute {
-                FontAttribute::Bold => draft.bold = on,
+                FontAttribute::Bold => {
+                    draft.bold = on;
+                    if on {
+                        draft.first_line_bold = false;
+                    }
+                }
+                FontAttribute::FirstLineBold => {
+                    draft.first_line_bold = on;
+                    if on {
+                        draft.bold = false;
+                    }
+                }
                 FontAttribute::Italic => draft.italic = on,
                 FontAttribute::Underline => draft.attributes.underline = on,
                 FontAttribute::WordUnderline => draft.attributes.word_underline = on,
@@ -1057,6 +1070,9 @@ fn font<'a>(state: &StyleProperties, colours: Context<'a>) -> Vec<Element<'a, Me
             .width(Length::Fill)
             .into(),
         ]),
+        check(draft.first_line_bold, "1st line bold", |on| {
+            StyleAction::Attribute(FontAttribute::FirstLineBold, on)
+        }),
     ]
 }
 
@@ -1636,6 +1652,29 @@ mod tests {
         if let Outcome::Apply(style) = outcome {
             styles.insert(style.id, *style);
         }
+    }
+
+    #[test]
+    fn first_line_bold_and_bold_exclude_each_other_and_each_applies_at_once() {
+        let (mut state, mut styles) = panel_on(1);
+        let outcome = state.update(StyleAction::Attribute(FontAttribute::Bold, true), &styles);
+        apply(outcome, &mut styles);
+        assert!(state.sync(&styles, Some(StyleId(1))));
+        let outcome = state.update(
+            StyleAction::Attribute(FontAttribute::FirstLineBold, true),
+            &styles,
+        );
+        assert!(
+            matches!(&outcome, Outcome::Apply(style) if style.first_line_bold && !style.bold),
+            "checking 1st line bold unchecks Bold"
+        );
+        apply(outcome, &mut styles);
+        assert!(state.sync(&styles, Some(StyleId(1))));
+        let outcome = state.update(StyleAction::Attribute(FontAttribute::Bold, true), &styles);
+        assert!(
+            matches!(&outcome, Outcome::Apply(style) if style.bold && !style.first_line_bold),
+            "checking Bold unchecks 1st line bold"
+        );
     }
 
     #[test]

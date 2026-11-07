@@ -389,6 +389,7 @@ pub fn import_sam(
                 bullets: spec.bullets.clone(),
                 origin: spec.origin,
                 both_sides: spec.both_sides,
+                first_line_bold: spec.first_line_bold,
                 kept: spec.kept.clone(),
             },
         );
@@ -810,6 +811,8 @@ struct StyleSpec {
     /// The document's own style, or the style sheet's.
     origin: StyleOrigin,
     both_sides: bool,
+    /// `[fnt]` 4096: Modify Style's 1st line bold.
+    first_line_bold: bool,
     kept: StyleKept,
 }
 
@@ -1001,8 +1004,9 @@ fn style_rules(sections: &[Section]) -> ParagraphRules {
 /// A style's character attributes from `[fnt]`: the colour (value 3, a
 /// `COLORREF`) and the flags (value 4): 4 underline, 8 word underline, 16
 /// upper case, 32 small caps, 64 double underline, 128 strikethrough, 256
-/// superscript, 512 subscript, 1024 lower case, 2048 initial caps, 4096
-/// protected text (decompile; `SAM_FORMAT_NOTES.md`, "Style records"). Of
+/// superscript, 512 subscript, 1024 lower case, 2048 initial caps (4096 is
+/// 1st line bold, `ParagraphStyle::first_line_bold`, not protected text:
+/// decompile `FUN_10d0_1aa6`, `FIRST_LINE_BOLD_NOTES.md`). Of
 /// two caps, the
 /// one Ami Pro's display applies first wins: small caps, upper, lower,
 /// initial.
@@ -1025,7 +1029,7 @@ fn style_attributes(colour: u32, flags: u32) -> CharacterAttributes {
         subscript: flags & 512 != 0,
         caps,
         colour: colour & 0x00FF_FFFF,
-        protected: flags & 4096 != 0,
+        protected: false,
         no_hyphenation: false,
         overstrike: None,
     }
@@ -1309,6 +1313,7 @@ fn collect_style_specs(
             face_kind: style_face_kind(flags),
             origin,
             both_sides: alignment_flags(&legacy.sections[index + 1..end]) & 16 != 0,
+            first_line_bold: flags & 4096 != 0,
             kept: style_kept(section, &legacy.sections[index + 1..end], flags),
         };
         output.insert(spec.name.to_lowercase(), spec);
@@ -1788,9 +1793,10 @@ mod tests {
             }
         );
         // 62664 = 8 + 64 + 128 + 1024 + 4096 + 0x2000 + 0xC000: word and
-        // double underline, strikethrough, lower case, protected text, the
-        // bit Ami Pro drops, and the face's kind; the colour's top byte is
-        // not part of the RGB value.
+        // double underline, strikethrough, lower case, 1st line bold (not
+        // protected text: FIRST_LINE_BOLD_NOTES.md), the bit Ami Pro drops,
+        // and the face's kind; the colour's top byte is not part of the RGB
+        // value.
         assert_eq!(
             style("Effects").attributes,
             CharacterAttributes {
@@ -1799,9 +1805,15 @@ mod tests {
                 strikethrough: true,
                 caps: Some(Caps::Lower),
                 colour: 0x00FF_0000,
-                protected: true,
                 ..CharacterAttributes::default()
             }
+        );
+        assert!(
+            imported
+                .document
+                .styles()
+                .values()
+                .any(|s| s.name == "Effects" && s.first_line_bold)
         );
         // 19248 = 16 + 32 + 256 + 512 + 2048 + 0x4000: small caps wins over
         // upper and initial caps; both scripts are kept.

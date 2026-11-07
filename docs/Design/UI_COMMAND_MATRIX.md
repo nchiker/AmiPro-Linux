@@ -162,6 +162,7 @@ the Unicode-entry conflict must be resolved before assigning Ctrl+Shift+U.
 |---|---|---|---|---|---|
 | Styles | — | Quick-apply field + panel | Active document exists; menu opens/focuses the single owner panel | Style apply I | UI-2 |
 | Modify Current Style… | — | Hidden | One uniform style is selected and style editing semantics exist | No | P2 |
+| 1st line bold (Style Properties › Font) | — | Check box after Caps | Exclusive with Bold; the first line of each paragraph in the style is bold, later lines regular; live, one undo step | I with `page-surface` (2026-11-07) | FIRST_LINE_BOLD_NOTES.md |
 | Bold | Ctrl+B | Toggle icon | Page surface: a selection, or a caret, where it formats the text typed next (VM C1, `UI_SPEC.md` §13); checked when the whole selection, or a character beside the caret, looks bold. Text editor: a selection | I (caret since 2026-10-12) | UI-1 then E-GATE |
 | Italic | Ctrl+I | Toggle icon | Same rule as Bold, check mark included | I | UI-1 then E-GATE |
 | Underline | Ctrl+U | Toggle icon (Standard set with the page surface) | As Bold on the page surface, one undo step | I with `page-surface`; future in the default build, whose editor cannot draw it | UI pass (gap A1) |

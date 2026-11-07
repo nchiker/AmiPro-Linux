@@ -92,6 +92,10 @@ pub struct ShapedParagraph {
     /// paragraph's end format over its style (decompile `10d0:0592`).
     pub ascent: f32,
     pub descent: f32,
+    /// The same words (same bytes, one for one) shaped in bold weight, for
+    /// the paragraph's first line when its style has 1st line bold; empty
+    /// otherwise ([`shape_with_first_line_bold`]).
+    pub first_line: Vec<ShapedWord>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -119,7 +123,59 @@ pub struct ShapedWord {
     pub tab: Option<TabLeader>,
 }
 
+/// Shapes a paragraph with `shape` and, when its style has 1st line bold,
+/// again with every character bold: the second set of words (same bytes,
+/// bold widths and metrics) is what the first line is broken and set with
+/// (decompile `10d0:0309`, `10d0:0d82`; `FIRST_LINE_BOLD_NOTES.md`). Shapers
+/// call this from `shape` with their plain shaping as `shape`.
+pub fn shape_with_first_line_bold(
+    request: ShapeRequest<'_>,
+    mut shape: impl FnMut(ShapeRequest<'_>) -> ShapedParagraph,
+) -> ShapedParagraph {
+    let mut shaped = shape(request);
+    if !request.style.first_line_bold || shaped.words.is_empty() {
+        return shaped;
+    }
+    let mut style = request.style.clone();
+    style.first_line_bold = false;
+    style.bold = true;
+    let runs: Vec<CharacterRun> = request
+        .runs
+        .iter()
+        .map(|run| {
+            let mut run = run.clone();
+            run.format.bold = Some(true);
+            run
+        })
+        .collect();
+    let bold = shape(ShapeRequest {
+        style: &style,
+        runs: &runs,
+        ..request
+    });
+    let same = bold.words.len() == shaped.words.len()
+        && bold
+            .words
+            .iter()
+            .zip(&shaped.words)
+            .all(|(bold, plain)| bold.bytes == plain.bytes);
+    if same {
+        shaped.first_line = bold.words;
+    }
+    shaped
+}
+
 impl ShapedParagraph {
+    /// A copy whose words are the first line's bold ones, or `None` when
+    /// the paragraph's first line is not set bold.
+    pub fn first_line_bold(&self) -> Option<ShapedParagraph> {
+        (!self.first_line.is_empty()).then(|| ShapedParagraph {
+            words: self.first_line.clone(),
+            first_line: Vec::new(),
+            ..self.clone()
+        })
+    }
+
     /// Sets the flags that follow from the text: forced breaks, soft hyphens
     /// (none in text marked No hyphenation, which is never split), and
     /// object indexes. Shapers call this after measuring.
@@ -173,8 +229,9 @@ impl FixedShaper {
     }
 }
 
-impl Shaper for FixedShaper {
-    fn shape(&mut self, request: ShapeRequest<'_>) -> ShapedParagraph {
+impl FixedShaper {
+    /// Shapes `request` in the paragraph's own weight.
+    pub fn shape_plain(&mut self, request: ShapeRequest<'_>) -> ShapedParagraph {
         let text = request.text;
         let style = request.style;
         let size = style.font_size_points * 20.0;
@@ -277,9 +334,16 @@ impl Shaper for FixedShaper {
             average_width: size / 2.0,
             ascent: height * 0.8,
             descent: height * 0.2,
+            first_line: Vec::new(),
         };
         shaped.classify(&request);
         shaped
+    }
+}
+
+impl Shaper for FixedShaper {
+    fn shape(&mut self, request: ShapeRequest<'_>) -> ShapedParagraph {
+        shape_with_first_line_bold(request, |request| self.shape_plain(request))
     }
 
     fn measure(&mut self, text: &str, style: &ParagraphStyle) -> f32 {

@@ -1,6 +1,6 @@
 # Ami Pro for Linux
 
-Native Rust + libcosmic word processor for Pop!_OS COSMIC, targeting the documented capabilities of Lotus Ami Pro 3.1 and original SAM/STY compatibility. The editor is usable (Phases 1–5 built; Phase 6 packaging, updates and crash recovery in progress; release v0.1.0 is published) but not complete: see `docs/KNOWN_LIMITATIONS.md`.
+Native Rust + libcosmic word processor for Pop!_OS COSMIC, targeting the documented capabilities of Lotus Ami Pro 3.1 and original SAM/STY compatibility. The editor is usable (Phases 1–5 built; Phase 6 packaging, updates and crash recovery in progress; release v0.1.0 is published) but not complete: see `docs/COMPATIBILITY.md` (what opens, what is written, what is checked) and `docs/KNOWN_LIMITATIONS.md`.
 
 Ami Pro for Linux is an independent project. It is not affiliated with, endorsed by, or sponsored by IBM, HCL, or Lotus. Lotus and Ami Pro are trademarks of their owners; they are used here only to name the file formats and the program this software is compatible with.
 

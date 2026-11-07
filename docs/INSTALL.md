@@ -74,7 +74,7 @@ Your documents are never touched. Settings (below) stay until you delete them.
 
 ## Known limitations
 
-See `docs/KNOWN_LIMITATIONS.md` for what is not built, decided against,
+See `docs/COMPATIBILITY.md` for the file formats and feature areas with their evidence, and `docs/KNOWN_LIMITATIONS.md` for what is not built, decided against,
 or different from Ami Pro, and `FEATURE_PARITY.md` for the evidence per
 feature. Notably: no accessibility nodes for page text (blocked by the pinned
 toolkit), IME preedit not yet checked on a real input method, no macros, no

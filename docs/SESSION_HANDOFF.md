@@ -63,7 +63,7 @@ sequencing. The previous handoff (runs B, C, D) is in `docs/HANDOFF_ARCHIVE.md`.
 
 ## Next steps
 
-1. Phase 6 remaining: the compatibility matrix (then update `docs/KNOWN_LIMITATIONS.md`). Fuzzing and large-document tests were dropped by the user on 2026-11-07 (they open their large documents in normal use). The live pass on 2026-11-07 (private Xwayland, isolated config; screenshots outside Git) passed for: Page Setup, Status Bar (persisted), crash recovery (kill -9, recover, Esc, Discard, Discard all, two instances, never-saved, recovery off), 1st line bold against `flb_after.png`, Face then Size and Size then Face, Insert Ruler, Fast Format, Check for Updates (up to date), Equations, Chart from Table, Charting, Image Processing, Paste Special, Links and Convert Object. Not covered live: IME, the update install path (needs a later release), the real file portals, chart Perspective/Expanded pie, Colour set, Axis.
+1. Phase 6: the compatibility matrix is done (`docs/COMPATIBILITY.md`, 2026-11-07; keep it and `docs/KNOWN_LIMITATIONS.md` current). Fuzzing and large-document tests were dropped by the user on 2026-11-07 (they open their large documents in normal use). The live pass on 2026-11-07 (private Xwayland, isolated config; screenshots outside Git) passed for: Page Setup, Status Bar (persisted), crash recovery (kill -9, recover, Esc, Discard, Discard all, two instances, never-saved, recovery off), 1st line bold against `flb_after.png`, Face then Size and Size then Face, Insert Ruler, Fast Format, Check for Updates (up to date), Equations, Chart from Table, Charting, Image Processing, Paste Special, Links and Convert Object. Not covered live: IME, the update install path (needs a later release), the real file portals, chart Perspective/Expanded pie, Colour set, Axis.
 2. CK10 and CK11 (Draft frame markers; New View and the Vertical Ruler).
 3. Help: mine Ami Pro's `.hlp` files (`amipro.hlp` first) as a read-only text
    dump for a behaviour oracle and a topic map for F1 Help; write the content
@@ -77,9 +77,9 @@ handoff commit and confirm `origin/master` equals `HEAD`.
 Prompt for the next session:
 
 ```text
-Read AGENTS.md, CLAUDE.md, and docs/SESSION_HANDOFF.md, then do Phase 6's
-remaining item (the compatibility matrix) as a
-straight run, keeping docs/KNOWN_LIMITATIONS.md current. Every change is one
+Read AGENTS.md, CLAUDE.md, and docs/SESSION_HANDOFF.md, then do the next
+ranked item as a straight run, keeping docs/KNOWN_LIMITATIONS.md and
+docs/COMPATIBILITY.md current. Every change is one
 undo step; scenarios pass before any physical check. Use lower-cost subagents
 for routine work and testing, keep decompiler output and my corpus file names
 out of Git, commit small tested slices, and hand off with a short ranked list.

@@ -79,7 +79,7 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
   DBF, XLSX, and ODS.
 - Word Pro (`.LWP`) files are not read. Frames, layouts, and some page
   controls are lost when exporting to other word processors, as in Ami Pro.
-- Compatibility details: `docs/research/FORMAT_COMPATIBILITY.md` and
+- Compatibility matrix: `docs/COMPATIBILITY.md`. Format register: `docs/research/FORMAT_COMPATIBILITY.md` and
   Help › Compatibility and Fidelity.
 
 ## Not yet checked on a real machine

@@ -368,14 +368,14 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 
 ## Phase 6 — Quality and release
 
-- [ ] Performance, accessibility, crash recovery, compatibility matrix (large-document tests and fuzzing dropped by the user, 2026-11-07). Crash recovery is built (P6.3); remaining: the compatibility matrix; accessibility is blocked by the toolkit.
+- [ ] Performance, accessibility, crash recovery, compatibility matrix (large-document tests and fuzzing dropped by the user, 2026-11-07). Crash recovery is built (P6.3); the compatibility matrix is written (`docs/COMPATIBILITY.md`, 2026-11-07); accessibility is blocked by the toolkit.
 - [ ] Produce COSMIC package and installation instructions; validate on user's machine. The repository is public (MPL-2.0, `LICENSE`, 2026-11-07) and release v0.1.0 is published.
   - P6.1 (2026-11-07): `tools/package-deb.sh` builds `dist/amipro-linux_<version>_amd64.deb`; `docs/INSTALL.md`. Package checked off-host (contents, ldd, lintian); the real install on the user's machine is pending.
   - P6.2 (2026-11-07): Help › Check for Updates… (`UI_SPEC.md` §43; `app/cosmic/src/updates*.rs`): GitHub Releases of the public repository, the `.deb` verified against `SHA256SUMS`, installed with `pkexec apt-get install -y` after a confirmation; optional once-a-day check at start (Preferences, off by default). `tools/release.sh` and `docs/RELEASING.md` prepare a release (nothing publishes by itself). Automated checks pass; physical check and the first real release pending.
   - P6.3 (2026-11-07): crash recovery (`UI_SPEC.md` §44; `app/cosmic/src/recovery*.rs`): open documents with unsaved changes are copied every 1/2/5/10 minutes (default 2; Preferences › General) in the lossless native format to `$XDG_DATA_HOME/amipro-linux/recovery/<session>/`, never over the user's file; removed on save, discard-close, and clean exit; after a crash the next start offers them in the rail (File › Recover Documents…), a recovered tab being an unsaved "name (recovered)" whose original is a Save As source. Live sessions (pid and start time) are not offered to another instance; sessions over 30 days old are deleted; password-protected documents are not copied. Automated checks pass; physical check (kill -9, two instances) pending.
   - Release (2026-11-07): the repository became public (MPL-2.0 `LICENSE`, fresh one-commit history after an audit) and release v0.1.0 is published; the update check against a later release is not yet exercised.
   - After P6.3 (2026-11-07): File › Page Setup… (opens Page Layout) and the View › Status Bar toggle; the dead Section Break and Move Document to New Window entries removed; status bar Face/Size no longer reset other font parts; First line bold built (bit 4096 of `[fnt]`, Style Properties check box). Scenario modules `drawing`, `crash_recovery`, `update_check` added.
-- [ ] Publish accurate coverage and known limitations (`docs/KNOWN_LIMITATIONS.md` written 2026-11-07; the compatibility matrix remains); defer macros until separately scheduled.
+- [ ] Publish accurate coverage and known limitations (`docs/KNOWN_LIMITATIONS.md` and `docs/COMPATIBILITY.md` written 2026-11-07); defer macros until separately scheduled.
   **Exit:** Stable release with transparent parity status.
 
 ## Execution and reporting

@@ -1,0 +1,25 @@
+# Original Ami Pro software and reference materials
+/Reference/
+
+# Rust build artifacts
+target/
+**/target/
+
+# Local environment
+.env
+.env.*
+*.log
+*.tmp
+*.swp
+*~
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Tester packages
+/dist/

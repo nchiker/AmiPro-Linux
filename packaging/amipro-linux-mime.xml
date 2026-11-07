@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-amipro-document">
+    <comment>Ami Pro document</comment>
+    <glob pattern="*.sam" case-sensitive="false"/>
+  </mime-type>
+  <mime-type type="application/x-amipro-style">
+    <comment>Ami Pro style sheet</comment>
+    <glob pattern="*.sty" case-sensitive="false"/>
+  </mime-type>
+</mime-info>

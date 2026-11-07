@@ -1,0 +1,15 @@
+[package]
+name = "page-layout-spike"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+publish = false
+
+# Isolated Phase 2.5a experiment (docs/research/LINE_BREAKING_SPIKE.md); not
+# part of the workspace or the gates.
+[workspace]
+
+[dependencies]
+amipro-document = { path = "../../crates/document" }
+amipro-formats = { path = "../../crates/ami-formats" }
+cosmic-text = "0.19"

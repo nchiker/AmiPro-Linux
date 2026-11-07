@@ -1,0 +1,17 @@
+[package]
+name = "amipro-pictures"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+# Readers of the picture formats Ami Pro stores, written for this project
+# without dependencies (docs/research/PICTURE_NOTES.md): Windows bitmaps,
+# Windows metafiles as a display list, and Ami Pro's own screen image. The
+# app draws them; formats that need a library (PNG, JPEG, GIF, TIFF, PCX,
+# SVG) are decoded there.
+[dependencies]
+
+[dev-dependencies]
+amipro-document = { path = "../document" }
+amipro-formats = { path = "../ami-formats" }

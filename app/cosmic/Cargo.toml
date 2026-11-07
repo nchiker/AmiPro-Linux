@@ -1,0 +1,74 @@
+[package]
+name = "amipro-cosmic"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0"
+rust-version = "1.93"
+
+[features]
+# The page surface is the normal build (user decision, 2026-10-12). The text
+# editor it replaced stays buildable with `--no-default-features`.
+default = ["page-surface"]
+rich-editor-prototype = []
+# The page editing surface (Phase 2.6): pages, frames, and every flow drawn
+# and edited through the layout engine.
+page-surface = ["dep:krilla"]
+
+[dependencies]
+amipro-document = { path = "../../crates/document" }
+amipro-editing = { path = "../../crates/editing" }
+amipro-formats = { path = "../../crates/ami-formats" }
+amipro-layout = { path = "../../crates/layout" }
+cosmic-text = "0.19"
+# Only to pass libcosmic's drop and clipboard traces to AMIPRO_TRACE_DROP.
+log = "0.4"
+# Knuth–Liang hyphenation with TeX's patterns (decision D2,
+# docs/research/HYPHENATION_OPTIONS.md): US English, and since the proofing
+# run every language hypher has, for a document's language (SP6).
+hypher = { version = "0.1.8", default-features = false, features = ["alloc", "full"] }
+# Pictures (decisions P1, P8; docs/research/DECISIONS.md, the pictures run):
+# the project's own readers of what Ami Pro stores, and maintained libraries
+# for the other formats Insert › Image… takes and to draw metafiles.
+amipro-pictures = { path = "../../crates/pictures" }
+image = { version = "0.25.10", default-features = false, features = ["bmp", "gif", "jpeg", "png", "tiff"] }
+image-extras = { version = "0.1.1", default-features = false, features = ["pcx"] }
+resvg = { version = "0.45.1", default-features = false, features = ["text", "system-fonts"] }
+tiny-skia = { version = "0.11.4", default-features = false, features = ["std", "simd"] }
+# The local wall clock for dates, times, and Ami Pro's time base (the fields
+# run; already in the build through libcosmic).
+jiff = "0.2.38"
+# Print and PDF (decision PO2; docs/research/PRINT_NOTES.md): Typst's PDF
+# writer, with fonts embedded and subset and text kept selectable.
+krilla = { version = "=0.8.2", optional = true, default-features = false, features = ["raster-images"] }
+# Export (decision EX1; docs/research/EXPORT_NOTES.md): the project's own
+# exchange document and its DOCX, ODT, RTF, and text filters, with deflate
+# for the zips (already in the build through png).
+amipro-exchange = { path = "../../crates/exchange" }
+flate2 = "1.1.10"
+# Proofing (decision SP1; docs/research/PROOFING_NOTES.md): Helix's
+# pure-Rust Hunspell-compatible checker, reading the system's Hunspell
+# dictionaries and the bundled en-US one (MPL-2.0).
+spellbook = "0.4.2"
+# Grammar (decision SP8): Automattic's Harper, offline, English only
+# (Apache-2.0); its own thesaurus is not used (SP7).
+harper-core = { version = "2.13.0", default-features = false, features = ["concurrent"] }
+
+[dependencies.libcosmic]
+git = "https://github.com/pop-os/libcosmic.git"
+rev = "dbc62f2d899cdbfbe43d170689ddc0290db663f4"
+default-features = false
+features = ["a11y", "about", "wayland", "wgpu", "xdg-portal", "tokio"]
+
+# Software renderer from the same pinned libcosmic revision, used only to lay
+# out the real application view in headless tests.
+# Renders the app's PDFs in tests, to compare them with the page surface's
+# drawing (the print and PDF run; Apache-2.0 or MIT, pure Rust).
+[dev-dependencies]
+hayro = "=0.8.0"
+
+[dev-dependencies.iced_tiny_skia]
+git = "https://github.com/pop-os/libcosmic.git"
+rev = "dbc62f2d899cdbfbe43d170689ddc0290db663f4"
+
+[workspace]
+

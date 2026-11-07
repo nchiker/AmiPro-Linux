@@ -1,0 +1,29 @@
+[package]
+name = "amipro-exchange"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+# Export to other word processors' formats (docs/research/EXPORT_NOTES.md):
+# the model resolved once into a neutral exchange document, as Ami Pro's
+# filters take one token stream, and a filter per format (DOCX, ODT, RTF,
+# plain text, Markdown). XML and RTF are written as text, zips with stored
+# entries or a compressor the caller passes; pictures are converted by the
+# caller (`PictureSink`). The one outside dependency is the Markdown
+# reader's parser (MD2): CommonMark is too large a grammar to write twice,
+# and `pulldown-cmark` (MIT) is the one the app already links; without its
+# default features (no HTML writer, no command-line parser).
+[dependencies]
+pulldown-cmark = { version = "0.13", default-features = false }
+amipro-document = { path = "../document" }
+# Import (`realise`) makes lists with the app's own list commands (IM5).
+amipro-editing = { path = "../editing" }
+amipro-layout = { path = "../layout" }
+
+[dev-dependencies]
+amipro-formats = { path = "../ami-formats" }
+# Inflate for the tests and examples that read real packages (the app
+# passes `flate2`'s); pure Rust.
+miniz_oxide = "0.8"
+amipro-pictures = { path = "../pictures" }

@@ -1,0 +1,15 @@
+[package]
+name = "amipro-editing"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+amipro-document = { path = "../document" }
+# Drawings are edited as Ami Pro's objects (`drawing.rs`, `UI_SPEC.md` §33).
+amipro-pictures = { path = "../pictures" }
+
+
+[dev-dependencies]
+amipro-formats = { path = "../ami-formats" }

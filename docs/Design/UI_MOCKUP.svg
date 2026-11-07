@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050" role="img" aria-labelledby="title desc">
+  <title id="title">AmiPro-Linux COSMIC interface specification, revision 2</title>
+  <desc id="desc">A realistic light-theme editing state with a complete grouped action bar, one Styles context rail, a strongly bounded portrait paper page with margins, formatted text, selection and caret, plus an inset showing the future Frame Properties state in the same rail.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#142033" flood-opacity="0.18"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#315b85"/>
+    </marker>
+    <style>
+      .ui { font-family: Inter, system-ui, sans-serif; fill: #182333; }
+      .small { font-size: 12px; }
+      .body { font-size: 14px; }
+      .label { font-size: 15px; font-weight: 650; }
+      .measure { font-size: 12px; fill: #315b85; font-weight: 650; }
+      .callout { fill: #f7fbff; stroke: #6f96bb; stroke-width: 1.5; rx: 10; }
+      .line { stroke: #315b85; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .separator { stroke: #c7d0d9; stroke-width: 1; }
+      .icon { fill: none; stroke: #26384a; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .tick { stroke: #68798a; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1050" fill="#edf2f6"/>
+  <text x="70" y="40" class="ui" font-size="22" font-weight="700">AmiPro-Linux — visual approval mockup, revision 2</text>
+  <text x="70" y="62" class="ui small">Realistic editing state at a representative desktop width; native COSMIC theme tokens and display scaling remain authoritative.</text>
+
+  <!-- Window and native header -->
+  <rect x="190" y="82" width="1220" height="820" rx="12" fill="#f8fafc" stroke="#91a0ae" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="190" y="82" width="1220" height="38" rx="12" fill="#dfe7ee"/>
+  <rect x="190" y="108" width="1220" height="12" fill="#dfe7ee"/>
+  <circle cx="211" cy="101" r="6" fill="#3e7eb9"/>
+  <text x="800" y="106" text-anchor="middle" class="ui body" font-weight="650">Quarterly Report — AmiPro-Linux</text>
+  <path d="M1348 101h12 M1382 95v12h12V95z M1378 96l18 12 M1396 96l-18 12" class="icon"/>
+
+  <!-- Menu -->
+  <rect x="190" y="120" width="1220" height="32" fill="#f8fafc"/>
+  <text x="208" y="142" class="ui body">File</text>
+  <text x="254" y="142" class="ui body">Edit</text>
+  <text x="300" y="142" class="ui body">View</text>
+  <text x="352" y="142" class="ui body">Insert</text>
+  <text x="410" y="142" class="ui body">Format</text>
+  <text x="478" y="142" class="ui body">Tools</text>
+  <text x="532" y="142" class="ui body">Window</text>
+  <text x="605" y="142" class="ui body">Help</text>
+  <line x1="190" y1="152" x2="1410" y2="152" class="separator"/>
+
+  <!-- Action bar -->
+  <rect x="190" y="153" width="1220" height="40" fill="#f5f8fa"/>
+  <!-- Document: New, Open, Save; the outlined printer marks its reserved future position only. -->
+  <rect x="201" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M209 181v-16h9l5 5v11z M218 165v6h5" class="icon"/>
+  <rect x="235" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M242 181v-13h6l2-3h8v16z" class="icon"/>
+  <rect x="269" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M276 164h16v18h-16z M280 164v7h8v-7 M280 177h8" class="icon"/>
+  <rect x="303" y="157" width="30" height="32" rx="7" fill="#f5f8fa" stroke="#9eabb7" stroke-dasharray="3 2"/><path d="M310 169h16v10h-16z M313 163h10v6 M313 179h10v5h-10z" class="icon" opacity="0.48"/>
+  <line x1="341" y1="161" x2="341" y2="185" class="separator"/>
+  <!-- History -->
+  <rect x="349" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M372 181c-3-8-11-9-16-3 M356 178l1-7 7 2" class="icon"/>
+  <rect x="383" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M390 181c3-8 11-9 16-3 M406 178l-1-7-7 2" class="icon" opacity="0.45"/>
+  <line x1="421" y1="161" x2="421" y2="185" class="separator"/>
+  <!-- Clipboard: Cut, Copy, Paste -->
+  <rect x="429" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M437 165l14 16 M451 165l-14 16 M438 171h12" class="icon"/>
+  <rect x="463" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M471 168h12v13h-12z M475 164h12v13" class="icon"/>
+  <rect x="497" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M505 167h14v15h-14z M509 164h6v5h-6z M508 173h8" class="icon"/>
+  <line x1="535" y1="161" x2="535" y2="185" class="separator"/>
+  <!-- Style -->
+  <rect x="543" y="157" width="168" height="32" rx="7" fill="#ffffff" stroke="#8eb2d3"/><text x="556" y="178" class="ui body">Body Text</text><path d="M693 170l5 6 5-6" class="icon"/>
+  <line x1="719" y1="161" x2="719" y2="185" class="separator"/>
+  <!-- Character formatting -->
+  <rect x="727" y="157" width="30" height="32" rx="7" fill="#dceeff" stroke="#4689c5"/><text x="742" y="180" text-anchor="middle" class="ui" font-size="17" font-weight="800">B</text>
+  <rect x="761" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><text x="776" y="180" text-anchor="middle" class="ui" font-size="17" font-style="italic" font-weight="700">I</text>
+  <rect x="795" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><text x="810" y="179" text-anchor="middle" class="ui" font-size="16" text-decoration="underline">U</text>
+  <line x1="833" y1="161" x2="833" y2="185" class="separator"/>
+  <!-- Paragraph formatting -->
+  <rect x="841" y="157" width="30" height="32" rx="7" fill="#dceeff" stroke="#4689c5"/><path d="M848 166h16 M848 171h12 M848 176h16 M848 181h10" class="icon"/>
+  <rect x="875" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M882 166h16 M884 171h12 M882 176h16 M885 181h10" class="icon"/>
+  <rect x="909" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M916 166h16 M920 171h12 M916 176h16 M922 181h10" class="icon"/>
+  <rect x="943" y="157" width="30" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><path d="M950 166h16 M950 171h16 M950 176h16 M950 181h16" class="icon"/>
+  <line x1="981" y1="161" x2="981" y2="185" class="separator"/>
+  <rect x="989" y="157" width="72" height="32" rx="7" fill="#ffffff" stroke="#c5d0db"/><text x="1002" y="178" class="ui small" font-weight="650">More</text><path d="M1044 170l5 6 5-6" class="icon"/>
+  <text x="1080" y="178" class="ui small" fill="#607486">Print outline = reserved placement; absent until functional</text>
+  <line x1="190" y1="193" x2="1410" y2="193" class="separator"/>
+
+  <!-- Tabs -->
+  <rect x="190" y="194" width="1220" height="44" fill="#eaf0f4"/>
+  <rect x="201" y="199" width="202" height="39" rx="8" fill="#ffffff" stroke="#75a7d4"/>
+  <rect x="213" y="210" width="12" height="16" rx="1" fill="#dceeff" stroke="#397eb9"/>
+  <text x="234" y="222" class="ui body" font-weight="650">Quarterly Report •</text>
+  <text x="385" y="222" class="ui body">×</text>
+  <rect x="407" y="201" width="230" height="35" rx="8" fill="#dfe7ee"/>
+  <text x="422" y="223" class="ui body">Very long imported docum…</text>
+  <text x="620" y="223" class="ui body">×</text>
+  <rect x="643" y="201" width="38" height="35" rx="8" fill="#dfe7ee"/>
+  <text x="662" y="224" text-anchor="middle" class="ui" font-size="20">+</text>
+
+  <!-- Main area -->
+  <rect x="190" y="238" width="1220" height="634" fill="#cad4dc"/>
+  <!-- Styles panel primary owner -->
+  <rect x="190" y="238" width="216" height="634" fill="#f7f9fb" stroke="#b9c5cf"/>
+  <text x="206" y="268" class="ui label">Styles</text><text x="307" y="267" class="ui small" fill="#607486">Text context</text>
+  <path d="M382 257l8 8 M390 257l-8 8" class="icon"/>
+  <rect x="202" y="281" width="192" height="32" rx="6" fill="#ffffff" stroke="#c4d0da"/>
+  <text x="214" y="302" class="ui small" fill="#6c7b89">Filter styles</text>
+  <circle cx="379" cy="296" r="6" class="icon"/><path d="M383 301l5 5" class="icon"/>
+  <rect x="202" y="325" width="192" height="34" rx="6" fill="#dceeff" stroke="#7babd4"/>
+  <text x="214" y="347" class="ui body" font-weight="650">¶  Body Text</text>
+  <text x="214" y="384" class="ui body">¶  Body Indent</text>
+  <text x="214" y="420" class="ui body">¶  Heading 1</text>
+  <text x="214" y="456" class="ui body">¶  Heading 2</text>
+  <text x="214" y="492" class="ui body">¶  Bullet 1</text>
+  <text x="214" y="528" class="ui body">¶  Numbered List</text>
+  <line x1="406" y1="238" x2="406" y2="872" stroke="#9aaab8"/>
+
+  <!-- Ruler and workspace -->
+  <rect x="406" y="238" width="1004" height="30" fill="#eff3f6"/>
+  <rect x="680" y="243" width="445" height="20" rx="3" fill="#ffffff" stroke="#8999a8"/>
+  <path d="M714 243l7 9h-14z M1091 263l7-9h-14z" fill="#4389c4" stroke="#286b9f"/>
+  <g class="tick">
+    <path d="M735 244v12 M785 244v8 M835 244v12 M885 244v8 M935 244v12 M985 244v8 M1035 244v12 M1085 244v8"/>
+  </g>
+  <g class="ui small" fill="#5e7080">
+    <text x="780" y="260">1</text><text x="830" y="260">2</text><text x="880" y="260">3</text><text x="930" y="260">4</text><text x="980" y="260">5</text><text x="1030" y="260">6</text>
+  </g>
+  <rect x="406" y="268" width="1004" height="604" fill="#9eacb7"/>
+
+  <!-- Page -->
+  <text x="685" y="285" class="ui small" fill="#33495b">Letter portrait · 100% · page 1</text>
+  <rect x="690" y="292" width="425" height="550" fill="#fffefa" stroke="#536474" stroke-width="2" filter="url(#shadow)"/>
+  <!-- Actual page margins / nonprinting guides -->
+  <rect x="729" y="330" width="347" height="472" fill="none" stroke="#b8c9d7" stroke-width="1" stroke-dasharray="4 4"/>
+  <text x="735" y="321" class="ui small" fill="#557188">0.75 in margin</text>
+  <!-- Realistic formatted editing state -->
+  <text x="735" y="370" font-family="Georgia, serif" font-size="27" font-weight="700" fill="#183f70">Quarterly Report</text>
+  <text x="735" y="394" font-family="Georgia, serif" font-size="13" font-style="italic" fill="#52616d">Operations and product outlook · Q3 2026</text>
+  <line x1="735" y1="407" x2="1070" y2="407" stroke="#2f6f9f" stroke-width="2"/>
+  <text x="735" y="436" font-family="Georgia, serif" font-size="13.5" fill="#222b33">AmiPro-Linux combines a native COSMIC interface with</text>
+  <text x="735" y="456" font-family="Georgia, serif" font-size="13.5" fill="#222b33">a style-driven editing model for publication-quality work.</text>
+  <text x="735" y="486" font-family="Georgia, serif" font-size="13.5" fill="#222b33"><tspan font-weight="700">Highlights.</tspan><tspan> Imported documents retain named styles,</tspan></text>
+  <text x="735" y="506" font-family="Georgia, serif" font-size="13.5" fill="#222b33">mixed emphasis, Unicode text, and protected source files.</text>
+  <!-- Selection over actual words, plus visible caret endpoint -->
+  <rect x="734" y="522" width="220" height="21" rx="2" fill="#2f7db8"/>
+  <text x="739" y="537" font-family="Georgia, serif" font-size="13.5" font-weight="700" fill="#ffffff">The page is the visual center</text>
+  <line x1="955" y1="520" x2="955" y2="545" stroke="#153f60" stroke-width="2"/>
+  <text x="735" y="561" font-family="Georgia, serif" font-size="13.5" fill="#222b33">while grouped tools keep commands discoverable.</text>
+  <text x="735" y="596" font-family="Georgia, serif" font-size="15" font-weight="700" fill="#183f70">Next steps</text>
+  <text x="742" y="621" font-family="Georgia, serif" font-size="13.5" fill="#222b33">• Validate responsive editing on representative documents.</text>
+  <text x="742" y="643" font-family="Georgia, serif" font-size="13.5" fill="#222b33">• Preserve styles while simplifying the application chrome.</text>
+  <rect x="735" y="675" width="335" height="78" rx="4" fill="#eef5fa" stroke="#a6bdce"/>
+  <text x="750" y="699" font-family="Georgia, serif" font-size="12.5" font-weight="700" fill="#2a5676">Layout note</text>
+  <text x="750" y="720" font-family="Georgia, serif" font-size="12.5" fill="#34434f">Margins, ruler ticks, selection, caret, and text all</text>
+  <text x="750" y="739" font-family="Georgia, serif" font-size="12.5" fill="#34434f">share one document-to-screen transform.</text>
+  <text x="902" y="823" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#677582">1</text>
+  <!-- Scrollbars -->
+  <rect x="1398" y="274" width="8" height="590" rx="4" fill="#a5b1bb" opacity="0.45"/>
+  <rect x="1398" y="304" width="8" height="128" rx="4" fill="#667b8c"/>
+  <rect x="420" y="854" width="970" height="8" rx="4" fill="#a5b1bb" opacity="0.35"/>
+
+  <!-- Status -->
+  <rect x="190" y="872" width="1220" height="30" fill="#f6f8fa"/>
+  <line x1="190" y1="872" x2="1410" y2="872" class="separator"/>
+  <text x="207" y="889" class="ui small">Page 1 · estimate</text>
+  <line x1="318" y1="875" x2="318" y2="894" class="separator"/>
+  <text x="333" y="889" class="ui small">Section 1</text>
+  <line x1="398" y1="875" x2="398" y2="894" class="separator"/>
+  <text x="413" y="889" class="ui small">2,134 words</text>
+  <text x="560" y="889" class="ui small" fill="#536575">Saved</text>
+  <text x="1135" y="889" class="ui small">−</text>
+  <line x1="1160" y1="884" x2="1260" y2="884" stroke="#9cacb9" stroke-width="3"/>
+  <circle cx="1215" cy="884" r="7" fill="#327eb8"/>
+  <text x="1280" y="889" class="ui small">100%</text>
+  <text x="1352" y="889" class="ui small">+</text>
+
+  <!-- Dimension lines -->
+  <path d="M1425 120h35 M1450 120v32 M1425 152h35" stroke="#315b85" fill="none"/>
+  <text x="1470" y="140" class="measure">32 menu</text>
+  <path d="M1425 153h35 M1450 153v40 M1425 193h35" stroke="#315b85" fill="none"/>
+  <text x="1470" y="177" class="measure">40 action</text>
+  <path d="M1425 194h35 M1450 194v44 M1425 238h35" stroke="#315b85" fill="none"/>
+  <text x="1470" y="220" class="measure">44 tabs</text>
+  <path d="M1425 238h35 M1450 238v30 M1425 268h35" stroke="#315b85" fill="none"/>
+  <text x="1470" y="257" class="measure">30 ruler</text>
+  <path d="M190 921v24 M190 934h216 M406 921v24" stroke="#315b85" fill="none"/>
+  <text x="298" y="962" text-anchor="middle" class="measure">216 Styles default (176–320)</text>
+
+  <!-- Callouts -->
+  <rect x="18" y="115" width="150" height="70" class="callout"/>
+  <text x="31" y="139" class="ui label">1  Discovery</text>
+  <text x="31" y="160" class="ui small">Eight complete menus;</text>
+  <text x="31" y="176" class="ui small">shortcuts align right.</text>
+  <path d="M168 150L246 137" class="line"/>
+
+  <rect x="18" y="205" width="150" height="112" class="callout"/>
+  <text x="31" y="229" class="ui label">2  Compact actions</text>
+  <text x="31" y="248" class="ui small">Document · history ·</text>
+  <text x="31" y="264" class="ui small">clipboard · style ·</text>
+  <text x="31" y="280" class="ui small">character · paragraph.</text>
+  <text x="31" y="296" class="ui small">Labeled More; no mystery.</text>
+  <path d="M168 250L327 176" class="line"/>
+
+  <rect x="18" y="335" width="150" height="104" class="callout"/>
+  <text x="31" y="359" class="ui label">3  Style owner</text>
+  <text x="31" y="380" class="ui small">Panel browses/manages;</text>
+  <text x="31" y="396" class="ui small">action field quick-applies.</text>
+  <text x="31" y="412" class="ui small">No status style picker.</text>
+  <path d="M168 388L234 344" class="line"/>
+
+  <rect x="18" y="480" width="150" height="86" class="callout"/>
+  <text x="31" y="504" class="ui label">4  Paper + margins</text>
+  <text x="31" y="525" class="ui small">Strong page edge on a</text>
+  <text x="31" y="541" class="ui small">recessed canvas; ruler,</text>
+  <text x="31" y="557" class="ui small">guides and text align.</text>
+  <path d="M168 523L728 477" class="line"/>
+
+  <rect x="18" y="650" width="150" height="86" class="callout"/>
+  <text x="31" y="674" class="ui label">5  Quiet status</text>
+  <text x="31" y="695" class="ui small">Page/count/message left;</text>
+  <text x="31" y="711" class="ui small">view and zoom right.</text>
+  <path d="M168 699L379 884" class="line"/>
+
+  <!-- Context rail state inset: documentation only, frame functionality is not implemented. -->
+  <rect x="420" y="920" width="600" height="106" rx="10" fill="#f7fbff" stroke="#6f96bb" stroke-width="1.5"/>
+  <text x="435" y="942" class="ui label">One context rail · mutually exclusive states</text>
+  <rect x="435" y="951" width="166" height="62" rx="6" fill="#ffffff" stroke="#9fb2c2"/>
+  <text x="446" y="970" class="ui small" font-weight="700">Styles</text>
+  <rect x="446" y="978" width="144" height="13" rx="3" fill="#dceeff"/><text x="451" y="988" class="ui" font-size="9">¶ Body Text</text>
+  <text x="451" y="1006" class="ui" font-size="9">¶ Heading 1 · ¶ Bullet 1</text>
+  <text x="613" y="971" class="ui" font-size="9" fill="#315b85">select frame</text>
+  <path d="M615 985h42" stroke="#315b85" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="666" y="951" width="166" height="62" rx="6" fill="#ffffff" stroke="#9fb2c2"/>
+  <text x="677" y="970" class="ui small" font-weight="700">Frame Properties</text>
+  <text x="677" y="987" class="ui" font-size="9">Position  ·  Wrap  ·  Border</text>
+  <text x="677" y="1003" class="ui" font-size="9">Text flow / links when modeled</text>
+  <text x="848" y="969" class="ui small">Same 216 px rail;</text>
+  <text x="848" y="986" class="ui small">never two columns.</text>
+  <text x="848" y="1003" class="ui small">Future only—no frame UI now.</text>
+
+  <!-- Dark semantic palette inset -->
+  <rect x="1040" y="930" width="500" height="96" rx="10" fill="#1b222c" stroke="#6c7b89"/>
+  <text x="1056" y="954" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="650" fill="#f2f5f8">Dark-theme semantic check (not a second layout)</text>
+  <rect x="1056" y="968" width="72" height="38" rx="5" fill="#252e39" stroke="#697887"/>
+  <text x="1092" y="991" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#edf2f7">chrome</text>
+  <rect x="1138" y="968" width="72" height="38" rx="5" fill="#15202b" stroke="#526271"/>
+  <text x="1174" y="991" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#edf2f7">workspace</text>
+  <rect x="1220" y="968" width="72" height="38" rx="5" fill="#d7ebff" stroke="#62a7df"/>
+  <text x="1256" y="991" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#163a5c">selected</text>
+  <rect x="1302" y="968" width="72" height="38" rx="5" fill="#ffffff" stroke="#a9b7c3"/>
+  <text x="1338" y="991" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#1a2530">paper</text>
+  <text x="1388" y="978" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#dce4eb">Use theme colors;</text>
+  <text x="1388" y="994" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#dce4eb">verify focus, caret,</text>
+  <text x="1388" y="1010" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#dce4eb">selection and contrast.</text>
+
+  <text x="190" y="1042" class="ui small">Normative for hierarchy, grouping, paper contrast and panel ownership—not proprietary artwork or proof of future frame/print functionality.</text>
+</svg>

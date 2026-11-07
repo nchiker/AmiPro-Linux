@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=AmiPro-Linux
+GenericName=Word Processor
+Comment=Word processor compatible with Lotus Ami Pro SAM and STY files (test build)
+Exec=amipro-linux %F
+Icon=org.amipro_linux.AmiPro
+Terminal=false
+Categories=Office;WordProcessor;
+MimeType=application/x-amipro-document;application/x-amipro-style;
+StartupWMClass=org.amipro_linux.AmiPro
+StartupNotify=true

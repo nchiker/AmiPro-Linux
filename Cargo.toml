@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/document",
+    "crates/editing",
+    "crates/layout",
+    "crates/ami-formats",
+    "crates/pictures",
+    "crates/exchange",
+]
+exclude = ["app/cosmic", "experiments/betteroffice-layout-poc"]
+
+[workspace.package]
+edition = "2024"
+license = "MPL-2.0"
+rust-version = "1.85"
+

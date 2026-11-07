@@ -479,3 +479,208 @@ fn the_status_bar_sets_face_and_size_and_special_characters_are_inserted() {
     assert!(!s.app().special_character);
     s.save_sam("FONTS.SAM");
 }
+
+/// A point on the first page over paragraph `paragraph`'s first line, at
+/// `fraction` of the way along its text, for a real mouse gesture.
+fn over_text(s: &mut Scenario, paragraph: usize, fraction: f32) -> cosmic::iced::Point {
+    let main = s.main_flow();
+    let line = s.app().pages.layout().pages[0]
+        .lines
+        .iter()
+        .find(|line| line.flow == main && line.paragraph_index == paragraph)
+        .map(|line| (line.x + line.width * fraction, line.top + line.height / 2.0))
+        .unwrap_or_else(|| s.fail("layout", "no line for the paragraph"));
+    s.rt.on_page(line.0, line.1)
+}
+
+/// Format › Fast Format (Ctrl+T) as a user does it: the menu command picks
+/// up the selection's format, then selections made with the real mouse
+/// (a press, a drag, a release on the page) take it, each one undo step;
+/// the same command and Esc end the mode.
+#[test]
+fn fast_format_is_picked_up_from_the_menu_and_taken_by_real_mouse_drags() {
+    let mut s = Scenario::new_document("fast-format-mouse");
+    s.clean_folder();
+    s.type_text("Bold words here.");
+    s.enter();
+    s.type_text("Plain words here.");
+    s.enter();
+    s.type_text("Plain again please.");
+    s.select_main((0, 0), (0, 4));
+    s.command(CommandId::Bold);
+    s.act("zoom 100%", |rt| {
+        rt.send(Message::ZoomTo(100));
+        rt.redraw();
+        rt.redraw();
+    });
+    let bold = |s: &Scenario, paragraph: usize, byte: usize| {
+        s.document().main_flow().paragraphs[paragraph]
+            .format_at(byte)
+            .bold
+    };
+    let check = |s: &Scenario| crate::menu_check(s.app(), CommandId::FastFormat);
+    assert_eq!(check(&s), Some(false));
+    assert!(s.app().command_enabled(CommandId::FastFormat));
+
+    // Picked up from a part of the bold word.
+    s.select_main((0, 1), (0, 3));
+    s.command_act(CommandId::FastFormat);
+    assert_eq!(check(&s), Some(true));
+    assert!(
+        s.app().status.contains("Fast Format on"),
+        "{}",
+        s.app().status
+    );
+
+    // A real drag over the start of the second paragraph takes it.
+    let from = over_text(&mut s, 1, 0.01);
+    let to = over_text(&mut s, 1, 0.3);
+    s.edit("drag over the start of Plain", move |rt| {
+        rt.drag(from, to);
+    });
+    assert_eq!(bold(&s, 1, 1), Some(true));
+    assert_eq!(
+        bold(&s, 1, 16),
+        None,
+        "the end of the paragraph is untouched"
+    );
+
+    // One undo step: the text is plain again; Redo formats it again.
+    s.act("Undo", |rt| {
+        rt.send(Message::Command(CommandId::Undo));
+    });
+    assert_eq!(bold(&s, 1, 1), None);
+    s.act("Redo", |rt| {
+        rt.send(Message::Command(CommandId::Redo));
+    });
+    assert_eq!(bold(&s, 1, 1), Some(true));
+
+    // The mode stays on: another paragraph takes it too.
+    let from = over_text(&mut s, 2, 0.5);
+    let to = over_text(&mut s, 2, 0.9);
+    s.edit("drag over the third paragraph", move |rt| {
+        rt.drag(from, to);
+    });
+    assert_eq!(bold(&s, 2, 14), Some(true));
+
+    // Esc ends it: a drag then changes nothing.
+    s.act("Esc", |rt| {
+        rt.send(Message::Page(PageAction::Escape));
+    });
+    assert!(s.app().fast_format.is_none());
+    assert_eq!(check(&s), Some(false));
+    let from = over_text(&mut s, 2, 0.01);
+    let to = over_text(&mut s, 2, 0.1);
+    s.no_change("drag with the mode off", move |rt| {
+        rt.drag(from, to);
+    });
+    assert_eq!(bold(&s, 2, 1), None);
+
+    // The command toggles it: on, then off, and then nothing applies.
+    s.select_main((0, 1), (0, 3));
+    s.command_act(CommandId::FastFormat);
+    assert!(s.app().fast_format.is_some());
+    s.command_act(CommandId::FastFormat);
+    assert!(s.app().fast_format.is_none());
+    let from = over_text(&mut s, 1, 0.5);
+    let to = over_text(&mut s, 1, 0.9);
+    s.no_change("drag after the toggle off", move |rt| {
+        rt.drag(from, to);
+    });
+    s.save_sam("FASTMOUSE.SAM");
+}
+
+/// The status bar's Face and Point Size lists (`font_controls`): the lists
+/// are what the toolbar shows for the caret or the selection, a choice on a
+/// selection formats it and one on a caret formats the next typing, each
+/// choice one undo step, and the sizes offered are the list's (the bar has
+/// no typed size: the Font dialog takes one).
+#[test]
+fn the_face_and_point_size_lists_follow_the_selection_and_format_a_caret_or_a_selection() {
+    let mut s = Scenario::new_document("status-font-caret");
+    s.clean_folder();
+    s.type_text("Alpha beta gamma.");
+    let families = s.app().font_families.clone();
+    assert!(families.len() >= 2);
+    assert_eq!(character_sizes().len(), 16);
+    let size_of = |s: &Scenario| s.app().sessions[s.app().active_session].selection_font();
+
+    // A selection: the lists show its font; a size changes it and the list.
+    s.select_main((0, 0), (0, 5));
+    let current = size_of(&s).0;
+    let other = families
+        .iter()
+        .position(|family| !family.eq_ignore_ascii_case(&current))
+        .unwrap();
+    let twenty_four = character_sizes()
+        .iter()
+        .position(|size| *size == "24")
+        .unwrap();
+    s.edit("24 points on Alpha", move |rt| {
+        rt.send(Message::StatusSize(twenty_four));
+    });
+    assert_eq!(size_of(&s).1, 24.0);
+    let run = |s: &Scenario, byte: usize| {
+        s.document().main_flow().paragraphs[0]
+            .format_at(byte)
+            .clone()
+    };
+    assert_eq!(run(&s, 2).font_size_points, Some(24.0));
+    assert_eq!(run(&s, 8).font_size_points, None, "beta is untouched");
+    // The selection moves on: the list shows the new text's size.
+    s.select_main((0, 6), (0, 10));
+    assert_ne!(size_of(&s).1, 24.0);
+    // A selection across both sizes takes the face for all of it.
+    s.select_main((0, 0), (0, 10));
+    let name = families[other].clone();
+    s.edit("a face on Alpha beta", move |rt| {
+        rt.send(Message::StatusFace(other));
+    });
+    assert_eq!(run(&s, 2).font_family.as_deref(), Some(name.as_str()));
+    assert_eq!(run(&s, 8).font_family.as_deref(), Some(name.as_str()));
+    assert_eq!(run(&s, 2).font_size_points, Some(24.0), "the size is kept");
+
+    // A caret: the choice is made for the typing that follows, no edit yet.
+    s.caret_to_end();
+    let twelve = character_sizes()
+        .iter()
+        .position(|size| *size == "12")
+        .unwrap();
+    let before = s.document().clone();
+    s.act("48 points at the caret", |rt| {
+        let forty_eight = character_sizes()
+            .iter()
+            .position(|size| *size == "48")
+            .unwrap();
+        rt.send(Message::StatusSize(forty_eight));
+    });
+    assert_eq!(*s.document(), before, "a caret choice edits nothing");
+    assert_eq!(size_of(&s).1, 48.0, "the list shows it");
+    s.type_text("Big");
+    assert_eq!(run(&s, 18).font_size_points, Some(48.0));
+    assert_eq!(
+        run(&s, 16).font_size_points,
+        None,
+        "the old text is not changed"
+    );
+    // Another choice at the caret in the new text, then typing again.
+    s.act("12 points at the caret", move |rt| {
+        rt.send(Message::StatusSize(twelve));
+    });
+    s.type_text("small");
+    assert_eq!(run(&s, 22).font_size_points, Some(12.0));
+    assert!(s.main_text().ends_with("Bigsmall"));
+
+    // An index past the list does nothing.
+    s.no_change("a size past the list", |rt| {
+        rt.send(Message::StatusSize(99));
+    });
+    s.no_change("a face past the list", |rt| {
+        rt.send(Message::StatusFace(100_000));
+    });
+    s.save_sam("FONTCARET.SAM");
+}
+
+fn character_sizes() -> &'static [&'static str] {
+    &crate::character_dialogs::SIZES
+}

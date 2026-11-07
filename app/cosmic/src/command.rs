@@ -162,6 +162,9 @@ pub enum CommandId {
     Print,
     PrintCurrentPage,
     PrintOptions,
+    /// File › Page Setup…: Ami Pro's File menu name for Modify Page Layout;
+    /// it opens the same rail panel as Format › Page Layout….
+    PageSetup,
     DocumentProperties,
     Quit,
     Undo,
@@ -221,7 +224,6 @@ pub enum CommandId {
     FullScreen,
     PageBreak,
     ColumnBreak,
-    SectionBreak,
     Frame,
     DrawFrame,
     Table,
@@ -439,7 +441,6 @@ pub enum CommandId {
     Preferences,
     NextDocument,
     PreviousDocument,
-    MoveDocumentToNewWindow,
     Help,
     KeyboardShortcuts,
     Compatibility,
@@ -932,6 +933,15 @@ pub const COMMANDS: &[CommandMetadata] = &[
         None,
         EnableRule::HasDocument,
     ),
+    // Ami Pro's File › Page Setup…: the Page Layout Properties panel, as
+    // Format › Page Layout… opens it.
+    page_surface_command(
+        CommandId::PageSetup,
+        "Page Setup…",
+        MenuRoot::File,
+        None,
+        EnableRule::HasDocument,
+    ),
     // Ami Pro's Print › Options…: the Print panel in the rail.
     page_surface_command(
         CommandId::PrintOptions,
@@ -1127,16 +1137,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
         Implemented
     ),
     page_surface_view(CommandId::Ruler, "Ruler", None),
-    command!(
-        StatusBar,
-        "Status Bar",
-        View,
-        None,
-        Future,
-        Future,
-        Future,
-        Future
-    ),
+    page_surface_view(CommandId::StatusBar, "Status Bar", None),
     page_surface_view(CommandId::ZoomIn, "Zoom In", character(CTRL, "+")),
     page_surface_view(CommandId::ZoomOut, "Zoom Out", character(CTRL, "-")),
     page_surface_view(CommandId::ActualSize, "Actual Size", character(CTRL, "0")),
@@ -1199,16 +1200,6 @@ pub const COMMANDS: &[CommandMetadata] = &[
         MenuRoot::Insert,
         named(CTRL_SHIFT, keyboard::key::Named::Enter),
         EnableRule::HasDocument,
-    ),
-    command!(
-        SectionBreak,
-        "Section Break…",
-        Insert,
-        None,
-        Future,
-        Future,
-        Future,
-        Future
     ),
     // Ami Pro's Frame › Create Frame… (the Create Frame dialog) and its
     // frame SmartIcon (drawing on the page): `UI_SPEC.md` §20, decision F1.
@@ -2113,16 +2104,6 @@ pub const COMMANDS: &[CommandMetadata] = &[
         Implemented
     ),
     command!(
-        MoveDocumentToNewWindow,
-        "Move Document to New Window",
-        Window,
-        None,
-        Future,
-        Future,
-        Future,
-        Future
-    ),
-    command!(
         Help,
         "AmiPro-Linux Help",
         Help,
@@ -2207,6 +2188,7 @@ const FILE_MENU: &[MenuSlot] = &[
     Item(C::Password),
     Divider,
     Folder("Export", EXPORT_MENU),
+    Item(C::PageSetup),
     Item(C::Print),
     Item(C::PrintCurrentPage),
     Item(C::PrintOptions),
@@ -2343,7 +2325,6 @@ const SHOW_MENU: &[MenuSlot] = &[
 const INSERT_MENU: &[MenuSlot] = &[
     Item(C::PageBreak),
     Item(C::ColumnBreak),
-    Item(C::SectionBreak),
     Divider,
     Item(C::Frame),
     Item(C::DrawFrame),
@@ -2658,8 +2639,6 @@ const WINDOW_MENU: &[MenuSlot] = &[
     Item(C::NextDocument),
     Item(C::PreviousDocument),
     Divider,
-    Item(C::MoveDocumentToNewWindow),
-    Divider,
     Documents,
 ];
 const HELP_MENU: &[MenuSlot] = &[
@@ -2769,6 +2748,7 @@ mod tests {
                 C::ExportText,
                 C::ExportMarkdown,
                 C::ExportFolder,
+                C::PageSetup,
                 C::Print,
                 C::PrintCurrentPage,
                 C::PrintOptions,
@@ -2867,7 +2847,6 @@ mod tests {
             [
                 C::PageBreak,
                 C::ColumnBreak,
-                C::SectionBreak,
                 C::Frame,
                 C::DrawFrame,
                 C::Table,
@@ -2962,11 +2941,7 @@ mod tests {
         );
         assert_eq!(
             command_order(MenuRoot::Window),
-            [
-                C::NextDocument,
-                C::PreviousDocument,
-                C::MoveDocumentToNewWindow,
-            ]
+            [C::NextDocument, C::PreviousDocument,]
         );
         assert_eq!(
             command_order(MenuRoot::Help),

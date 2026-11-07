@@ -53,7 +53,7 @@ pub(super) fn insert_image(s: &mut Scenario, path: &std::path::Path, link: bool)
 }
 
 /// The picture frames in the document, in the stack's order.
-fn picture_frames(s: &Scenario) -> Vec<FrameId> {
+pub(super) fn picture_frames(s: &Scenario) -> Vec<FrameId> {
     s.document()
         .frame_stack()
         .iter()
@@ -568,7 +568,7 @@ fn a_picture_in_an_empty_cell_saves_without_a_loss_list() {
 
 // ----- Drawings (§33) -----
 
-fn objects(s: &Scenario, frame: FrameId) -> Vec<amipro_pictures::sdw::Object> {
+pub(super) fn objects(s: &Scenario, frame: FrameId) -> Vec<amipro_pictures::sdw::Object> {
     drawing_of(s.document(), frame)
         .unwrap_or_else(|| s.fail("drawing", "the frame holds no drawing"))
         .objects

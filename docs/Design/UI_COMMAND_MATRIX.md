@@ -49,6 +49,7 @@ submenu may be a single specifically named disabled item rather than a generic
 | Export Folder… (File › Export ▸) | — | Hidden | Always: the Export Folder panel in the rail (From, To, format, Export, Stop, the report) | Yes, page surface (2026-10-20) | §30 (EX6) |
 | Print… | Ctrl+P | A button in the Print panel; offered in Customize Toolbar (its printer icon), not in the standard set | A document is open: the desktop's print dialog (portal), the chosen pages sent as a PDF | Yes, page surface (2026-10-20) | §29 (PO1) |
 | Print Current Page… | — | Hidden; a button in the Print panel | A document is open: the print dialog with the caret's page as its range | Yes, page surface (2026-10-20) | §29 (PX7) |
+| Page Setup… | — | Hidden | A document is open: opens the Page Layout Properties panel, the same handler as Format › Page Layout… (Ami Pro's File › Page Setup is its Modify Page Layout) | Yes, page surface (2026-11-07) | §18 |
 | Print Options… | — | Hidden | A document is open: the Print panel in the rail (Ami Pro's options; the PDF's additions); the pages show as they print | Yes, page surface (2026-10-20) | §29 (PO1, PO5) |
 | Print Envelope… | — | Hidden | A document is open: the Envelope panel in the rail (Ami Pro's sizes and Custom, the recipient from the selection or the first address, saved return addresses, feed and offsets, Print…, PDF…, New Document, Merge Envelopes) | Yes, page surface (2026-11-03) | §38 (MG8) |
 | Merge… | — | Hidden | A document is open: the Merge panel in the rail (data file: Open…, New Data File…, Edit records…; fields; preview; conditions; labels; Merge to: New Document, PDF…, Printer…, View & Print, Ami Pro File…; Start from); each change one undo step | Yes, page surface (2026-11-03) | §38 (MG1–MG11) |
@@ -56,8 +57,8 @@ submenu may be a single specifically named disabled item rather than a generic
 | Document Properties… | Alt+Enter | Hidden | A document is open: Document Properties in the rail (Ami Pro's Doc Info), each change one undo step | Yes, page surface (2026-10-20) | §28 (FL3) |
 | Quit | Ctrl+Q | Menu only | Application active; resolves every dirty tab safely | UI-1 I | UI-1 |
 
-File grouping: New/Open; Close; Save/Save As/Revert; Export/Print (Page Setup
-moved to Format › Page Layout…, decision L2, 2026-10-13);
+File grouping: New/Open; Close; Save/Save As/Revert; Export/Print (Page Setup… sits before Print
+and opens the same panel as Format › Page Layout…; decisions L2, 2026-10-13, and 2026-11-07);
 Properties; Quit. Recent Documents may be added between Open and Close only
 after privacy, missing-path, and duplicate-session behavior is defined.
 
@@ -99,7 +100,7 @@ bindings already work. This directly closes the memorized-shortcut defect.
 | Ruler | — | Hidden | Active document exists; checked while the ruler shows; saved with the toolbar's visibility | Yes, page surface (2026-10-17): the interactive ruler | §19 |
 | Show Power Fields | Alt+F9 | Menu only | Checked; the codes in red in place of the results, typed over as text and read back when off (since 2026-10-20 after the run); one undo step; off before a save | Yes, page surface (2026-10-20) | §28 (FL6) |
 | Field Shading | — | Menu only | Checked, on by default (settings); fields' shown text light grey on screen | Yes, page surface (2026-10-20) | §28 (FL6) |
-| Status Bar | — | Hidden | Always; checked; hiding must not conceal errors without another route | Always shown today | UI-2 optional toggle |
+| Status Bar | — | Hidden | Active document exists; checked while the bar shows; saved in the preferences (default shown); hidden, the bar still appears while the message is a failure, so no error is concealed | Yes, page surface (2026-11-07) | UI-2 optional toggle |
 | Zoom In | Ctrl++ | Right status control | Active document exists and below maximum zoom | No | UI-2/shared transform |
 | Zoom Out | Ctrl+- | Right status control | Active document exists and above minimum zoom | No | UI-2/shared transform |
 | Actual Size | Ctrl+0 | Zoom menu/status | Active document exists | No | UI-2/shared transform |
@@ -118,7 +119,6 @@ appears in the action bar; the status bar owns view and zoom.
 |---|---|---|---|---|---|
 | Page Break | Ctrl+Enter | Hidden | Caret in the main text; the break at the caret without splitting the paragraph, an empty paragraph after it at the end of the text (VM PB1, PB3). Caret in a table cell: the row starts the next page (Ami Pro's page break in a table, VM TP6), checked while the row has one, chosen again to take it away (§26, TP1) | Yes, page surface (2026-10-13; in a cell 2026-10-19) | §18, §26 |
 | Column Break | Ctrl+Shift+Enter | Hidden | Caret in the main text; the mark at the start of the caret's paragraph, once (VM CB1) | Yes, page surface (2026-10-13) | §18 |
-| Section Break… | — | Hidden | Editable insertion point and section model exists | No | P3 |
 | Frame… | — | Hidden | A document; the small Create Frame dialog (Width, Height, Down from top, In from left, from the last frame made; Create on the page in view, Draw on Page, Cancel; a frame off the paper refused in place); Ami Pro's default frame, selected, one undo step (VM FC1, FC5, FC9) | Yes, page surface (2026-10-17) | §20 (F1) |
 | Draw Frame | — | Standard (last) | A document; the next press on a page draws a frame (crosshair, dashed outline kept on the paper); a click, Esc, or a press outside every page ends drawing (VM FC2–FC4, FC10, FC11) | Yes, page surface (2026-10-17) | §20 (F1) |
 | Table… | Ctrl+F12 | Hidden | The caret in the main text outside a table, or one empty text frame selected: Insert Table's dialog, a table at the caret or in the frame, one undo step | Yes, page surface (2026-10-24) | §32 (TD1, TD2) |
@@ -231,7 +231,6 @@ approved.
 |---|---|---|---|---|---|
 | Next Document | Ctrl+Tab | Tabs | More than one tab | UI-1 I | UI-1 label/enabling |
 | Previous Document | Ctrl+Shift+Tab | Tabs | More than one tab | UI-1 I | UI-1 label/enabling |
-| Move Document to New Window | — | Hidden | Multi-window architecture exists | No | Future |
 | *Open document list* | mnemonic index only | Tabs/overflow | Dynamic checked list; selecting activates tab; show when at least one tab exists | UI-1 I | UI-1 |
 
 The original release document evidences Tile Windows and Cascade Windows, but

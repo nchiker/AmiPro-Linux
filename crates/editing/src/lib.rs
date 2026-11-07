@@ -191,6 +191,15 @@ pub enum Command {
         size: Option<f32>,
         colour: Option<Colour>,
     },
+    /// Changes only the face, size, or colour that is `Some`, keeping the
+    /// others of each run (the status bar's Face and Point Size lists).
+    SetFontParts {
+        start: TextPosition,
+        end: TextPosition,
+        family: Option<String>,
+        size: Option<f32>,
+        colour: Option<Colour>,
+    },
     /// Ami Pro's Text › Normal: removes the direct character formatting
     /// between two positions of one flow and the direct paragraph formatting
     /// (indents, spacing, alignment) of the paragraphs they touch, which
@@ -870,6 +879,32 @@ fn apply_command(document: &Document, command: &Command) -> Result<Applied, Edit
                 run.font_family.clone_from(family);
                 run.font_size_points = *size;
                 run.colour = *colour;
+            })
+        }
+        Command::SetFontParts {
+            start,
+            end,
+            family,
+            size,
+            colour,
+        } => {
+            if family
+                .as_ref()
+                .is_some_and(|family| family.trim().is_empty())
+                || size.is_some_and(|size| !size.is_finite() || size <= 0.0)
+            {
+                return Err("invalid font");
+            }
+            modify_characters(document, *start, *end, |_, run| {
+                if family.is_some() {
+                    run.font_family.clone_from(family);
+                }
+                if size.is_some() {
+                    run.font_size_points = *size;
+                }
+                if colour.is_some() {
+                    run.colour = *colour;
+                }
             })
         }
         Command::ClearDirectFormatting { start, end } => {
@@ -3164,6 +3199,30 @@ mod tests {
         assert!(font(&document, Some(" "), None, None).is_err());
         assert!(font(&document, None, Some(0.0), None).is_err());
         assert!(font(&document, None, None, Some(0x0100_0000)).is_err());
+    }
+
+    #[test]
+    fn font_parts_change_only_what_is_given() {
+        let document = Document::with_paragraphs([("some text here", StyleId(1))]);
+        let part = |document: &Document, family: Option<&str>, size| {
+            apply(
+                document,
+                &Command::SetFontParts {
+                    start: main_at(document, 0, 5),
+                    end: main_at(document, 0, 9),
+                    family: family.map(str::to_owned),
+                    size,
+                    colour: None,
+                },
+            )
+            .unwrap()
+            .document
+        };
+        let sized = part(&document, None, Some(18.0));
+        let both = part(&sized, Some("Arial"), None);
+        let format = &both.paragraphs()[0].runs[0].format;
+        assert_eq!(format.font_family.as_deref(), Some("Arial"));
+        assert_eq!(format.font_size_points, Some(18.0));
     }
 
     #[test]

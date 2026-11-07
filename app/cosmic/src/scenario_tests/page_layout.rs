@@ -222,7 +222,6 @@ fn breaks_and_inserted_layouts_make_pages_and_a_layout_can_be_changed_and_remove
     s.expect_status("already");
     s.no_change("a second Column Break in the same paragraph", |rt| {
         rt.send(Message::Command(CommandId::ColumnBreak));
-        assert!(rt.app.status.contains("already"), "{}", rt.app.status);
     });
     s.clear_expected_status();
 
@@ -629,6 +628,49 @@ fn a_page_number_in_the_header_is_redone_with_the_caret_after_it() {
     });
 }
 
+/// File › Page Setup… (Ami Pro's name for Modify Page Layout) opens the same
+/// Page Layout Properties panel as Format › Page Layout….
+#[test]
+fn file_page_setup_opens_the_page_layout_panel_like_format_page_layout() {
+    let mut s = Scenario::new_document("layout-page-setup");
+    type_paragraphs(&mut s, 2);
+    let main = s.main_flow();
+    s.caret(main, 1, 5, 1, false);
+    assert!(s.app().command_enabled(CommandId::PageSetup));
+    assert_eq!(
+        crate::command::metadata(CommandId::PageSetup).label,
+        "Page Setup…"
+    );
+
+    s.command_act(CommandId::PageSetup);
+    assert!(s.app().rail_open());
+    let setup = s
+        .app()
+        .page_layout_properties
+        .as_ref()
+        .map(|state| state.layout)
+        .unwrap_or_else(|| s.fail("Page Setup", "Page Layout Properties did not open"));
+    assert_eq!(setup, standard(&s).id);
+    s.act("close the panel", |rt| {
+        rt.send(Message::PageLayoutProperties(LayoutAction::Close));
+    });
+    assert!(s.app().page_layout_properties.is_none());
+    s.command_act(CommandId::PageLayout);
+    assert_eq!(
+        s.app()
+            .page_layout_properties
+            .as_ref()
+            .map(|state| state.layout),
+        Some(setup),
+        "Format > Page Layout opens the same panel"
+    );
+    // Opened again from File, the panel draws.
+    s.command_act(CommandId::PageSetup);
+    s.act("redraw with the panel", |rt| {
+        rt.redraw();
+    });
+}
+
 /// Format › Ruler ▸ and Page Layout Changes ▸ (`UI_SPEC.md` §39, CA.8): Ami
 /// Pro's Page › Ruler and Insert Page Layout commands from the menu, each
 /// one undo step, saved as SAM.
@@ -685,6 +727,116 @@ fn ruler_and_page_layout_changes_from_the_menu() {
     s.caret_to_end();
     s.command(CommandId::RevertPageLayout);
     s.save_sam("LAYOUTS.SAM");
+}
+
+/// The tab stops the page ruler shows at the caret now.
+fn ruler_tabs(s: &Scenario) -> Vec<amipro_document::TabStop> {
+    crate::ruler::Ruler::at(s.document(), s.app().pages.layout(), s.app().page_selection)
+        .unwrap_or_else(|| s.fail("ruler", "no ruler at the caret"))
+        .tabs
+}
+
+/// Page › Ruler ▸ Insert Ruler and Remove Ruler (`COMMANDS_NOTES.md` §7)
+/// as a user does them: a paragraph takes its own ruler, a tab set on it
+/// shows on the page ruler only there, the selection's paragraphs all take
+/// one, Remove gives the style's back, each one undo step, and the own rulers
+/// survive Save As SAM and a fresh window.
+#[test]
+fn inserted_rulers_belong_to_their_paragraphs_show_on_the_ruler_and_are_saved() {
+    let mut s = Scenario::new_document("layout-own-rulers");
+    s.clean_folder();
+    for index in 0..3 {
+        if index > 0 {
+            s.enter();
+        }
+        s.type_text(&format!("Paragraph {index} of the ruler test."));
+    }
+    s.act("zoom 100%", |rt| {
+        rt.send(Message::ZoomTo(100));
+        rt.redraw();
+        rt.redraw();
+    });
+    let own =
+        |s: &Scenario, paragraph: usize| s.document().paragraphs()[paragraph].format.tabs.clone();
+    assert!(own(&s, 0).is_none() && own(&s, 1).is_none() && own(&s, 2).is_none());
+    assert!(s.app().command_enabled(CommandId::InsertRuler));
+
+    // The first paragraph takes its own ruler (a click in its text first).
+    let text = s.rt.on_page(1_500.0, 1_560.0);
+    s.act("click in the first paragraph", |rt| {
+        rt.click(Button::Left, text);
+    });
+    assert_eq!(s.app().page_selection.focus.paragraph, 0);
+    s.command(CommandId::InsertRuler);
+    assert!(own(&s, 0).is_some() && own(&s, 1).is_none());
+
+    // A tab clicked on the ruler goes to that paragraph alone.
+    let at_ruler = s.rt.on_ruler(1_440.0 + 1_300.0, 10.0);
+    s.edit("click the ruler: a tab", |rt| {
+        rt.click(Button::Left, at_ruler);
+    });
+    let stops = own(&s, 0).expect("own ruler");
+    // (The stops in effect, Ami Pro's every-half-inch ones, became its own.)
+    let near = |stops: &[amipro_document::TabStop], at: i32| {
+        stops
+            .iter()
+            .any(|stop| (stop.position - at).abs() <= 15 && stop.position % 720 != 0)
+    };
+    assert!(near(&stops, 1_300), "{stops:?}");
+    assert_eq!(ruler_tabs(&s), stops, "the page ruler shows it");
+    s.select_main((1, 3), (1, 3));
+    assert!(
+        !near(&ruler_tabs(&s), 1_300),
+        "the second paragraph's ruler is the style's"
+    );
+    s.select_main((0, 3), (0, 3));
+    assert_eq!(ruler_tabs(&s), stops);
+
+    // Two paragraphs selected: both take their own ruler in one step.
+    s.select_main((1, 2), (2, 4));
+    s.command(CommandId::InsertRuler);
+    assert!(own(&s, 1).is_some() && own(&s, 2).is_some());
+    // The ruler on one of them gets its own tab, which the other lacks.
+    s.select_main((2, 3), (2, 3));
+    let second = s.rt.on_ruler(1_440.0 + 2_600.0, 10.0);
+    s.edit("click the ruler on the third paragraph", |rt| {
+        rt.click(Button::Left, second);
+    });
+    assert!(near(&own(&s, 2).unwrap(), 2_600));
+    assert!(!near(&own(&s, 1).unwrap(), 2_600));
+    assert!(!near(&own(&s, 2).unwrap(), 1_300));
+    assert_eq!(own(&s, 0).unwrap(), stops);
+
+    // Inserting again changes nothing.
+    s.no_change("Insert Ruler again on the third paragraph", |rt| {
+        rt.send(Message::Command(CommandId::InsertRuler));
+    });
+
+    // Remove Ruler on the middle paragraph; none to remove on the next press.
+    s.select_main((1, 3), (1, 3));
+    s.command(CommandId::RemoveRuler);
+    assert!(own(&s, 1).is_none());
+    s.no_change("Remove Ruler where there is none", |rt| {
+        rt.send(Message::Command(CommandId::RemoveRuler));
+    });
+
+    // Undo takes the removal back, step by step.
+    s.act("Undo the removal", |rt| {
+        rt.send(Message::Command(CommandId::Undo));
+    });
+    assert!(own(&s, 1).is_some());
+    s.act("Redo the removal", |rt| {
+        rt.send(Message::Command(CommandId::Redo));
+    });
+    assert!(own(&s, 1).is_none());
+
+    // Saved: the tab survives a fresh window; the removed one stays removed.
+    let path = s.save_sam("OWNRULERS.SAM");
+    let fresh = s.reopen(&path);
+    let own_fresh = |paragraph: usize| fresh.document().paragraphs()[paragraph].format.tabs.clone();
+    assert_eq!(own_fresh(0), own(&s, 0), "the first paragraph's tab");
+    assert_eq!(own_fresh(2), own(&s, 2), "the third paragraph's tab");
+    assert!(own_fresh(1).is_none(), "the removed ruler stays removed");
 }
 
 /// Format › Line Numbering… (`UI_SPEC.md`, CA.13): the numbers in the left

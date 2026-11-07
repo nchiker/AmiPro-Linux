@@ -1191,8 +1191,8 @@ Pro in the VM (`docs/LAYOUT_SETUP_PROGRESS.md`). Modules:
 `page_layout_properties.rs` (the panel), `page_dialogs.rs` (the two
 dialogs), `lengths.rs`; the rules are `amipro_editing::layout_setup`.
 
-- **Opening:** Format › Page Layout… (the File › Page Setup placeholder is
-  gone), a double-click in a page's left or right margin, and the
+- **Opening:** Format › Page Layout… and File › Page Setup… (Ami Pro's
+  name for the same command; one handler, 2026-11-07), a double-click in a page's left or right margin, and the
   right-click menu there, which puts Page Layout… first, above the text
   menu (§16). The panel and Style Properties replace each other in the
   rail; Frame Properties still comes first while a frame is selected.

@@ -1942,6 +1942,41 @@ impl DocumentSession {
     /// Sets the font over the page selection, or at a caret for the text
     /// typed next.
     #[cfg(feature = "page-surface")]
+    /// The status bar's Face or Point Size: only the part chosen changes, on
+    /// a selection or in the typing format at a caret.
+    fn apply_font_part(&mut self, choice: page_editing::FontChoice) {
+        if self.frame_selection.is_some() {
+            return;
+        }
+        let selection = self.page_selection;
+        if selection.is_caret() {
+            let font = &mut self.typing_format_mut().font;
+            let held = font.get_or_insert_with(page_editing::FontChoice::default);
+            if choice.family.is_some() {
+                held.family = choice.family;
+            }
+            if choice.size.is_some() {
+                held.size = choice.size;
+            }
+            if choice.colour.is_some() {
+                held.colour = choice.colour;
+            }
+            self.status = "Font for typing".into();
+            return;
+        }
+        let (start, end) = selection.ordered();
+        self.execute_page_command(&amipro_editing::Command::SetFontParts {
+            start,
+            end,
+            family: choice.family,
+            size: choice.size,
+            colour: choice.colour,
+        });
+        self.page_selection = page_editing::valid_selection(&self.document, selection);
+        self.sync_editor_to_page();
+        self.status = "Font applied".into();
+    }
+
     fn apply_font(&mut self, choice: page_editing::FontChoice) {
         if self.frame_selection.is_some() {
             return;
@@ -2402,6 +2437,9 @@ struct Preferences {
     toolbar_visible: bool,
     /// View › Ruler (`UI_SPEC.md` §19).
     ruler_visible: bool,
+    /// View › Status Bar: shown by default; hidden, it still appears while
+    /// the message is a failure, so an error is never concealed.
+    status_bar_visible: bool,
     /// Ami Pro's style-sheet path (Tools › User Setup › Paths): folders
     /// searched for a document's style sheet and listed by Use Another
     /// Style Sheet. A sheet chosen with Browse… adds its folder.
@@ -2528,6 +2566,7 @@ impl Default for Preferences {
             toolbar: chrome::standard_toolbar(),
             toolbar_visible: true,
             ruler_visible: true,
+            status_bar_visible: true,
             style_folders: Vec::new(),
             last_frame: None,
             frame_defaults: amipro_editing::frame_creation::FrameDefaults::AMI_PRO,
@@ -2618,6 +2657,9 @@ impl Settings {
             ruler_visible: config
                 .get("ruler_visible")
                 .unwrap_or(defaults.ruler_visible),
+            status_bar_visible: config
+                .get("status_bar_visible")
+                .unwrap_or(defaults.status_bar_visible),
             style_folders: config
                 .get::<Vec<String>>("style_folders")
                 .map_or(defaults.style_folders, |folders| {
@@ -2864,6 +2906,7 @@ impl Settings {
         transaction.set("toolbar", keys)?;
         transaction.set("toolbar_visible", preferences.toolbar_visible)?;
         transaction.set("ruler_visible", preferences.ruler_visible)?;
+        transaction.set("status_bar_visible", preferences.status_bar_visible)?;
         let folders: Vec<String> = preferences
             .style_folders
             .iter()
@@ -4335,7 +4378,17 @@ impl cosmic::Application for AmiProApp {
                     .into()
             }));
         }
-        rows.extend([document_row.height(Length::Fill).into(), status.into()]);
+        // View › Status Bar: hidden, the slot shrinks to nothing (it stays so
+        // the tree keeps its place); a failure message brings the bar back.
+        let status: Element<'_, Message> = if self.status_bar_shown() {
+            status.into()
+        } else {
+            widget::space()
+                .width(Length::Fill)
+                .height(Length::Shrink)
+                .into()
+        };
+        rows.extend([document_row.height(Length::Fill).into(), status]);
         widget::column::with_children(rows).into()
     }
 
@@ -6016,7 +6069,7 @@ impl AmiProApp {
             Message::StatusFace(index) => {
                 if let Some(family) = self.font_families.get(index).cloned() {
                     let session = &mut self.sessions[self.active_session];
-                    session.apply_font(page_editing::FontChoice {
+                    session.apply_font_part(page_editing::FontChoice {
                         family: Some(family),
                         size: None,
                         colour: None,
@@ -6030,7 +6083,7 @@ impl AmiProApp {
                     .and_then(|size| size.parse::<f32>().ok())
                 {
                     let session = &mut self.sessions[self.active_session];
-                    session.apply_font(page_editing::FontChoice {
+                    session.apply_font_part(page_editing::FontChoice {
                         family: None,
                         size: Some(size),
                         colour: None,
@@ -10187,6 +10240,7 @@ fn menu_check(app: &AmiProApp, command: CommandId) -> Option<bool> {
         CommandId::StylesPanel => Some(app.rail_open()),
         CommandId::ShowToolbar => Some(app.preferences.toolbar_visible),
         CommandId::Ruler => Some(app.preferences.ruler_visible),
+        CommandId::StatusBar => Some(app.preferences.status_bar_visible),
         CommandId::Bold => Some(app.character_state(CharacterAttribute::Bold) == ToggleState::On),
         CommandId::Italic => {
             Some(app.character_state(CharacterAttribute::Italic) == ToggleState::On)
@@ -11056,6 +11110,15 @@ impl AmiProApp {
         }
     }
 
+    /// Whether the status bar shows: View › Status Bar, and always while the
+    /// message reports a failure, so an error is never concealed.
+    fn status_bar_shown(&self) -> bool {
+        let message = self.status.as_str();
+        self.preferences.status_bar_visible
+            || message.contains("failed")
+            || message.contains("refused")
+    }
+
     fn command_enabled(&self, command: CommandId) -> bool {
         let metadata = command::metadata(command);
         if metadata.implementation != Implementation::Implemented {
@@ -11327,6 +11390,10 @@ impl AmiProApp {
                 self.preferences.ruler_visible = !self.preferences.ruler_visible;
             }
             #[cfg(feature = "page-surface")]
+            CommandId::StatusBar => {
+                self.preferences.status_bar_visible = !self.preferences.status_bar_visible;
+            }
+            #[cfg(feature = "page-surface")]
             CommandId::SpecialCharacter => self.special_character = true,
             CommandId::RevertToSaved => {
                 if self.saved_file().is_some() {
@@ -11397,7 +11464,7 @@ impl AmiProApp {
                 }
             }
             #[cfg(feature = "page-surface")]
-            CommandId::PageLayout => self.open_page_layout_properties(),
+            CommandId::PageLayout | CommandId::PageSetup => self.open_page_layout_properties(),
             #[cfg(feature = "page-surface")]
             CommandId::FastFormat => self.toggle_fast_format(),
             #[cfg(feature = "page-surface")]
@@ -17239,6 +17306,11 @@ mod tests {
             send_message(&mut app, Message::Command(CommandId::Ruler));
             let (_, preferences, _) = Settings::load(config());
             assert!(!preferences.ruler_visible);
+            // So is View › Status Bar (shown by default).
+            assert!(preferences.status_bar_visible);
+            send_message(&mut app, Message::Command(CommandId::StatusBar));
+            let (_, preferences, _) = Settings::load(config());
+            assert!(!preferences.status_bar_visible);
         }
 
         // Reset to Standard is saved too.

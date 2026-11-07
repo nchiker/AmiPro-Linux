@@ -154,3 +154,48 @@ fn view_show_marks_are_checked_drawn_and_kept_in_the_preferences_page() {
     assert!(!checked(&s, CommandId::ShowTabsReturns));
     s.save_sam("MARKS.SAM");
 }
+
+/// View › Status Bar (`UI_COMMAND_MATRIX.md`): shown by default, a check
+/// mark, hides and shows the bar through the message path; a failure brings
+/// a hidden bar back so no error is concealed.
+#[test]
+fn the_status_bar_is_hidden_and_shown_from_the_view_menu() {
+    let mut s = Scenario::new_document("views-status-bar");
+    s.type_text("Some text.");
+    assert!(s.app().status_bar_shown());
+    assert!(checked(&s, CommandId::StatusBar));
+    assert!(s.app().command_enabled(CommandId::StatusBar));
+
+    s.command_act(CommandId::StatusBar);
+    assert!(!s.app().status_bar_shown());
+    assert!(!s.app().preferences.status_bar_visible);
+    assert!(!checked(&s, CommandId::StatusBar));
+    // Typing and the view go on without it.
+    s.type_text(" More.");
+    s.act("redraw without the bar", |rt| {
+        rt.redraw();
+    });
+
+    // A failure message shows the bar again, whatever the preference.
+    s.expect_status("failed");
+    s.act("a failure is reported", |rt| {
+        rt.app.status = "Export failed: no space".into();
+        rt.redraw();
+    });
+    assert!(s.app().status_bar_shown());
+    assert!(
+        !checked(&s, CommandId::StatusBar),
+        "the preference is unchanged"
+    );
+    s.act("the message clears", |rt| {
+        rt.app.status = "Modified".into();
+    });
+    s.clear_expected_status();
+    assert!(!s.app().status_bar_shown());
+
+    s.command_act(CommandId::StatusBar);
+    assert!(s.app().status_bar_shown() && checked(&s, CommandId::StatusBar));
+    s.act("redraw with the bar", |rt| {
+        rt.redraw();
+    });
+}

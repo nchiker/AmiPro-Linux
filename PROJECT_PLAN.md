@@ -368,7 +368,7 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 
 ## Phase 6 — Quality and release
 
-- [ ] Performance, accessibility, crash recovery, compatibility matrix (large-document tests and fuzzing dropped by the user, 2026-11-07). Crash recovery is built (P6.3); remaining: large-document tests, fuzzing, the compatibility matrix; accessibility is blocked by the toolkit.
+- [ ] Performance, accessibility, crash recovery, compatibility matrix (large-document tests and fuzzing dropped by the user, 2026-11-07). Crash recovery is built (P6.3); remaining: the compatibility matrix; accessibility is blocked by the toolkit.
 - [ ] Produce COSMIC package and installation instructions; validate on user's machine. The repository is public (MPL-2.0, `LICENSE`, 2026-11-07) and release v0.1.0 is published.
   - P6.1 (2026-11-07): `tools/package-deb.sh` builds `dist/amipro-linux_<version>_amd64.deb`; `docs/INSTALL.md`. Package checked off-host (contents, ldd, lintian); the real install on the user's machine is pending.
   - P6.2 (2026-11-07): Help › Check for Updates… (`UI_SPEC.md` §43; `app/cosmic/src/updates*.rs`): GitHub Releases of the public repository, the `.deb` verified against `SHA256SUMS`, installed with `pkexec apt-get install -y` after a confirmation; optional once-a-day check at start (Preferences, off by default). `tools/release.sh` and `docs/RELEASING.md` prepare a release (nothing publishes by itself). Automated checks pass; physical check and the first real release pending.

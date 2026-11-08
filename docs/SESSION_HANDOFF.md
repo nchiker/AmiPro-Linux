@@ -22,7 +22,7 @@ sequencing. The previous handoff (runs B, C, D) is in `docs/HANDOFF_ARCHIVE.md`.
   `docs/research/FIRST_LINE_BOLD_NOTES.md`).
 - New scenario modules: `drawing`, `crash_recovery`, `update_check`.
 - Counts (2026-11-07, `AMIPRO_STYLES` unset): core 802 (+30 ignored), COSMIC
-  714 default, 128 text editor, 721 all features (85, 9, 85 ignored).
+  741 default, 128 text editor, 748 all features (85, 9, 85 ignored).
 - Docs brought up to date 2026-11-07 (CLAUDE.md, PROJECT_PLAN, PROJECT_STATUS,
   FEATURE_PARITY, INSTALL, UI_COMMAND_MATRIX, playbooks, UI_SPEC notes); the
   user-facing list of gaps is `docs/KNOWN_LIMITATIONS.md` (keep it current).
@@ -35,8 +35,8 @@ sequencing. The previous handoff (runs B, C, D) is in `docs/HANDOFF_ARCHIVE.md`.
    Paste Special, Image Processing, Charting and Chart from Table, Equations).
 3. Crash recovery: kill -9 the app with unsaved changes, restart, File >
    Recover Documents....
-4. Update check against a later release (v0.1.0 is the only release, so the
-   "newer version" path has not been seen on a real machine).
+4. Update check against a later release (v0.1.1 is published 2026-11-07; install it over v0.1.0 to see the
+   "newer version" path on a real machine).
 5. First line bold against the VM picture `flb_after.png`; the status bar's
    Face and Size lists after the SetFontParts fix.
 6. Markdown (open, insert, export, Save As), the Documents folder
@@ -47,7 +47,7 @@ sequencing. The previous handoff (runs B, C, D) is in `docs/HANDOFF_ARCHIVE.md`.
 ## Open items
 
 - Window > New View and the Vertical Ruler (CK11); Draft's frame markers
-  (CK10); no packaged Help (F1).
+  (CK10); F1 context for dialogs outside the rail.
 - Layout: FG3 (a word wider than a gap beside a frame) and FG5 (a Wrap around
   frame beside a column's first lines); `_FAX3`'s table height (FG5/FG6).
 - Accessibility nodes for page text: blocked by the pinned iced_winit.
@@ -65,9 +65,7 @@ sequencing. The previous handoff (runs B, C, D) is in `docs/HANDOFF_ARCHIVE.md`.
 
 1. Phase 6: the compatibility matrix is done (`docs/COMPATIBILITY.md`, 2026-11-07; keep it and `docs/KNOWN_LIMITATIONS.md` current). Fuzzing and large-document tests were dropped by the user on 2026-11-07 (they open their large documents in normal use). The live pass on 2026-11-07 (private Xwayland, isolated config; screenshots outside Git) passed for: Page Setup, Status Bar (persisted), crash recovery (kill -9, recover, Esc, Discard, Discard all, two instances, never-saved, recovery off), 1st line bold against `flb_after.png`, Face then Size and Size then Face, Insert Ruler, Fast Format, Check for Updates (up to date), Equations, Chart from Table, Charting, Image Processing, Paste Special, Links and Convert Object. Not covered live: IME, the update install path (needs a later release), the real file portals, chart Perspective/Expanded pie, Colour set, Axis.
 2. CK10 and CK11 (Draft frame markers; New View and the Vertical Ruler).
-3. Help: mine Ami Pro's `.hlp` files (`amipro.hlp` first) as a read-only text
-   dump for a behaviour oracle and a topic map for F1 Help; write the content
-   in our own words.
+3. Help is built (about 160 topics, `docs/HELP_AUTHORING.md`); read topics as you use the app and report wrong details.
 4. Accessibility stays blocked until the toolkit forwards widget trees.
 
 Gate note: run the test steps with `AMIPRO_STYLES` unset; set it only for

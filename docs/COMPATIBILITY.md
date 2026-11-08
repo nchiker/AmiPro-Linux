@@ -114,7 +114,7 @@ Partial; Decided against; Deferred; Not planned.
   (it does not take over as default handler), and the icon; it contains no Ami
   Pro files. The package was checked off the target machine (contents,
   libraries, lintian); the install on the user's machine is pending.
-- Licence: MPL-2.0; the repository is public. Release v0.1.0 is published.
+- Licence: MPL-2.0; the repository is public. Releases v0.1.0 and v0.1.1 are published.
 - Updates: Help › Check for Updates reads GitHub Releases, verifies the
   package against `SHA256SUMS`, and installs after confirmation. The "up to
   date" result was seen live; the "newer version" path needs a later release

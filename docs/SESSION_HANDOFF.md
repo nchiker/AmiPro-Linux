@@ -35,8 +35,7 @@ sequencing. The previous handoff (runs B, C, D) is in `docs/HANDOFF_ARCHIVE.md`.
    Paste Special, Image Processing, Charting and Chart from Table, Equations).
 3. Crash recovery: kill -9 the app with unsaved changes, restart, File >
    Recover Documents....
-4. Update check against a later release (v0.1.1 is published 2026-11-07; install it over v0.1.0 to see the
-   "newer version" path on a real machine).
+4. Update check against a later release: DONE 2026-11-07 (v0.1.0 offered and installed v0.1.1 on the user's machine).
 5. First line bold against the VM picture `flb_after.png`; the status bar's
    Face and Size lists after the SetFontParts fix.
 6. Markdown (open, insert, export, Save As), the Documents folder

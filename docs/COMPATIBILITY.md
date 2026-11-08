@@ -103,7 +103,7 @@ Partial; Decided against; Deferred; Not planned.
 | Window › Tile and Cascade | Decided against | Tabs replace them | |
 | Window › New View and the Vertical Ruler | Not built yet | CK11 | |
 | File Management, Notes/FX, mail, DDE | Not planned | | |
-| Help (F1) | Not built yet | | Keyboard Shortcuts, Compatibility and Fidelity, Check for Updates, and About exist |
+| Help (F1, Contents, Search) | Built, awaiting physical check | `UI_SPEC.md` §45; scenario `help` | Own text in a starter set of topics; commands without a topic are listed in the tests. Keyboard Shortcuts, Compatibility and Fidelity, Check for Updates, and About exist |
 
 ## 4. Platform
 

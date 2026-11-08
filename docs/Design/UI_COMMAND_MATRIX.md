@@ -242,7 +242,9 @@ They are recorded in the comparison rather than presented as inert commands.
 
 | Command | Shortcut | Action bar | Enabled when / behavior | Current | Milestone |
 |---|---|---|---|---|---|
-| AmiPro-Linux Help | F1 | Hidden | Packaged/current help exists | No (not built; Ami Pro's help files are the planned source) | P2 |
+| Help | F1 | Hidden | Always; opens the Help panel in the rail at the topic for the context (the open panel or drawer, the selected frame's kind, the find bar, a table, Outline mode), or at the contents (`UI_SPEC.md` §45) | Yes, implemented (P6.4, 2026-11-07) | P6 |
+| Help Contents (Help) | — | Hidden | Always; opens the Help panel at the contents, the topics by area | Yes, implemented (P6.4) | P6 |
+| Search Help… (Help) | — | Hidden | Always; opens the Help panel with the search box focused; results rank title, keywords, then text | Yes, implemented (P6.4) | P6 |
 | Keyboard Shortcuts | — | Hidden | Generated from the authoritative command registry | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | UI-1/P2 |
 | Compatibility and Fidelity | — | Hidden | Report UI exists; explains SAM/STY protection and unsupported content | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 | About AmiPro-Linux | — | Hidden | Always; native COSMIC About dialog | UI-1 I | UI-1 |

@@ -43,6 +43,7 @@ mod fields;
 mod files;
 mod find;
 mod frames;
+mod help;
 mod lists;
 mod markdown;
 mod master;

@@ -441,7 +441,12 @@ pub enum CommandId {
     Preferences,
     NextDocument,
     PreviousDocument,
+    /// Help › Help (F1): the topic for where the user is (P6.4).
     Help,
+    /// Help › Help Contents: the topics by area.
+    HelpContents,
+    /// Help › Search Help…: the search box of the Help panel.
+    HelpSearch,
     KeyboardShortcuts,
     Compatibility,
     About,
@@ -2103,15 +2108,26 @@ pub const COMMANDS: &[CommandMetadata] = &[
         TabStrip,
         Implemented
     ),
-    command!(
-        Help,
-        "AmiPro-Linux Help",
-        Help,
+    page_surface_command(
+        CommandId::Help,
+        "Help",
+        MenuRoot::Help,
         named(NONE, keyboard::key::Named::F1),
-        Future,
-        Future,
-        Future,
-        Future
+        EnableRule::Always,
+    ),
+    page_surface_command(
+        CommandId::HelpContents,
+        "Help Contents",
+        MenuRoot::Help,
+        None,
+        EnableRule::Always,
+    ),
+    page_surface_command(
+        CommandId::HelpSearch,
+        "Search Help…",
+        MenuRoot::Help,
+        None,
+        EnableRule::Always,
     ),
     command!(
         KeyboardShortcuts,
@@ -2643,6 +2659,9 @@ const WINDOW_MENU: &[MenuSlot] = &[
 ];
 const HELP_MENU: &[MenuSlot] = &[
     Item(C::Help),
+    Item(C::HelpContents),
+    Item(C::HelpSearch),
+    Divider,
     Item(C::KeyboardShortcuts),
     Item(C::Compatibility),
     Divider,
@@ -2947,6 +2966,8 @@ mod tests {
             command_order(MenuRoot::Help),
             [
                 C::Help,
+                C::HelpContents,
+                C::HelpSearch,
                 C::KeyboardShortcuts,
                 C::Compatibility,
                 C::CheckForUpdates,

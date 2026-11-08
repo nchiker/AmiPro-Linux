@@ -25,8 +25,9 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 - Window › New View (a second view of one document) and the Vertical Ruler.
 - Draft mode does not draw frame markers.
-- A packaged Help (F1 does nothing yet). Help has Keyboard Shortcuts,
-  Compatibility and Fidelity, Check for Updates, and About.
+- Help covers the main areas in a starter set of topics (F1, Help
+  Contents, Search Help…); not every command has its own topic yet, and
+  dialogs that are not rail panels have no F1 context.
 - Some picture import filters: CGM, HPGL, DrawPerfect, Freelance, PIC,
   AutoCAD, EPS, WPG. BMP, WMF, EMF, PNG, JPEG, GIF, SVG, and Ami Pro's
   drawings are read; TIFF and PCX are converted when imported.

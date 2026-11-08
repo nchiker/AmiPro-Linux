@@ -5781,3 +5781,25 @@ until it is saved or closed. The suffix goes when the document is saved.
 *Not done:* recovering a document's password, undo history, or scroll position;
 a recovery of the Merge or Master set windows (their documents are ordinary
 tabs).
+
+## 45. Help: F1, Contents, Search (P6.4) — own text, written 2026-11-07
+
+*Rule.* The program's Help is original text, written for this program from its own documents and code. Ami Pro's help files are a source of facts about Ami Pro's behaviour, kept outside Git, and are never copied (`docs/HELP_AUTHORING.md`).
+
+*Where.* Help › Help (F1), Help › Help Contents, and Help › Search Help… open one rail panel, "Help" (`RailPanel::Help`, single-panel rule, `rail_panels.rs`); Esc and the X close it. The panel is the tab's; where the reader is (the page, the query, Back and Forward) belongs to the program (`HelpState`), so the panel reopens where it was left. The rest of the Help menu is unchanged: Keyboard Shortcuts, Compatibility and Fidelity, Check for Updates…, About.
+
+*Content.* Markdown topic files in `app/cosmic/help/<area>/<topic>.md`, each with a small front matter (`id`, `title`, `area`, `keywords`, `see_also`, `context`), embedded at build time (`build.rs` lists the files; `src/help.rs` includes them). Nothing is read from disk or the network at run time. The reader supports `##` and `###` headings, paragraphs, lists, fenced code, bold, italic, code, and `[label](topic-id)` links. Areas, in order: Getting started, Writing and layout, Tables, pictures, and drawings, Files and output, Reference.
+
+*The panel.* From the top: the title and the X; Back and Forward (greyed when there is nowhere to go) and Contents; a search box. Below, one of:
+
+- *Contents:* each area's heading, then its topics (title as a link, the first sentence under it).
+- *Search results:* every word of the query must be found in the topic's title, keywords, area, or text, case ignored; a word in the title ranks above one in the keywords, above one in the text; a query of the whole title ranks first. "N topics for “query”", each result with its area and first sentence. An empty query shows the contents; no match says so.
+- *A topic:* the area, the title, the body (links in the accent colour, underlined), and a "See also" list.
+
+Typing a query keeps one Back step (the page left). Following a link, a result, or a See also entry opens that topic and scrolls it to the top.
+
+*F1.* Help › Help opens the topic for where the user is, taking the first of these that has a topic: the shortcuts or compatibility drawer; Draw mode; the open rail panel (`panel:<Name>`); for a selected frame, its kind (a picture: Pictures; a table: Tables; text: Pages, frames, and layouts); the find bar; the caret in a table; Outline mode. If none has a topic, the contents. Inside Help, F1 opens "Using Help". Each topic names its contexts in its front matter as `command:<CommandId>` or `panel:<RailPanel>`; one context belongs to one topic.
+
+*Coverage rule (test).* Every implemented command with a menu entry has a topic that names it, or is on the exemption list in `help_panel.rs`; the list shrinks as content grows. Every topic parses, ids are unique, every link and See also resolves, and every context names a real command or panel.
+
+*Not done:* Help on dialogs that are not rail panels (they have no context yet), a table of contents inside a long topic, images in topics, printing a topic, a language other than English.

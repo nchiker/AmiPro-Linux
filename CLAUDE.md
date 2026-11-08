@@ -19,6 +19,7 @@
 - P6.3 crash recovery (`recovery.rs`, `recovery_commands.rs`, `recovery_panel.rs`; `UI_SPEC.md` §44): timed copies of unsaved documents, File › Recover Documents…; automated checks pass, physical check (kill -9) pending.
 - The repository is public (MPL-2.0 `LICENSE`, fresh one-commit history, 2026-11-07); release v0.1.0 is published. Also built since run D: File › Page Setup… (opens Page Layout), View › Status Bar toggle, First line bold (style attribute, bit 4096 of `[fnt]`), the status bar Face/Size fix; Fast Format, Face/Size lists, inserted rulers and Line Numbering are built. Phase 6 left: fuzzing, large-document tests, the compatibility matrix; `docs/KNOWN_LIMITATIONS.md` is the user-facing list and must be kept current.
 - Save writes over a `.SAM` after the loss check, keeping `NAME.SAM.bak` the first time; imports and STY files are never written over. A run of typing undoes as one step (SU4: `TypingRun` in `main.rs`, `History::changes`).
+- Help (P6.4, `UI_SPEC.md` §45): own Markdown topics in `app/cosmic/help/<area>/<topic>.md`, embedded by `build.rs`; `help.rs` (parse, search, context, history), `help_panel.rs` (rail panel, F1 contexts, the coverage test and its exemption list), `docs/HELP_AUTHORING.md` (original wording only). A new panel or menu command needs a topic context or a line in the exemption list.
 - Every run adds its area's scenarios to `app/cosmic/src/scenario_tests/` (one module per area, one checker after every step); they pass before the user's physical check.
 
 ## Repository layout
@@ -50,6 +51,7 @@ No top-level `src/`. A dependency-free core Cargo workspace (edition 2024) plus 
 - Objects: `equation_*.rs`, `chart_*.rs`, `paste_special.rs`, `rail_panels.rs`.
 - Fields, notes, contents: `field_commands.rs`, `fields_panel.rs`, `document_properties.rs`, `clock.rs`, `reference_*.rs`, `references_panel.rs`, `contents_*.rs`, `glossary_*.rs`.
 - Find and proofing: `find_bar.rs`, `find_set.rs`, `spelling.rs`, `grammar.rs`, `proofing_*.rs`.
+- Help: `help.rs`, `help_panel.rs`, `help_drawers.rs`; topics in `app/cosmic/help/`.
 - Output and exchange: `pdf.rs`, `pdf_pictures.rs`, `print.rs`, `print_portal.rs`, `print_panel.rs`, `export*.rs`, `import*.rs`.
 - Master and merge: `master*.rs`, `merge*.rs`, `data_file.rs`, `envelope_panel.rs`.
 - Tests, prototypes: `page_surface_app_tests.rs` (`Runtime` harness), `scenario_tests/`, `layout_comparison.rs`, `document_highlighter.rs`, `rich_*.rs` (not default).

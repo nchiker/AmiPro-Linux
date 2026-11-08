@@ -38,6 +38,7 @@ pub(crate) fn page_app(document: Document) -> AmiProApp {
         preferences: Preferences::default(),
         settings: None,
         updates: crate::updates_panel::UpdatesState::default(),
+        help: crate::help_panel::HelpState::default(),
         update_backend: std::sync::Arc::new(crate::updates::OfflineBackend),
         recovery: crate::recovery_panel::RecoveryState::default(),
         toolbar_editor: None,
@@ -1198,6 +1199,22 @@ fn render_window(
     maximized: bool,
 ) -> Vec<u8> {
     render_window_after(app, size, theme, maximized, &[])
+}
+
+/// The window at 1280 × 800 as a PPM file, in the light or dark theme (for
+/// the screenshot tests that read the result).
+pub(crate) fn write_window_ppm(app: &AmiProApp, path: &std::path::Path, dark: bool) {
+    let theme = if dark {
+        cosmic::Theme::dark()
+    } else {
+        cosmic::Theme::light()
+    };
+    let size = (1_280, 800);
+    let rgb = render_window(app, size, &theme, false);
+    let mut ppm = format!("P6\n{} {}\n255\n", size.0, size.1).into_bytes();
+    ppm.extend(rgb);
+    std::fs::write(path, ppm).unwrap();
+    eprintln!("wrote {}", path.display());
 }
 
 /// [`render_window`] after `events` reach the window's widgets, each with

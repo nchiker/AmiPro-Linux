@@ -72,7 +72,11 @@ mod glossary_commands;
 mod glossary_panel;
 #[cfg(feature = "page-surface")]
 mod grammar;
+#[cfg(feature = "page-surface")]
+mod help;
 mod help_drawers;
+#[cfg(feature = "page-surface")]
+mod help_panel;
 mod import;
 #[cfg(feature = "page-surface")]
 mod import_folder;
@@ -781,6 +785,9 @@ struct DocumentSession {
     /// File › Recover Documents… in the rail (P6.3), when it is open.
     #[cfg(feature = "page-surface")]
     recovery_panel: Option<recovery_panel::RecoveryPanel>,
+    /// Help in the rail (P6.4), when it is open.
+    #[cfg(feature = "page-surface")]
+    help_panel: Option<help_panel::HelpPanel>,
     /// Opened from a recovery copy and not saved since: the tab says so.
     #[cfg(feature = "page-surface")]
     recovered: bool,
@@ -1081,6 +1088,8 @@ impl DocumentSession {
             updates_panel: None,
             #[cfg(feature = "page-surface")]
             recovery_panel: None,
+            #[cfg(feature = "page-surface")]
+            help_panel: None,
             #[cfg(feature = "page-surface")]
             recovered: false,
             #[cfg(feature = "page-surface")]
@@ -3131,6 +3140,9 @@ struct AmiProApp {
     /// File › Recover Documents… and the autosave behind it (P6.3).
     #[cfg(feature = "page-surface")]
     recovery: recovery_panel::RecoveryState,
+    /// Help (P6.4): where the reader is, and Back and Forward.
+    #[cfg(feature = "page-surface")]
+    help: help_panel::HelpState,
     /// Tools › Customize Toolbar…, while it is open.
     toolbar_editor: Option<ToolbarEditor>,
     /// Tools › Preferences…, while it is open (CM6).
@@ -3567,6 +3579,9 @@ enum Message {
     /// The Recover documents panel and the autosave (P6.3).
     #[cfg(feature = "page-surface")]
     Recovery(recovery_panel::RecoveryAction),
+    /// The Help panel in the rail (P6.4).
+    #[cfg(feature = "page-surface")]
+    HelpPanel(help_panel::PanelAction),
     /// The Paste Special panel in the rail (DO.4).
     #[cfg(feature = "page-surface")]
     PasteSpecial(paste_special::PasteSpecialAction),
@@ -3802,6 +3817,8 @@ impl cosmic::Application for AmiProApp {
             settings,
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::RealBackend),
             #[cfg(feature = "page-surface")]
@@ -4249,6 +4266,7 @@ impl cosmic::Application for AmiProApp {
                 )
             }
             RailPanel::Recovery => (recovery_panel::panel(&self.recovery), recovery_panel::WIDTH),
+            RailPanel::Help => (help_panel::panel(&self.help), help_panel::WIDTH),
             RailPanel::Updates => (
                 updates_panel::panel(&self.updates, &updates::installed_version().to_string()),
                 updates_panel::WIDTH,
@@ -5130,6 +5148,11 @@ impl AmiProApp {
             && self.find.as_ref().is_none_or(|bar| bar.focused.is_none())
         {
             return self.update_recovery(recovery_panel::RecoveryAction::Close);
+        }
+        // Esc closes the Help panel.
+        #[cfg(feature = "page-surface")]
+        if self.help_panel.is_some() && self.find.as_ref().is_none_or(|bar| bar.focused.is_none()) {
+            return self.update_help(help_panel::PanelAction::Close);
         }
         // Esc closes the Updates panel (a transfer in flight finishes and
         // is dropped).
@@ -6150,6 +6173,8 @@ impl AmiProApp {
             Message::Updates(action) => return self.update_updates(action),
             #[cfg(feature = "page-surface")]
             Message::Recovery(action) => return self.update_recovery(action),
+            #[cfg(feature = "page-surface")]
+            Message::HelpPanel(action) => return self.update_help(action),
             #[cfg(feature = "page-surface")]
             Message::PasteSpecial(action) => return self.update_paste_special(action),
             #[cfg(feature = "page-surface")]
@@ -11554,6 +11579,12 @@ impl AmiProApp {
             #[cfg(feature = "page-surface")]
             CommandId::RecoverDocuments => self.open_recovery(),
             #[cfg(feature = "page-surface")]
+            CommandId::Help => return self.open_help_for_context(),
+            #[cfg(feature = "page-surface")]
+            CommandId::HelpContents => return self.open_help(help::Page::Contents, false),
+            #[cfg(feature = "page-surface")]
+            CommandId::HelpSearch => return self.open_help(help::Page::Search, true),
+            #[cfg(feature = "page-surface")]
             CommandId::Charting => return self.open_charting(),
             #[cfg(feature = "page-surface")]
             CommandId::Equations => return self.open_equations(),
@@ -12074,6 +12105,9 @@ impl AmiProApp {
             CommandId::FullScreen => return self.set_clean_screen(!self.clean_screen),
             #[cfg(feature = "page-surface")]
             CommandId::ContinuousPages => self.facing = false,
+            // Every command is handled with the page surface; the text
+            // editor leaves the Future ones.
+            #[cfg(not(feature = "page-surface"))]
             _ => return Task::none(),
         }
         self.update_title()
@@ -16130,6 +16164,8 @@ mod tests {
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
+            #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
             #[cfg(feature = "page-surface")]
             recovery: recovery_panel::RecoveryState::default(),
@@ -18709,6 +18745,8 @@ mod tests {
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
+            #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
             #[cfg(feature = "page-surface")]
             recovery: recovery_panel::RecoveryState::default(),
@@ -18819,6 +18857,8 @@ mod tests {
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
             #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
+            #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
             #[cfg(feature = "page-surface")]
             recovery: recovery_panel::RecoveryState::default(),
@@ -18919,6 +18959,8 @@ mod tests {
             settings: None,
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
             #[cfg(feature = "page-surface")]
@@ -19042,6 +19084,8 @@ mod tests {
             settings: None,
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
             #[cfg(feature = "page-surface")]
@@ -19209,6 +19253,8 @@ mod tests {
             settings: None,
             #[cfg(feature = "page-surface")]
             updates: updates_panel::UpdatesState::default(),
+            #[cfg(feature = "page-surface")]
+            help: help_panel::HelpState::default(),
             #[cfg(feature = "page-surface")]
             update_backend: Arc::new(updates::OfflineBackend),
             #[cfg(feature = "page-surface")]

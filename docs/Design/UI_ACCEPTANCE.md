@@ -1484,6 +1484,7 @@ Physical checklist, ranked (about fifteen minutes):
 | Master documents (§10, `UI_SPEC.md` §37) | AUTOMATED PASS; VM PASS (MD2, MD3 reproduced; twins AMS, AMA–AMC) / PHYSICAL PASS | 2026-11-03, `docs/MASTER_PROGRESS.md` | None |
 | Run A commands and views (§10, `UI_SPEC.md` §39) | AUTOMATED PASS; VM PASS (New… for nine sheets; line numbering LN1–LN20 and twins LNT1, LNT2; passwords PWA–PWEMP byte for byte and twins PWT1, PWT2; twin CAT1) / PHYSICAL PASS (CA.1–CA.12, then line numbering, passwords, and Move Up/Down: the user, 2026-11-05, "all test passed") | 2026-11-05, `docs/COMMANDS_PROGRESS.md` | New View, Vertical Ruler, Draft's frame markers not built (CK10, CK11) |
 | Table data (§10, `UI_SPEC.md` §41) | AUTOMATED PASS; VM PASS (engine and storage; twins ATD1–ATD5) / PHYSICAL PENDING | 2026-11-06, `docs/TABLE_DATA_PROGRESS.md` | Physical checklist above |
+| Help (`UI_SPEC.md` §45, P6.4) | AUTOMATED PASS / PHYSICAL PENDING | 2026-11-07 | Physical checklist "Help" below |
 | Updates (`UI_SPEC.md` §43, P6.2) | AUTOMATED PASS / PHYSICAL PENDING | 2026-11-07 | Physical checklist above; needs a published release |
 | Crash recovery (`UI_SPEC.md` §44, P6.3) | AUTOMATED PASS / PHYSICAL PENDING | 2026-11-07 | Physical checklist above |
 | Objects (§10, `UI_SPEC.md` §42) | AUTOMATED PASS; VM PASS (twins CHT1, EQT2, the adjusted `.tgf`, an OLE round trip) / PHYSICAL PENDING | 2026-11-07, `docs/OBJECTS_PROGRESS.md` | Physical checklist above |
@@ -1503,3 +1504,15 @@ breaks it ("quickly," ends the first paragraph's first line, "and" wraps),
 the later lines are regular, the one-line paragraph is wholly bold; Format ›
 Styles › Modify Style shows the 1st line bold box after Caps, checking it
 unchecks Bold and the reverse, each change is live and one Undo step.
+
+## Help (P6.4, 2026-11-07): physical checklist
+
+Automated (core search and history, F1 contexts, the message path, the scenario `help`, every topic built in the window, screenshots light and dark read): green. PENDING physical check, about five minutes, on the desktop:
+
+- [ ] F1 in a plain document opens the rail's Help at the contents; the rail is not too narrow, links are underlined in the accent colour and readable in light and dark themes.
+- [ ] Help › Search Help… puts the cursor in the box; typing "table" lists Tables first; Enter is not needed; the clear button empties the box and shows the contents.
+- [ ] A link in a topic opens that topic at its top; Back and Forward retrace; Contents returns to the list.
+- [ ] F1 with the caret in a table, with a picture frame selected, with the Find bar open, and with Charting open each opens its own topic.
+- [ ] Esc closes the panel; reopening shows the topic left; opening another rail panel replaces Help.
+- [ ] A long topic scrolls with the wheel; text wraps at the panel's width; a long window title does not push the buttons out.
+- [ ] Nothing in the topics reads wrongly for the program as it is (report any topic that does).

@@ -42,7 +42,8 @@ fn index(panel: RailPanel) -> usize {
         RailPanel::Equation => 24,
         RailPanel::Updates => 25,
         RailPanel::Recovery => 26,
-        RailPanel::Styles => 27,
+        RailPanel::Help => 27,
+        RailPanel::Styles => 28,
     }
 }
 
@@ -77,6 +78,7 @@ fn open_command(panel: RailPanel) -> Option<CommandId> {
         RailPanel::Equation => CommandId::Equations,
         RailPanel::Updates => CommandId::CheckForUpdates,
         RailPanel::Recovery => CommandId::RecoverDocuments,
+        RailPanel::Help => CommandId::HelpContents,
     })
 }
 
@@ -137,6 +139,7 @@ fn close(app: &mut AmiProApp, panel: RailPanel) {
         RailPanel::Equation => Message::Equation(crate::equation_panel::EquationAction::Close),
         RailPanel::Updates => Message::Updates(crate::updates_panel::UpdatesAction::Close),
         RailPanel::Recovery => Message::Recovery(crate::recovery_panel::RecoveryAction::Close),
+        RailPanel::Help => Message::HelpPanel(crate::help_panel::PanelAction::Close),
     };
     send(app, message);
 }
@@ -185,7 +188,7 @@ fn the_panel_opened_last_is_the_only_one_that_shows() {
         .into_iter()
         .filter(|panel| open_command(*panel).is_some() || *panel == RailPanel::ImportReport)
         .collect();
-    assert_eq!(panels.len(), 25);
+    assert_eq!(panels.len(), 26);
     for first in &panels {
         for second in &panels {
             if first == second {

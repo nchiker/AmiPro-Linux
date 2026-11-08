@@ -3,8 +3,8 @@ id: merge
 title: Merge, labels, and envelopes
 area: files
 keywords: merge, mail merge, data file, labels, envelope, records, fields, conditions, csv
-see_also: fields, printing-pdf, tables
-context: command:Merge, command:MergeField, command:PrintEnvelope, panel:Merge, panel:Envelope
+see_also: envelopes, merge-messages, fields, printing-pdf, tables
+context: command:Merge, command:MergeField, panel:Merge
 ---
 Merging fills a form document with records from a data file.
 

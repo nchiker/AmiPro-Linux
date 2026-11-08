@@ -41,12 +41,7 @@ pub const DATE_KINDS: [&str; 5] = [
 /// the name, what choosing it puts in the code, a syntax line in our words,
 /// and whether the app works it out (FL1).
 pub const POWER_FIELDS: [(&str, &str, &str, bool); 41] = [
-    (
-        "Bookmark",
-        "",
-        "A bookmark's name: its text (bookmarks come later)",
-        false,
-    ),
+    ("Bookmark", "", "A bookmark's name: its text", false),
     (
         "Button",
         "Button \"Text\" ",
@@ -146,7 +141,7 @@ pub const POWER_FIELDS: [(&str, &str, &str, bool); 41] = [
     (
         "MergeField",
         "MergeField ",
-        "MergeField name: a merge value (merge comes later)",
+        "MergeField name: a merge value",
         true,
     ),
     (
@@ -170,7 +165,7 @@ pub const POWER_FIELDS: [(&str, &str, &str, bool); 41] = [
     (
         "NextRec",
         "NextRec",
-        "NextRec: the next merge record (merge comes later)",
+        "NextRec: the next merge record",
         false,
     ),
     (
@@ -193,12 +188,7 @@ pub const POWER_FIELDS: [(&str, &str, &str, bool); 41] = [
         "NumWords: the words in the document",
         true,
     ),
-    (
-        "PageRef",
-        "PageRef ",
-        "PageRef bookmark: its page (bookmarks come later)",
-        false,
-    ),
+    ("PageRef", "PageRef ", "PageRef bookmark: its page", false),
     (
         "PrintEscape",
         "PrintEscape \"\"",
@@ -229,12 +219,7 @@ pub const POWER_FIELDS: [(&str, &str, &str, bool); 41] = [
         "Set name value: a variable (no result)",
         true,
     ),
-    (
-        "Skip",
-        "Skip",
-        "Skip: skips a merge record (merge comes later)",
-        false,
-    ),
+    ("Skip", "Skip", "Skip: skips a merge record", false),
     (
         "StrCat$",
         "StrCat$(\"\",\"\")",

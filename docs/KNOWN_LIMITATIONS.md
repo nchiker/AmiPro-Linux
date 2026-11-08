@@ -52,12 +52,14 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
   reordering colours, and a live link to a table are missing.
 - Equations: Ami Pro's TeX dialect reads and writes the same bytes as Ami
   Pro for the 27 test equations. Layout follows TeX's rules fitted to Ami
-  Pro's sizes (mean error about 2 %), so it will differ slightly. About 330
+  Pro's sizes (mean error about 2 %), so it will differ slightly. A few hundred (not an exact count)
   of Ami Pro's 887 symbol names are known; an unknown control word is
   reported as an error.
 - Image Processing: Brightness, Contrast, Edge Enhancement, Smoothing, Invert,
   Halftone, and Revert are available; the smoothing and edge filters are
   inferred, not copied from Ami Pro.
+  The Halftone mode is stored and written to Ami Pro files but is not applied
+  to the picture on screen, in PDF or in print.
 
 ## Accessibility and input
 

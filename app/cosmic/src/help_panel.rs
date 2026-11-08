@@ -568,11 +568,11 @@ mod tests {
     fn f1_opens_the_topic_of_the_open_panel() {
         let mut app = page_app(Document::default());
         for (command, topic) in [
-            (CommandId::ModifyCurrentStyle, "styles"),
-            (CommandId::PageLayout, "pages-frames-layouts"),
+            (CommandId::ModifyCurrentStyle, "modify-style"),
+            (CommandId::PageLayout, "page-layout-panel"),
             (CommandId::CheckForUpdates, "updates"),
             (CommandId::RecoverDocuments, "crash-recovery"),
-            (CommandId::Sort, "tables"),
+            (CommandId::Sort, "sorting"),
             (CommandId::Charting, "charts"),
             (CommandId::Equations, "equations"),
             (CommandId::MasterDocument, "master-documents"),

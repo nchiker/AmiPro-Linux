@@ -3,7 +3,7 @@ id: master-documents
 title: Master documents
 area: files
 keywords: master, book, members, page numbers, sequence, combine documents
-see_also: toc-index, printing-pdf
+see_also: toc-index, printing-pdf, master-documents-messages
 context: command:MasterDocument, panel:Master
 ---
 A **master document** ties several documents together as one work, such as the chapters of a book. **File › Master Document…** opens the panel in the rail: add files in order, remove them, and set the output files for the table of contents and index.

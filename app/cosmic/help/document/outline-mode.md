@@ -2,21 +2,23 @@
 id: outline-mode
 title: Outline mode
 area: document
-keywords: outline, headings, levels, expand, contract, promote, demote, navigator, move up, move down
-see_also: styles, text-formatting, toc-index
-context: command:OutlineMode, command:OutlineExpand, command:OutlineContract, command:UseOutlineStyles, command:OutlineNavigator, command:ShowLevel1, command:ShowLevel2, command:ShowLevel3, command:ShowLevel4, command:ShowLevel5, command:ShowLevel6, command:ShowLevel7, command:ShowLevel8, command:ShowLevel9, command:ShowAllLevels, panel:Outline
+keywords: outline, headings, structure, collapse, view, outline bar, layout mode
+see_also: outline-levels, outline-promote-move, outline-view-fonts, outline-styles, outline-navigator, styles, toc-index
+context: command:OutlineMode
 ---
-Outline mode shows the document by outline level, so you can see and rearrange its structure. View › Outline Mode turns it on and off; View › Outline holds the rest.
+Outline mode shows the document by outline level, so you can see and rearrange its structure. **View › Outline Mode** turns it on and off for the current tab. It cannot be on at the same time as Draft Mode.
 
-## Working in the outline
+## What you see
 
-- **Expand** (Alt+PageDown) and **Contract** (Alt+PageUp) show or hide the lower levels under the heading you are on.
-- **Show 1 Level** to **Show 9 Levels** and **Show All Levels** set how deep the whole outline goes.
-- **Promote**, **Demote**, **Move Up**, and **Move Down** (Format › Bullets and Numbering) change a heading's level or move it together with everything under it. They work in the normal view too.
-- **Use Outline Styles** gives the headings the styles that go with their levels.
+Each heading is shown left-aligned and indented by its level, with a small mark in front: a grey plus on a heading that has text under it, a minus on one without, and a small box on body text. Body text sits a step right of the heading above. The document itself is never changed by the mode; it is a display of the text, and text can be edited in it.
 
-## The navigator
+In Outline mode an *Outline bar* replaces the toolbar. It has the buttons 1 to 9 and All, Promote, Demote, Move Up, Move Down, Expand, Contract, and Layout Mode, which returns to the normal view.
 
-View › Outline › Outline Navigator opens a list of the headings in the rail. Click one to jump there. The heading the caret is in is marked.
+## Where to go next
 
-Which styles are outline levels, and how they are numbered, is part of the style: see [Styles](styles). The same levels build the table of contents; see [Table of contents and index](toc-index).
+- [Showing and hiding levels](outline-levels) controls how much of the outline you see.
+- [Promote, demote, and move](outline-promote-move) changes levels and order.
+- [Outline view fonts](outline-view-fonts) changes how headings look in this view.
+- [The Outline navigator](outline-navigator) lists headings in the rail.
+
+Which styles are outline levels, and how they are numbered, is part of the style; see [Styles](styles). The same levels build the table of contents ([Table of contents and index](toc-index)).

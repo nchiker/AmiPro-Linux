@@ -2,28 +2,25 @@
 id: pictures
 title: Pictures
 area: objects
-keywords: picture, image, insert image, graphics scaling, crop, frame, brightness, contrast, paste special, link
-see_also: pages-frames-layouts, drawing, charts
-context: command:Image, command:InsertFile, command:ImageProcessing, command:PasteSpecial, command:Links, panel:PasteSpecial, panel:Links
+keywords: picture, image, bitmap, insert image, import picture, graphic, frame, photo, paste image
+see_also: inserting-pictures, picture-formats, graphics-scaling, image-processing, pages-frames-layouts
+context: command:Image, command:InsertFile
 ---
-A picture always lives in a [frame](pages-frames-layouts).
+A picture is a graphic that lives inside a [frame](pages-frames-layouts). The frame decides where it sits on the page and how text flows around it; the picture decides what is drawn inside.
 
-## Putting one in
+## The pieces
 
-- **Insert › Image…** (Ctrl+Shift+I) opens a picture file. With an empty frame selected, the picture goes into it; with the caret in text, a new frame is made at the caret.
-- You can also paste an image, or drop a file on the page.
-- **Insert › File…** inserts the text of a document instead.
+- **Getting a picture in.** Insert › Image… (Ctrl+Shift+I), paste, or drop a file. See [Inserting pictures](inserting-pictures).
+- **Which files work.** See [Picture formats](picture-formats).
+- **How big it is drawn.** Frame Properties › Picture has the sizing choices: [Graphics scaling](graphics-scaling).
+- **Which part shows.** A picture can be moved inside its frame so that only part of it is visible: [Moving and cropping a picture](picture-position-crop).
+- **How it looks.** Brightness, contrast and the rest are in [Image processing](image-processing).
+- **Housekeeping.** Replace, Reset, Fit Frame to Picture, Save Picture As and the description are in [Picture frame actions](picture-frame-actions).
 
-BMP, WMF, EMF, PNG, JPEG, GIF, SVG, TIFF, and PCX pictures, and Ami Pro drawings, are read.
+Drawings, charts and equations are also kept in picture frames, but each has its own editor: [Drawing](drawing), [Charts](charts), [Equations](equations).
 
-## Sizing and position
+## Inserting text instead
 
-**Format › Frame › Graphics Scaling…** chooses original size, fit in frame, a percentage, or custom, and can keep the aspect ratio. Double-click a picture frame to move the picture within it, which crops it; Esc returns.
+**Insert › File…** puts the text of another document at the caret. It does not make a picture; see [Import and export](import-export).
 
-## Adjusting
-
-**Tools › Image Processing…** changes brightness and contrast, smooths, sharpens edges, inverts, or halftones a bitmap. Revert undoes the changes.
-
-## Linked and embedded objects
-
-**Edit › Links…** lists linked pictures and embedded objects. **Edit › Paste Special…** pastes the clipboard as a particular type. Embedded OLE objects from Ami Pro files are drawn and kept but not edited; see [Known limitations](known-limitations).
+If a picture frame is selected, press F1 to come back to this page.

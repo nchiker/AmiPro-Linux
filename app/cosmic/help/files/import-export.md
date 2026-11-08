@@ -6,6 +6,8 @@ keywords: import, export, docx, odt, rtf, markdown, text, word, libreoffice, imp
 see_also: saving-files, compatibility, printing-pdf
 context: command:ExportDocx, command:ExportOdt, command:ExportRtf, command:ExportText, command:ExportMarkdown, command:ExportFolder, command:ImportFolder, panel:ExportFolder, panel:ImportFolder, panel:ImportReport
 ---
+The program opens and writes several other file formats besides SAM; this topic says which, and what is lost on the way.
+
 ## Opening other formats
 
 **File › Open…** reads DOCX, ODT (and flat ODT), RTF, Markdown, and plain text as well as Ami Pro files. The file opens as a new unsaved document. When something could not be carried over, the **Import Report** panel lists it in the rail: tracked changes, highlighting, hidden text, nested tables, and the like. Insert › File… puts a file's text into the current document.

@@ -86,7 +86,7 @@ fn a_writer_asks_for_help_while_working_and_goes_back_to_the_document() {
     s.no_change("F1 in the Sort panel", |rt| {
         rt.send(Message::Command(CommandId::Help));
     });
-    assert_eq!(topic(&s), "tables");
+    assert_eq!(topic(&s), "sorting");
     s.act("Help › Keyboard Shortcuts", |rt| {
         rt.send(Message::Command(CommandId::KeyboardShortcuts));
     });

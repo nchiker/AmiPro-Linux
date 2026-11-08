@@ -1,25 +1,21 @@
 ---
 id: toc-index
-title: Table of contents, index, and glossary
+title: Table of contents and index
 area: document
-keywords: toc, table of contents, index, glossary, mark entry, alphabetical, include
-see_also: outline-mode, master-documents, notes-footnotes
-context: command:ContentsIndex, command:MarkIndexEntry, command:MarkTocEntry, command:MarkGlossary, command:InsertGlossary, panel:Contents, panel:Glossary
+keywords: toc, table of contents, index, alphabetical, include, levels, TOC options, separators, regenerate
+see_also: marking-entries, glossary, outline-mode, master-documents, toc-index-messages
+context: command:ContentsIndex, panel:Contents
 ---
-Tools › TOC, Index… builds a table of contents and an index from your document, and opens the Contents and Index panel in the rail.
+Tools › TOC, Index… builds a table of contents and an index from your document and opens the Contents and Index panel in the rail.
 
 ## Table of contents
 
-Tick **Table of contents**, then use TOC Options to say which paragraph styles go at which level, from 1 to 9. The first choice comes from the styles' outline levels. To list a heading that has no style for it, select the text and use **Edit › Mark Text › TOC Entry…**.
+Tick **Table of contents**, then use TOC Options to say which paragraph styles go at which level, from 1 to 9. The first choice comes from the styles' outline levels. To list a heading that has no style for it, mark it as a TOC entry ([Marking entries](marking-entries)).
+
+The table is made as a table of entry and page number. Generate again after the text has changed: Update replaces the table where it stands. Ctrl+click an entry in the panel to go to its heading.
 
 ## Index
 
-Mark each entry with **Edit › Mark Text › Index Entry…**: a primary entry, an optional secondary one, and whether it shows a page number. The index is built from the marks, with alphabetical separators if you ask for them.
+The index is built from the marks you made: a primary entry, an optional secondary one, and whether a page number shows. Entries that are equal merge, pages are listed in order, and alphabetical separators are added if you ask for them. The index is made as its own document, so you can review and print it.
 
-The result is made into its own document, so you can review and print it. Generate again after the text has changed.
-
-## Glossary
-
-A glossary holds pieces of text you use again. **Edit › Mark Text › Glossary…** stores the selection under a name; **Insert › Glossary Record…** (Ctrl+K) puts it back in.
-
-For a book made of several files, [Master documents](master-documents) build one table of contents and index across them.
+For a book of several files, [Master documents](master-documents) build one table of contents and index across them.

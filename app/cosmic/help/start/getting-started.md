@@ -4,7 +4,6 @@ title: Getting started
 area: start
 keywords: begin, window, new document, open, tabs, toolbar, rail, status bar, preferences, undo
 see_also: pages-frames-layouts, styles, saving-files, keyboard-shortcuts, using-help
-context: command:NewDocument, command:NewFromStyleSheet, command:Open, command:CloseDocument, command:Quit, command:Undo, command:Redo, command:Cut, command:Copy, command:Paste, command:PastePlainText, command:Delete, command:SelectAll, command:ShowToolbar, command:StylesPanel, command:Ruler, command:StatusBar, command:FullScreen, command:CustomizeToolbar, command:Preferences, command:NextDocument, command:PreviousDocument, command:About
 ---
 AmiPro-Linux is a page-based word processor for the COSMIC desktop. It opens Ami Pro documents (`.SAM`) and style sheets (`.STY`), and it also reads DOCX, ODT, RTF, Markdown, and plain text.
 

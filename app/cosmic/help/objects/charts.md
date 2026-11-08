@@ -2,18 +2,25 @@
 id: charts
 title: Charts
 area: objects
-keywords: chart, graph, bar, pie, line, data, series, axes, png, svg, csv
-see_also: tables, pictures, equations
-context: command:Charting, command:ChartFromTable, panel:Chart
+keywords: chart, graph, bar, pie, line, data, series, charting, amichart, plot
+see_also: chart-types, chart-data, chart-options, chart-from-table, chart-output, chart-storage, tables
+context: command:Charting, panel:Chart
 ---
-**Tools › Charting…** opens the Chart panel in the rail and makes a chart in a picture frame. **Tools › Chart from Table** takes the data from the table the caret is in.
+A chart turns a small grid of numbers into a picture on the page. **Tools › Charting…** makes the chart and opens the **Chart** panel in the rail; the page redraws as you change anything.
 
-## The panel
+## Starting a chart
 
-Choose one of the twelve chart types, edit the data in a small grid (rows are categories, columns are series), and adjust titles, axes, legend, and colours. The chart redraws on the page as you change it.
+What Charting… does depends on where you are:
 
-## Taking the chart out
+- **A chart frame is selected:** the panel opens on that chart. Double-clicking a chart does the same, unless it was last edited in Draw mode (see [How charts are stored](chart-storage)).
+- **An empty text frame, an empty table cell, or the main text:** a new chart is made. The clipboard is read once; if it holds tab-separated text with numbers, that is the data. Otherwise the chart starts with sample data (three categories, two series) and the panel says so.
+- **A frame holding a drawing or picture:** the panel asks whether to replace it with a chart.
+- **Anywhere else** (a frame holding text, a header): the status bar says what Charting needs.
 
-The panel can save the chart as a PNG or SVG picture and copy its data as CSV. In an exported document, a chart appears as a picture.
+A new chart gets a frame 3.2 by 2.7 inches, flowing with the text at the caret. Making it is one undo step; Undo closes the panel and removes the frame.
 
-Charts from Ami Pro documents are read and written back unchanged. Not built yet: Ami Pro's Pictures dialog, reordering colours, and a live link that updates the chart when its table changes. See [Known limitations](known-limitations).
+## The panel, top to bottom
+
+[Type](chart-types), [Options](chart-options) (legend, grid, 3D), the colour set, Axis, and [Data](chart-data), then the buttons that take the chart out ([Chart output](chart-output)). Esc closes the panel and throws away text typed but not applied.
+
+Charts are for numbers you type or paste. To chart a table, see [Chart from Table](chart-from-table). Charts in exported documents appear as pictures.

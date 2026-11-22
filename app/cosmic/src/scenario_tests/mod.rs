@@ -44,6 +44,7 @@ mod files;
 mod find;
 mod frames;
 mod help;
+mod launch;
 mod lists;
 mod markdown;
 mod master;

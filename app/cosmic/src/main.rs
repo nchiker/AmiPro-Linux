@@ -84,6 +84,7 @@ mod import_folder;
 mod import_report;
 #[cfg(test)]
 mod layout_comparison;
+mod launch;
 #[cfg(feature = "page-surface")]
 mod lengths;
 #[cfg(feature = "page-surface")]
@@ -264,7 +265,11 @@ fn main() -> cosmic::iced::Result {
     DropTrace::install();
     let settings = cosmic::app::Settings::default()
         .size_limits(Limits::NONE.min_width(900.0).min_height(640.0));
-    cosmic::app::run::<AmiProApp>(settings, ())
+    // Files named on the command line open in the running window when there
+    // is one (D-Bus activation), else in this one (`launch.rs`).
+    let directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
+    let launch = launch::Launch::from_args(std::env::args_os().skip(1), &directory);
+    cosmic::app::run_single_instance::<AmiProApp>(settings, launch)
 }
 
 /// A Save As SAM the loss check stopped (decision B): where it goes and
@@ -293,6 +298,14 @@ struct SaveProblem {
 enum SaveRetry {
     SaveAs,
     StyleSheet { description: String, contents: bool },
+}
+
+/// The dialog for a file that could not be opened.
+fn open_problem(path: &std::path::Path, error: &dyn std::fmt::Display) -> (String, String) {
+    (
+        format!("Could not open {}", file_name(path)),
+        format!("{}: {error}", path.display()),
+    )
 }
 
 impl SaveProblem {
@@ -462,6 +475,8 @@ struct DocumentSession {
     sam_save: Option<PendingSamSave>,
     /// A save that was refused or failed, shown in a dialog until answered.
     save_problem: Option<SaveProblem>,
+    /// A file that could not be opened: what is wrong, shown until dismissed.
+    open_problem: Option<(String, String)>,
     dirty: bool,
     clean_document: Document,
     /// When this session opened the document: a save adds the minutes
@@ -889,6 +904,7 @@ impl DocumentSession {
             overwrite_confirmation: OverwriteConfirmation::default(),
             sam_save: None,
             save_problem: None,
+            open_problem: None,
             dirty: false,
             clean_document,
             opened_at: std::time::Instant::now(),
@@ -3493,6 +3509,10 @@ enum Message {
     /// The save problem dialog: choose another name, or close it.
     SaveProblemRetry,
     SaveProblemClose,
+    /// The dialog for a file that would not open was dismissed.
+    OpenProblemClose,
+    /// Files to open (command line, or handed over by another launch).
+    OpenPaths(Vec<PathBuf>),
     OpenDialogFinished(FileDialogResult),
     /// Import Options' choices (`UI_SPEC.md` §31).
     ImportOptions(import::OptionsAction),
@@ -3731,7 +3751,7 @@ enum FileDialogResult {
 
 impl cosmic::Application for AmiProApp {
     type Executor = cosmic::executor::Default;
-    type Flags = ();
+    type Flags = launch::Launch;
     type Message = Message;
 
     const APP_ID: &'static str = APP_ID;
@@ -3770,7 +3790,7 @@ impl cosmic::Application for AmiProApp {
         })
     }
 
-    fn init(core: cosmic::Core, _flags: Self::Flags) -> (Self, Task<cosmic::Action<Message>>) {
+    fn init(core: cosmic::Core, flags: Self::Flags) -> (Self, Task<cosmic::Action<Message>>) {
         let document = new_document();
         let session = DocumentSession::new(
             1,
@@ -3871,12 +3891,34 @@ impl cosmic::Application for AmiProApp {
         let startup_check = application.startup_update_check();
         #[cfg(not(feature = "page-surface"))]
         let startup_check = Task::none();
+        let open_named = if flags.paths().is_empty() {
+            Task::none()
+        } else {
+            Task::done(cosmic::Action::App(Message::OpenPaths(
+                flags.paths().to_vec(),
+            )))
+        };
         let tasks = Task::batch([
             application.update_title(),
             Self::clipboard_availability_task(true),
             startup_check,
+            open_named,
         ]);
         (application, tasks)
+    }
+
+    /// Another launch handed over files (`launch.rs`): open them as File ›
+    /// Open does, in new tabs.
+    fn dbus_activation(
+        &mut self,
+        message: cosmic::dbus_activation::Message,
+    ) -> Task<cosmic::Action<Message>> {
+        let paths = launch::paths_from_activation(&message.msg);
+        if paths.is_empty() {
+            Task::none()
+        } else {
+            Task::done(cosmic::Action::App(Message::OpenPaths(paths)))
+        }
     }
 
     fn view(&self) -> Element<'_, Message> {
@@ -4778,6 +4820,17 @@ impl cosmic::Application for AmiProApp {
         if let Some(editor) = self.toolbar_editor {
             return Some(toolbar_editor_view(&self.preferences.toolbar, editor));
         }
+        if let Some((title, body)) = &self.open_problem {
+            return Some(
+                widget::dialog()
+                    .title(title.clone())
+                    .body(body.clone())
+                    .primary_action(
+                        widget::button::suggested("OK").on_press(Message::OpenProblemClose),
+                    )
+                    .into(),
+            );
+        }
         if let Some(problem) = &self.save_problem {
             return Some(
                 widget::dialog()
@@ -5087,6 +5140,9 @@ impl AmiProApp {
         }
         if self.toolbar_editor.is_some() {
             return Some(Message::CloseToolbarEditor);
+        }
+        if self.open_problem.is_some() {
+            return Some(Message::OpenProblemClose);
         }
         if self.save_problem.is_some() {
             return Some(Message::SaveProblemClose);
@@ -5964,6 +6020,8 @@ impl AmiProApp {
                 }
             }
             Message::SaveProblemClose => self.save_problem = None,
+            Message::OpenProblemClose => self.open_problem = None,
+            Message::OpenPaths(paths) => self.open_named_paths(paths),
             Message::CancelSamSave => {
                 self.sam_save = None;
                 self.close_after_save = None;
@@ -15521,7 +15579,10 @@ impl AmiProApp {
                     #[cfg(feature = "page-surface")]
                     self.auto_run_fields();
                 }
-                Err(error) => self.status = format!("Open failed: {error}"),
+                Err(error) => {
+                    self.status = format!("Open failed: {error}");
+                    self.open_problem = Some(open_problem(&path, &error));
+                }
             }
         }
     }
@@ -15569,7 +15630,39 @@ impl AmiProApp {
                 dialog.error = Some(amipro_formats::ImportError::WrongPassword.to_string());
                 self.password_dialog = Some(dialog);
             }
-            Err(error) => self.status = format!("SAM import failed: {error}"),
+            Err(error) => {
+                self.status = format!("SAM import failed: {error}");
+                self.open_problem = Some(open_problem(&path, &error));
+            }
+        }
+    }
+
+    /// Files named on the command line or handed over by another launch:
+    /// each opens as File › Open opens it (a new tab; an open one is
+    /// activated), and a file that cannot be read says so in a dialog. A
+    /// window that is still the untouched first "Untitled" gives way to the
+    /// first file.
+    fn open_named_paths(&mut self, paths: Vec<PathBuf>) {
+        let pristine = self.sessions.len() == 1
+            && !self.sessions[0].dirty
+            && self.sessions[0].location == DocumentLocation::Untitled;
+        let before = self.sessions.len();
+        for path in paths {
+            match std::fs::File::open(&path) {
+                Ok(_) if path.is_dir() => {
+                    self.open_problem = Some(open_problem(&path, &"it is a folder, not a document"));
+                }
+                Ok(_) => self.open_document_path(path),
+                Err(error) => {
+                    self.status = format!("Could not open {}: {error}", path.display());
+                    self.open_problem = Some(open_problem(&path, &error));
+                }
+            }
+        }
+        if pristine && self.sessions.len() > before {
+            self.sessions.remove(0);
+            self.active_session = self.active_session.saturating_sub(1);
+            self.sync_tab_model();
         }
     }
 

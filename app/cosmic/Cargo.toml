@@ -56,13 +56,15 @@ harper-core = { version = "2.13.0", default-features = false, features = ["concu
 # Help › Check for Updates… (P6.2): the release API's JSON and the package's
 # SHA-256 (both already in the build through other crates).
 serde_json = "1"
+# Files named on the command line or handed over by another program (`launch.rs`).
+url = "2"
 sha2 = "0.10"
 
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic.git"
 rev = "dbc62f2d899cdbfbe43d170689ddc0290db663f4"
 default-features = false
-features = ["a11y", "about", "wayland", "wgpu", "xdg-portal", "tokio"]
+features = ["a11y", "about", "wayland", "wgpu", "xdg-portal", "tokio", "single-instance"]
 
 # Software renderer from the same pinned libcosmic revision, used only to lay
 # out the real application view in headless tests.

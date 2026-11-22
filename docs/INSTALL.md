@@ -27,6 +27,29 @@ launcher ("AmiPro-Linux") or run `amipro-linux [file.sam]`. It registers
 `.sam` and `.sty` as Ami Pro types but does not take over as default handler;
 set that in Files (Open With) if you want it.
 
+## Opening files from the command line and from other programs
+
+`amipro-linux FILE…` opens each file (a relative or an absolute path; `.sam`
+and the other formats File › Open takes). When AmiPro-Linux is already
+running, the second launch hands the files to the running window through the
+desktop's D-Bus activation (`org.freedesktop.DbusActivation` on the session
+bus, name `org.amipro_linux.AmiPro`) and exits at once; the window opens each
+file in a new tab, as File › Open does, and leaves its other tabs (and their
+unsaved changes) alone. An untouched first "Untitled" window gives way to the
+first file. A missing, unreadable, or damaged file shows a message in the
+window. Files "Open with" in the file manager take the same route (the desktop
+entry has `Exec=amipro-linux %F`; no setup beyond the package). Another
+program (Stack's "Open in Ami Pro") needs nothing more than:
+
+```sh
+amipro-linux /full/path/to/file.sam
+```
+
+Without a running window that starts one; with one it opens a tab there. The
+equivalent D-Bus call is `Open` of `org.freedesktop.DbusActivation` at
+`/org/amipro_linux/AmiPro` with `file://` addresses. Setting
+`COSMIC_SINGLE_INSTANCE=0` starts a separate window instead.
+
 ## Crash recovery
 
 While you edit, the program keeps hidden copies of documents with unsaved

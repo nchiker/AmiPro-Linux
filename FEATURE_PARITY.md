@@ -54,6 +54,7 @@
 | PK-01 | Debian package and install | P1 | Project requirement (Phase 6); not an Ami Pro feature | IMPLEMENTED (P6.1, 2026-11-07) | `tools/package-deb.sh` builds the `.deb`; `docs/INSTALL.md`; checked off-host (contents, ldd, lintian); the release v0.1.0 is published; install on the user's machine pending |
 | UP-01 | Help › Check for Updates… | P2 | Project addition (`UI_SPEC.md` §43) | IMPLEMENTED (P6.2) | GitHub Releases, SHA-256 verified, `pkexec apt-get install -y`; `scenario_tests/update_check.rs`; tested against a later release: pending |
 | CR-01 | Crash recovery | P1 | Project addition (`UI_SPEC.md` §44); Ami Pro's `autorec.dll` not compared | IMPLEMENTED (P6.3) | Timed copies of unsaved documents, File › Recover Documents…; `scenario_tests/crash_recovery.rs`; physical check after `kill -9` pending |
+| OF-01 | Open files from the command line and other programs (single instance) | P1 | Project addition (Stack's "Open in Ami Pro", file manager Open with); `docs/INSTALL.md` | IMPLEMENTED | `launch.rs`, `scenario_tests/launch.rs`; physical check passed 2026-11-22 on the installed `.deb` |
 | HP-01 | In-app Help (F1, Contents, Search) | P2 | Project addition (`UI_SPEC.md` §45); Ami Pro 3.1 has a `.HLP` help file, used only as a facts source, never copied | IMPLEMENTED (P6.4, 2026-11-07) | Own Markdown topics embedded at build time (`app/cosmic/help/`, `help.rs`, `help_panel.rs`); context map for F1; tests `help::`, `help_panel::tests`, scenario `help`; `docs/HELP_AUTHORING.md`; physical check pending |
 
 ## Evidence protocol
@@ -61,4 +62,3 @@ For each feature confirmed from Ami Pro 3.1, record: source title/version, page 
 
 ## Format fidelity register
 Maintain separate fixture-level records in `docs/research/FORMAT_COMPATIBILITY.md`: source format/version, constructs present, import result, edit result, export result, round-trip loss, and test command. Do not claim full SAM/STY compatibility from simple text-only documents.
-| OF-01 | Open files from the command line and other programs (single instance) | P1 | Project addition (Stack's "Open in Ami Pro", file manager Open with); `docs/INSTALL.md` | IMPLEMENTED | `launch.rs`, `scenario_tests/launch.rs`; physical check passed 2026-11-22 on the installed `.deb` |

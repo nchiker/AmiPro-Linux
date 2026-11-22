@@ -61,3 +61,4 @@ For each feature confirmed from Ami Pro 3.1, record: source title/version, page 
 
 ## Format fidelity register
 Maintain separate fixture-level records in `docs/research/FORMAT_COMPATIBILITY.md`: source format/version, constructs present, import result, edit result, export result, round-trip loss, and test command. Do not claim full SAM/STY compatibility from simple text-only documents.
+| OF-01 | Open files from the command line and other programs (single instance) | P1 | Project addition (Stack's "Open in Ami Pro", file manager Open with); `docs/INSTALL.md` | IMPLEMENTED | `launch.rs`, `scenario_tests/launch.rs`; physical check passed 2026-11-22 on the installed `.deb` |

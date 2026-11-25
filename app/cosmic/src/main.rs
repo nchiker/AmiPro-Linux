@@ -2583,6 +2583,9 @@ struct Preferences {
     /// and how often they are written, in minutes.
     keep_recovery: bool,
     recovery_minutes: u32,
+    /// Preferences › General › Save new documents as: the format Save As
+    /// offers for a document that has no file yet (Ami Pro by default).
+    save_format: SaveFormat,
 }
 
 impl Default for Preferences {
@@ -2650,6 +2653,7 @@ impl Default for Preferences {
             last_update_check: 0,
             keep_recovery: true,
             recovery_minutes: preferences_dialog::RECOVERY_DEFAULT,
+            save_format: SaveFormat::Sam,
         }
     }
 }
@@ -2789,6 +2793,11 @@ impl Settings {
                 .ok()
                 .filter(|folder| !folder.is_empty())
                 .map(PathBuf::from),
+            save_format: config
+                .get::<String>("save_format")
+                .ok()
+                .and_then(|key| SaveFormat::from_key(&key))
+                .unwrap_or(defaults.save_format),
             documents_folder: config
                 .get::<String>("documents_folder")
                 .ok()
@@ -3045,6 +3054,7 @@ impl Settings {
                 .map_or_else(String::new, |folder| folder.display().to_string()),
         )?;
         transaction.set("export_format", preferences.export_format.clone())?;
+        transaction.set("save_format", preferences.save_format.key())?;
         transaction.set("import_styles", preferences.import_styles.clone())?;
         transaction.set("import_line_ends", preferences.import_line_ends.clone())?;
         transaction.set("import_keep_names", preferences.import_keep_names)?;
@@ -4792,6 +4802,7 @@ impl cosmic::Application for AmiProApp {
                 check_updates: self.preferences.check_updates_on_start,
                 keep_recovery: self.preferences.keep_recovery,
                 recovery_minutes: self.preferences.recovery_minutes,
+                save_format: self.preferences.save_format,
                 default_sheet: &self.preferences.default_sheet,
                 style_folders: &self.preferences.style_folders,
                 documents_folder: self.preferences.documents_folder.as_deref(),
@@ -12414,7 +12425,9 @@ impl AmiProApp {
 
     fn save_dialog_task(&self) -> Task<cosmic::Action<Message>> {
         let session_id = self.id;
-        let suggested_name = self.location.suggested_file_name(&self.document);
+        let preferred = self.preferences.save_format;
+        let suggested_name = self.location.suggested_file_name(&self.document, preferred);
+        let first = self.location.default_save_format(preferred);
         let starting_directory = match &self.location {
             DocumentLocation::LegacySource(path)
             | DocumentLocation::Sam(path)
@@ -12424,22 +12437,29 @@ impl AmiProApp {
         cosmic::task::future(async move {
             // Both formats (decision A): the typed extension decides, then
             // the Format choice, which portals that support choices report.
-            let native = FileFilter::new("AmiPro-Linux documents (.amipro)").glob("*.amipro");
-            let sam = FileFilter::new("Ami Pro 3.1 documents (.SAM)")
-                .glob("*.sam")
-                .glob("*.SAM");
-            let markdown = FileFilter::new("Markdown (.md)").glob("*.md").glob("*.MD");
-            let format = file_chooser::Choice::new("format", "Format", "amipro")
-                .insert("amipro", "AmiPro-Linux document (.amipro)")
-                .insert("sam", "Ami Pro 3.1 document (.SAM)")
-                .insert("markdown", "Markdown (.md)");
+            let filter_for = |format: SaveFormat| match format {
+                SaveFormat::Native => {
+                    FileFilter::new("AmiPro-Linux documents (.amipro)").glob("*.amipro")
+                }
+                SaveFormat::Sam => FileFilter::new("Ami Pro 3.1 documents (.SAM)")
+                    .glob("*.sam")
+                    .glob("*.SAM"),
+                SaveFormat::Markdown => FileFilter::new("Markdown (.md)")
+                    .glob("*.md")
+                    .glob("*.MD"),
+            };
+            let mut format = file_chooser::Choice::new("format", "Format", first.key());
+            for each in SaveFormat::ALL {
+                format = format.insert(each.key(), each.label());
+            }
             let mut dialog = file_chooser::save::Dialog::new()
                 .title("Save document as".to_owned())
                 .file_name(suggested_name)
-                .filter(native)
-                .filter(sam)
-                .filter(markdown)
+                .current_filter(filter_for(first))
                 .choice(format);
+            for each in SaveFormat::ALL {
+                dialog = dialog.filter(filter_for(each));
+            }
             if let Some(directory) = starting_directory {
                 dialog = dialog.directory(directory);
             }
@@ -12450,13 +12470,7 @@ impl AmiProApp {
                         .iter()
                         .find(|(id, _)| id == "format")
                         .map(|(_, value)| {
-                            if value == "sam" {
-                                SaveFormat::Sam
-                            } else if value == "markdown" {
-                                SaveFormat::Markdown
-                            } else {
-                                SaveFormat::Native
-                            }
+                            SaveFormat::from_key(value).unwrap_or(SaveFormat::Native)
                         });
                     response
                         .url()
@@ -14618,6 +14632,7 @@ impl AmiProApp {
                 }
                 state.recent_files = text;
             }
+            A::SaveFormat(format) => self.preferences.save_format = format,
             A::KeepBackup(on) => self.preferences.keep_backup = on,
             A::CheckUpdates(on) => self.preferences.check_updates_on_start = on,
             A::KeepRecovery(on) => self.preferences.keep_recovery = on,
@@ -17608,6 +17623,7 @@ mod tests {
             A::UndoLevels("25".into()),
             A::RecentFiles("2".into()),
             A::KeepBackup(false),
+            A::SaveFormat(SaveFormat::Markdown),
             A::Page(Page::Folders),
             A::FolderChosen(Some(folder.clone())),
             A::FolderChosen(Some(folder.clone())),
@@ -17625,6 +17641,13 @@ mod tests {
         assert_eq!(saved.undo_levels, 25);
         assert_eq!(saved.recent_count, 2);
         assert!(!saved.keep_backup);
+        assert_eq!(saved.save_format, SaveFormat::Markdown);
+        assert_eq!(Preferences::default().save_format, SaveFormat::Sam);
+        assert_eq!(
+            app.location
+                .suggested_file_name(&app.document, app.preferences.save_format),
+            "untitled.md"
+        );
         assert_eq!(saved.style_folders, vec![folder.clone()]);
         assert_eq!(saved.documents_folder, Some(folder.clone()));
         assert!(!saved.toolbar_visible);

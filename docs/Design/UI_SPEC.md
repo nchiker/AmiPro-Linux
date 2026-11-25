@@ -5803,3 +5803,14 @@ Typing a query keeps one Back step (the page left). Following a link, a result, 
 *Coverage rule (test).* Every implemented command with a menu entry has a topic that names it, or is on the exemption list in `help_panel.rs`; the list shrinks as content grows. Every topic parses, ids are unique, every link and See also resolves, and every context names a real command or panel.
 
 *Not done:* Help on dialogs that are not rail panels (they have no context yet), a table of contents inside a long topic, images in topics, printing a topic, a language other than English.
+
+## 46. Preferences › General › Save new documents as
+
+One compact row of three buttons (Ami Pro (.SAM), the default; Native
+(.amipro); Markdown (.md)), applied as pressed and kept in the COSMIC
+configuration (`save_format`). For a document with no file yet, Save As
+offers `untitled.<ext>` and starts on that format's filter and Format
+choice. A document that already has a file keeps its own type. Writing
+goes through the existing paths: SAM after the loss check, Markdown as an
+export with its loss list and replace confirmation; imports are never
+written over.

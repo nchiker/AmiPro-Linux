@@ -46,6 +46,42 @@ pub enum SaveFormat {
     Markdown,
 }
 
+impl SaveFormat {
+    /// Every format Save As offers, in the dialog's order.
+    pub const ALL: [Self; 3] = [Self::Sam, Self::Native, Self::Markdown];
+
+    /// The key kept in the settings and used as the dialog's choice id.
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Sam => "sam",
+            Self::Native => "amipro",
+            Self::Markdown => "markdown",
+        }
+    }
+
+    pub fn from_key(key: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|format| format.key() == key)
+    }
+
+    /// The extension a new file of this format gets.
+    pub const fn extension(self) -> &'static str {
+        match self {
+            Self::Sam => "SAM",
+            Self::Native => "amipro",
+            Self::Markdown => "md",
+        }
+    }
+
+    /// How Preferences and the dialog's Format choice name it.
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Sam => "Ami Pro 3.1 document (.SAM)",
+            Self::Native => "AmiPro-Linux document (.amipro)",
+            Self::Markdown => "Markdown (.md)",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SaveSafetyError {
     MissingFileName,
@@ -102,7 +138,14 @@ impl DocumentLocation {
         }
     }
 
-    pub fn suggested_file_name(&self, document: &Document) -> String {
+    /// The name Save As offers. A document with no file yet takes the
+    /// preferred format's extension (Preferences › Save new documents as);
+    /// one that has a file keeps `.amipro` as the offer, as before.
+    pub fn suggested_file_name(&self, document: &Document, preferred: SaveFormat) -> String {
+        let extension = match self {
+            Self::Untitled => preferred.extension(),
+            _ => "amipro",
+        };
         let stem = match self {
             Self::LegacySource(path) | Self::Sam(path) | Self::Native(path) => path
                 .file_stem()
@@ -116,7 +159,15 @@ impl DocumentLocation {
         } else {
             stem
         };
-        format!("{stem}.amipro")
+        format!("{stem}.{extension}")
+    }
+
+    /// The Format choice the Save As dialog starts on (and so its filter).
+    pub fn default_save_format(&self, preferred: SaveFormat) -> SaveFormat {
+        match self {
+            Self::Untitled => preferred,
+            _ => SaveFormat::Native,
+        }
     }
 }
 
@@ -508,6 +559,37 @@ mod tests {
         ));
         std::fs::create_dir(&path).unwrap();
         path
+    }
+
+    #[test]
+    fn a_new_document_is_offered_the_preferred_format() {
+        let document = Document::from_plain_text("One.");
+        let untitled = DocumentLocation::Untitled;
+        for (format, name) in [
+            (SaveFormat::Sam, "untitled.SAM"),
+            (SaveFormat::Native, "untitled.amipro"),
+            (SaveFormat::Markdown, "untitled.md"),
+        ] {
+            assert_eq!(untitled.suggested_file_name(&document, format), name);
+            assert_eq!(untitled.default_save_format(format), format);
+            assert_eq!(SaveFormat::from_key(format.key()), Some(format));
+        }
+        assert_eq!(SaveFormat::from_key("docx"), None);
+        // A document that has a file keeps its own offer.
+        let saved = DocumentLocation::Sam(PathBuf::from("/d/Letter.SAM"));
+        assert_eq!(
+            saved.suggested_file_name(&document, SaveFormat::Markdown),
+            "Letter.amipro"
+        );
+        assert_eq!(
+            saved.default_save_format(SaveFormat::Markdown),
+            SaveFormat::Native
+        );
+        // The chosen format also gives a bare name its extension.
+        assert_eq!(
+            save_destination(Path::new("/d/Memo"), Some(SaveFormat::Markdown)).unwrap(),
+            (PathBuf::from("/d/Memo.md"), SaveFormat::Markdown)
+        );
     }
 
     #[test]

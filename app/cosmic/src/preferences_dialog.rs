@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use cosmic::iced::Length;
 use cosmic::{Element, widget};
 
-use crate::Message;
+use crate::{Message, SaveFormat};
 
 /// Undo levels Preferences offers; the app has always kept 100.
 pub const UNDO_LEVELS: std::ops::RangeInclusive<usize> = 1..=1000;
@@ -91,6 +91,8 @@ pub enum PreferencesAction {
     CustomZoom(String),
     /// Typed recent files; a number in [`RECENT_FILES`] applies at once.
     RecentFiles(String),
+    /// The format Save As offers for a document with no file yet.
+    SaveFormat(SaveFormat),
     KeepBackup(bool),
     /// Check for updates when the program starts (P6.2).
     CheckUpdates(bool),
@@ -119,6 +121,7 @@ pub enum PreferencesAction {
 
 /// What the pages show, read from the preferences.
 pub struct Shown<'a> {
+    pub save_format: SaveFormat,
     pub keep_backup: bool,
     pub check_updates: bool,
     pub keep_recovery: bool,
@@ -226,6 +229,36 @@ fn recovery_interval_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
         .into()
 }
 
+/// Save new documents as: one button for each format Save As writes.
+fn save_format_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
+    let mut buttons: Vec<Element<'a, Message>> = vec![
+        widget::text::body("Save new documents as")
+            .width(Length::Fill)
+            .into(),
+    ];
+    for format in SaveFormat::ALL {
+        let label = match format {
+            SaveFormat::Sam => "Ami Pro (.SAM)",
+            SaveFormat::Native => "Native (.amipro)",
+            SaveFormat::Markdown => "Markdown (.md)",
+        };
+        let button = if format == shown.save_format {
+            widget::button::suggested(label)
+        } else {
+            widget::button::standard(label)
+        };
+        buttons.push(
+            button
+                .on_press(send(PreferencesAction::SaveFormat(format)))
+                .into(),
+        );
+    }
+    widget::row::with_children(buttons)
+        .spacing(4)
+        .align_y(cosmic::iced::Alignment::Center)
+        .into()
+}
+
 fn general<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
     vec![
         number_field(
@@ -258,6 +291,7 @@ fn general<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a
         .spacing(8)
         .align_y(cosmic::iced::Alignment::Center)
         .into(),
+        save_format_row(shown),
         toggle_row(
             "Keep the original as NAME.SAM.bak when saving over an Ami Pro document",
             shown.keep_backup,

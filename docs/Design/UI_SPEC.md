@@ -5867,8 +5867,9 @@ margins, the vertical ruler for a frame's interior.
 
 Fast Format (§39, CM4; Ctrl+T) stays Ami Pro's mode: on, taking every
 mouse selection, until Ctrl+T or Esc. The same picked-up format
-(`fast_format.rs`, `FastFormat`) now has more ways in, under Format › Format
-Painter ▸ and on the toolbar (Customize Toolbar offers the button):
+(`fast_format.rs`, `FastFormat`) now has more ways in, under Format › Fast
+Format ▸ (named Format Painter ▸ until the UI review, §50) and on the
+toolbar (Customize Toolbar offers the button):
 
 - **Format Painter** (toolbar button, no shortcut): one-shot. The next mouse
   selection that has something to apply takes the format as one undo step and
@@ -5876,7 +5877,9 @@ Painter ▸ and on the toolbar (Customize Toolbar offers the button):
   does not use it up. Pressed again within 500 ms (a double-click on the
   button) it stays on; pressed later while armed it ends.
 - **Format Painter (Keep On)**, Ctrl+Shift+T: on until Esc or the command
-  again (as Ctrl+T).
+  again (as Ctrl+T). *Since the UI review (§50) this is Fast Format itself:
+  the item went, Ctrl+Shift+T is Fast Format's second shortcut, and a saved
+  toolbar's button becomes Fast Format's.*
 - **Copy Format**, Ctrl+Alt+C, and **Paste Format**, Ctrl+Alt+V: the format
   kept apart from the mouse (`copied_format`). Every picking up keeps its
   format for Paste Format too. Paste Format is one undo step; with nothing
@@ -5891,4 +5894,84 @@ caret or a whole paragraph, as Ami Pro) starts at the last answer. While
 armed the pointer over the pages is the toolkit's copy cursor (a pointer with
 a plus; no custom brush cursor is available) and a brush icon stands before
 the message. The menu items are checked while armed: Format Painter for the
-one-shot, Keep On for the staying mode, Fast Format for either.
+one-shot, Fast Format for the staying mode (§50: before, Fast Format was
+checked for either, so two items could be checked at once).
+
+## 50. UI review 2026-11: conventions and the fixes made
+
+Findings, ranks, and what was deferred are in
+`docs/research/UI_REVIEW_2026-11.md`. The conventions it settles, for every
+new menu item, panel, and dialog:
+
+*Menus.*
+- A label is the command's name, whole, wherever it appears (menu, toolbar
+  tooltip, Customize Toolbar, Keyboard Shortcuts, Help), so a submenu's
+  items may repeat its name (Export ▸ Export PDF…).
+- An ellipsis when the command asks for more before it acts or opens a
+  dialog or panel to work in; none for a command that acts at once or a
+  toggle. Toggles and choices carry a check mark; a menu with one gives
+  every row the column (§13).
+- "and", not "&", in labels (Line and Fill, Tabs and Returns).
+- Ami Pro's command names keep Ami Pro's spelling (Center, wherever an
+  alignment is named: menus, panels, the ruler, Draw › Align ▸, the
+  envelope's feed); the program's own words are British (colour).
+- A group of more than about six related rows that are not used every day
+  becomes a submenu (Edit › Go To ▸); unrelated groups get a divider (Tools).
+- One command per action: two commands that do the same thing become one,
+  with the other's shortcut kept as a second shortcut (`SHORTCUT_ALIASES`
+  in `command.rs`; the Keyboard Shortcuts list shows "A or B"). Previous
+  Document shows Ctrl+PageUp, the pair of Next Document's Ctrl+PageDown;
+  Ctrl+Shift+Tab still works.
+- A label may say what the command does now: Custom Zoom names its
+  percentage, as Enlarged (200%) does; Connect Cells becomes Disconnect
+  Cells in a joined cell.
+
+*Menus changed.* File: Recover Documents… after Open…; Import Folder… with
+Export ▸; printing its own group. Edit: Go To ▸ (Go To…, Previous Page,
+Next Page, Select Next Frame, Go To Header, Go To Footer, Go To Ruler).
+View: Draft Mode beside the other page views, before Outline Mode. Format:
+Fast Format ▸ (Fast Format, Format Painter, Copy Format, Paste Format) in
+place of Fast Format plus Format Painter ▸; Frame ▸ divided as the frame's
+right-click menu is. Tools: proofing (Word Count joins it), Sort…, objects,
+notes and contents, settings. Draw: Snap to Grid; Extract and Apply Line and
+Fill; Align ▸ Center.
+
+*Rail panels.*
+- One header for all (`chrome::panel_header`), as §15 and §18 first drew
+  it: the title, "‹ Styles" (back to the Styles list, the rail staying
+  open), and an X that closes the panel and the rail (its tooltip names
+  View › Styles Panel). Before, nine panels had "‹ Styles" and seventeen
+  had none, and the X of Paragraph Properties and Proofing kept the rail
+  open while every other X closed it. A panel without its own back action
+  gets "‹ Styles" through `Message::RailBack` (its close, then the rail
+  open again). Frame Properties and Draw mode's properties keep their
+  header: they follow the selection or the mode rather than being opened.
+- A panel's title is its command's name without the ellipsis, in Title
+  Case: Charting, Equations, TOC and Index, Outline Navigator, Check for
+  Updates, Recover Documents. A panel several commands open keeps its own
+  name (Proofing, Fields, Bookmarks).
+- Folding sections use one look (`chrome::section_toggle`: arrow icon and
+  heading); Proofing's text arrows went.
+- A panel's main action is a full-width accent button (Print…, Sort, Import,
+  Export, Generate Contents, Generate Index, Start Spell Check, Start
+  Grammar Check, Paste Special's Paste); other buttons are standard.
+- The same thing has the same name in a panel as in a menu: Table
+  Properties' styles are Grid, Outline, Header Row, Banded Rows, Plain as
+  Table › Table Style ▸; Glossary's buttons are Open Data File… and New Data
+  File… as Merge's; Print's options say Document Properties, not Doc Info.
+- Lengths show "in" (no full stop), as the status bar and the rulers do.
+
+*Dialogs.* Labels have no trailing colon. The New… dialog is titled New;
+the password asked for when opening is "Protected Document". The password
+warning is the program's own wording.
+
+*Preferences* (§39 extended). Three pages, each in titled sections:
+General: New documents (style sheet, Save new documents as on its own row
+under its label, which the buttons used to overlap), Saving (.bak copy,
+recovery copies; the interval shows only while copies are on), Editing
+(undo levels, recent files), Updates. Folders: unchanged. View: Window
+(Toolbar with Customize Toolbar… beside it, Ruler, Vertical ruler, Status
+bar, which had no switch here), Zoom (Custom zoom, moved from General), Show
+on the page (View › Show's marks in its order). The Toolbar page went: its
+switch duplicated the View page's.
+

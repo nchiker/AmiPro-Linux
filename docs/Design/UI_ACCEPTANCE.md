@@ -272,7 +272,7 @@ outside Git.
    - × or Ctrl+W on a dirty tab offers Save/Discard/Cancel.
    - Closing the last tab leaves a new Untitled document.
 10. **Switching:**
-    - Ctrl+PageDown goes to the next tab and Ctrl+Shift+Tab to the previous.
+    - Ctrl+PageDown goes to the next tab and Ctrl+PageUp (or Ctrl+Shift+Tab, UI review 2026-11) to the previous.
     - Window menu checked entries match the active tab.
     - Report whether Ctrl+Tab now works (known pending).
 11. **Status bar:**
@@ -1516,3 +1516,13 @@ Automated (core search and history, F1 contexts, the message path, the scenario 
 - [ ] Esc closes the panel; reopening shows the topic left; opening another rail panel replaces Help.
 - [ ] A long topic scrolls with the wheel; text wraps at the panel's width; a long window title does not push the buttons out.
 - [ ] Nothing in the topics reads wrongly for the program as it is (report any topic that does).
+
+## UI review (2026-11-25): physical checklist
+
+Automated (registry order and aliases, the panel header clicked on 25 panels, the Format Painter scenario with Ctrl+Shift+T, screenshots of every panel, Preferences page, and dialog in light and dark read): green. Findings and reasons: `docs/research/UI_REVIEW_2026-11.md`; conventions: `UI_SPEC.md` §50.
+
+- [ ] Every rail panel's header reads "Title … ‹ Styles ×": ‹ Styles shows the Styles list with the rail open, × closes the rail (Sort, Paragraph Properties, and Proofing used to differ).
+- [ ] Preferences: General, Folders, View, each in titled sections; the page area keeps one height (View scrolls); Customize Toolbar… beside the Toolbar switch; Status bar has a switch; the recovery interval shows only while recovery copies are on; nothing overlaps at the 900 × 640 minimum window.
+- [ ] Format › Fast Format ▸: Fast Format (Ctrl+T, also Ctrl+Shift+T) stays on and is ticked; Format Painter takes one selection and is ticked while armed; Copy Format and Paste Format as before.
+- [ ] Edit › Go To ▸ holds Go To… (Ctrl+G), Previous/Next Page, Select Next Frame, Go To Header/Footer/Ruler; File, View, and Tools groups read well; Format › Frame ▸ has dividers.
+- [ ] View › Custom Zoom shows its percentage; Ctrl+PageUp goes to the previous tab.

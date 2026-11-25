@@ -361,3 +361,98 @@ fn graphics_scaling_shows_frame_properties_in_every_rail_state() {
     send(&mut app, Message::Command(CommandId::GraphicsScaling));
     shows_picture(&app);
 }
+
+/// `AMIPRO_SCREENSHOT_DIR=DIR`: every rail panel, every Preferences page,
+/// and the dialogs a command opens, light and dark (the UI review,
+/// `docs/research/UI_REVIEW_2026-11.md`; not committed images).
+#[test]
+#[ignore = "writes screenshots to AMIPRO_SCREENSHOT_DIR"]
+fn ui_review_screenshots() {
+    use crate::page_surface_app_tests::write_window_ppm;
+    let Some(directory) = std::env::var_os("AMIPRO_SCREENSHOT_DIR") else {
+        eprintln!("AMIPRO_SCREENSHOT_DIR is not set; skipping");
+        return;
+    };
+    let directory = std::path::PathBuf::from(directory);
+    let write = |app: &AmiProApp, name: &str| {
+        for dark in [false, true] {
+            let suffix = if dark { "dark" } else { "light" };
+            write_window_ppm(app, &directory.join(format!("{name}-{suffix}.ppm")), dark);
+        }
+    };
+    let mut app = app_for_every_panel();
+    send(&mut app, Message::Command(CommandId::StylesPanel));
+    if !app.rail_open() {
+        send(&mut app, Message::Command(CommandId::StylesPanel));
+    }
+    write(&app, "panel-Styles");
+    for panel in RailPanel::ALL {
+        if open_command(panel).is_none() && panel != RailPanel::ImportReport {
+            continue;
+        }
+        open(&mut app, panel);
+        write(&app, &format!("panel-{panel:?}"));
+        app.close_rail_panels();
+    }
+    // Preferences, each page.
+    for (page, name) in crate::preferences_dialog::Page::ALL {
+        let mut app = app_for_every_panel();
+        send(&mut app, Message::Command(CommandId::Preferences));
+        send(
+            &mut app,
+            Message::Preferences(crate::preferences_dialog::PreferencesAction::Page(page)),
+        );
+        write(&app, &format!("prefs-{name}"));
+    }
+    // The dialogs that commands open (none is a portal).
+    for command in [
+        CommandId::Font,
+        CommandId::SpecialEffects,
+        CommandId::SpecialCharacter,
+        CommandId::NewFromStyleSheet,
+        CommandId::Password,
+        CommandId::GoToPage,
+        CommandId::HeaderFooter,
+        CommandId::PageNumber,
+        CommandId::Frame,
+        CommandId::InsertBullet,
+        CommandId::OutlineNumbering,
+        CommandId::CreateStyle,
+        CommandId::StyleManagement,
+        CommandId::UseAnotherStyleSheet,
+        CommandId::SaveAsStyleSheet,
+        CommandId::CustomizeToolbar,
+        CommandId::LineNumbering,
+        CommandId::BulletNumberStyle,
+        CommandId::WordCount,
+        CommandId::ReadabilityStatistics,
+        CommandId::Bookmarks,
+        CommandId::FootnoteOptions,
+        CommandId::DateTime,
+        CommandId::CrossReference,
+        CommandId::MergeField,
+        CommandId::InsertGlossary,
+        CommandId::MarkIndexEntry,
+        CommandId::Spelling,
+        CommandId::Thesaurus,
+        CommandId::GrammarCheck,
+        CommandId::EditFormula,
+        CommandId::Find,
+        CommandId::Replace,
+    ] {
+        let mut app = app_for_every_panel();
+        send(&mut app, Message::Command(CommandId::StylesPanel));
+        if !app.rail_open() {
+            send(&mut app, Message::Command(CommandId::StylesPanel));
+        }
+        send(&mut app, Message::Command(command));
+        write(&app, &format!("cmd-{command:?}"));
+    }
+    // A plain text caret (not in a table), with the Format Painter armed.
+    let mut app = page_app(crate::page_surface::page_fixture());
+    send(&mut app, Message::Command(CommandId::VerticalRuler));
+    send(&mut app, Message::Command(CommandId::FormatPainter));
+    write(&app, "window-painter-vruler");
+    send(&mut app, Message::Command(CommandId::Table));
+    write(&app, "cmd-Table");
+}

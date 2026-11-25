@@ -10,6 +10,7 @@ From 2026-11-04 (SU1), each run adds one line here; its details are in its docs/
 
 - 2026-11-22, open from outside: `amipro-linux FILE…` and a second launch handing files to the running window (libcosmic single-instance D-Bus activation; `launch.rs`, `open_problem` dialog, `scenario_tests/launch.rs`, `docs/INSTALL.md`). COSMIC 750 default, 133 text editor. Physical check passed on the installed `.deb`. See `docs/SESSION_HANDOFF.md`.
 - 2026-11-25, UI review (`docs/research/UI_REVIEW_2026-11.md`, `UI_SPEC.md` §50): one rail panel header (‹ Styles back, X closes the rail) on all 25 panels; Preferences in sections on three pages (Toolbar page folded into View, Status bar switch added, Custom zoom moved to View); Format › Fast Format ▸ (Format Painter (Keep On) was Fast Format; Ctrl+Shift+T kept); Edit › Go To ▸; File and Tools regrouped; Previous Document shows Ctrl+PageUp; label, unit, and spelling fixes. Automated checks pass; physical check pending (the ranked list in the review).
+- 2026-11-25, follow-up to the UI work: scenarios `selecting`, `format_painter`, `vertical_ruler`, `preferences`, `dialogs` (found and fixed: Go To's box was not selected, so a typed page was appended to the current one); drag auto-scroll no longer hides the input-method request; the recorded scroll offset is the drawn one at fractional zoom. COSMIC 784 default (88 ignored), 137 text editor (9), 791 all features (88); core 802 (+30); app Clippy and fmt pass; core Clippy FAILS on two untouched lines in `ami-formats/src/info.rs`. Physical check PENDING (`docs/SESSION_HANDOFF.md`).
 
 **Phase:** Phase 6 close-out; the Phase 5 queue is complete (runs A–D built; runs C and D await the physical check). Older phase text below is kept as a record.
 
@@ -285,9 +286,9 @@ Verification on 2026-10-11 at `96aeda4`. Host: Intel i7-10610U (8 threads), 15 G
 
 ## Next tasks
 
-1. The user's physical checks, ranked in `docs/SESSION_HANDOFF.md`: runs C (table data) and D (objects), Markdown, the Documents folder, Esc and the rail, IME, the update check against a later release, crash recovery after `kill -9`, First line bold, the status bar Face/Size fix.
+1. The user's physical checks, ranked in `docs/SESSION_HANDOFF.md`: first the 2026-11-25 UI work, then runs C (table data) and D (objects), Markdown, the Documents folder, Esc and the rail, IME, the update check against a later release, crash recovery after `kill -9`, First line bold, the status bar Face/Size fix.
 2. Phase 6: the compatibility matrix is done (`docs/COMPATIBILITY.md`, 2026-11-07; keep it current with `docs/KNOWN_LIMITATIONS.md`) (fuzzing and large-document tests dropped by the user, 2026-11-07; the live pass of the new features passed); `docs/KNOWN_LIMITATIONS.md` is written and is kept current.
-3. Open layout and view items: Window › New View and the Vertical Ruler (CK11), Draft's frame markers (CK10), FG3 and FG5 wrap differences.
+3. Fix the core Clippy failure in `ami-formats/src/info.rs`. Open layout and view items: Window › New View (CK11), Draft's frame markers (CK10), FG3 and FG5 wrap differences.
 4. Mining Ami Pro's `.hlp` files for a packaged Help (F1) and as a behaviour oracle for unbuilt dialogs.
 5. Accessibility of the page surface stays blocked by the pinned iced_winit.
 6. Leave P0 closed unless a pending dragging, scrolling, history, caret-visibility, or tab-isolation regression fails; do not infer unreported checks passed.

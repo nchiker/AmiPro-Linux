@@ -379,6 +379,9 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 - [ ] Publish accurate coverage and known limitations (`docs/KNOWN_LIMITATIONS.md` and `docs/COMPATIBILITY.md` written 2026-11-07); defer macros until separately scheduled.
   **Exit:** Stable release with transparent parity status.
 
+- 2026-11-25, UI work and reviews (`UI_SPEC.md` §46–§50): save type, drag selection across pages, View › Vertical Ruler, Format Painter, the UI and modal dialog reviews, Preferences, opening zoom; scenarios and three fixes (Go To's box selected on opening, the input method during drag auto-scroll, the scroll offset at fractional zoom). AUTOMATED PASS (core Clippy excepted), PHYSICAL PENDING.
+  - Next: the user's physical check (ranked in `docs/SESSION_HANDOFF.md`). No blocker for development; core Clippy fails on `ami-formats/src/info.rs` (two lines this work did not touch).
+
 ## Execution and reporting
 
 Work in small independent increments, commit after tests, update parity matrix as evidence changes. Maintain `docs/research/DECISIONS.md` for nontrivial decisions. At the end of each session record last commit, commands/tests/results, known blockers and next unblocked task. Do not ask the user to approve routine next steps. Never mark a phase complete without executable proof.

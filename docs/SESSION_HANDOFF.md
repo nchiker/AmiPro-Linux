@@ -1,65 +1,78 @@
 # Session Handoff
 
-**Updated:** 2026-11-22, after "open from outside" (files named on the command
-line or handed to a running window). `PROJECT_PLAN.md` is authoritative for
-sequencing. The previous handoff (P6.1-P6.3, the public release) is in
-`docs/HANDOFF_ARCHIVE.md`; the open items in it still stand unless noted here.
+**Updated:** 2026-11-25, after the UI work of 2026-11-25 (save type, drag
+selection, vertical ruler, Format Painter, the UI and modal dialog reviews,
+Preferences, opening zoom), its scenarios, and two follow-up fixes.
+`PROJECT_PLAN.md` is authoritative for sequencing. The previous handoff (open
+from outside) is in `docs/HANDOFF_ARCHIVE.md`.
 
-## What was built (commits `90a5767`, `8292558`; pushed)
+## What was built (`39ef6c6`..`c70c6fd`)
 
-- `amipro-linux FILE...` opens files (relative or absolute; `file://` also).
-  With a window running, the second launch hands the files over by libcosmic's
-  single-instance D-Bus activation (`run_single_instance`; name
-  `org.amipro_linux.AmiPro`, path `/org/amipro_linux/AmiPro`) and exits. The
-  window gets `ActivateAction("open", absolute paths)` or `Open(file:// uris)`,
-  both becoming `Message::OpenPaths` (`app/cosmic/src/launch.rs`,
-  `AmiProApp::dbus_activation`, `open_named_paths`). Files open as File >
-  Open does (new tabs; an open file is activated; other tabs' unsaved changes
-  are untouched); an untouched first "Untitled" gives way to the first file.
-- A file that cannot be opened (missing, unreadable, a folder, damaged) shows
-  the `open_problem` dialog (title and reason, OK). The status bar says it too.
-- Dependencies: libcosmic feature `single-instance`, crate `url`.
-- Packaging needed no change: the desktop entry already had `Exec=amipro-linux
-  %F` and the Ami Pro MIME types. `docs/INSTALL.md` has the section "Opening
-  files from the command line and from other programs"; `COSMIC_SINGLE_INSTANCE=0`
-  starts a separate window.
-- Requested by the Stack session for its "Open in Ami Pro"; the Stack session
-  was told (2026-11-22). Its command: `amipro-linux /full/path/to/file.sam`.
+- Preferences > General > Save new documents as (`UI_SPEC.md` section 46).
+- Selecting past the window's edge auto-scrolls; a drag stays in the flow it
+  started in, so a selection spans pages (section 47).
+- View > Vertical Ruler with draggable top and bottom margins (section 48).
+- Format Painter, Copy Format and Paste Format (Ctrl+Alt+C, Ctrl+Alt+V),
+  Format > Fast Format submenu (section 49).
+- UI review and modal dialog review (section 50): one rail panel header, menus
+  regrouped, Preferences in three pages (Folders restyled), one key table for
+  dialogs (Esc, Enter, first focus), Promote/Demote icons.
+- Preferences > View > Open documents at; Custom zoom (91%) by default, taken
+  by every new tab.
+- `2229639`: during drag auto-scroll a redraw still asks for the input method
+  (it did not).
+- `d7f8bd2`: at fractional zoom the recorded scroll offset is the drawn (whole
+  pixel) one (was 992.96 against 993).
+- `c70c6fd`: scenarios `selecting`, `format_painter`, `vertical_ruler`,
+  `preferences`, `dialogs`. They found one bug, fixed: Go To opened with the
+  current page in its box and the cursor after it (Ctrl+G, 3, Enter asked for
+  page 13). A dialog's first field is now selected when it opens.
+- `tools/test-changed.sh` runs only the tests a change can affect.
 
-## Checked
+## Checked (2026-11-25, code at `c70c6fd`, `AMIPRO_STYLES` unset)
 
-- Automated: unit tests in `launch.rs`, scenarios in
-  `scenario_tests/launch.rs` (named file replaces the untouched first tab; a
-  file into a window with unsaved work; same file again; missing, folder and
-  damaged files; several files). COSMIC default 750 pass (85 ignored), text
-  editor 133 pass (9 ignored). Core workspace not touched.
-- Layer 2/3: D-Bus handoff driven on a private Xwayland (second launch from
-  another folder, `Open` with a percent-encoded `file://`, missing file
-  dialog). Physical (2026-11-22, installed `.deb` 0.1.1+git90a5767): command
-  line, second launch into the running window, file manager Open with: all
-  worked.
-- The scenario tests do not cover the D-Bus transport itself (libcosmic's).
+- COSMIC default 784 pass (88 ignored); text editor 137 (9 ignored); all
+  features 791 (88 ignored); core 802 (30 ignored).
+- App Clippy (`--all-features --all-targets -D warnings`) and `cargo fmt
+  --check` (core and app) pass.
+- Core `cargo clippy --workspace --all-targets -- -D warnings` FAILS: two
+  `needless_range_loop` errors in `crates/ami-formats/src/info.rs` (lines 291
+  and 308), a file this work did not touch (rustc 1.100.0). Not fixed.
+- Corpus audit, release build and VM comparison were not run.
+- Layer 3: nothing newly accepted. The scenarios are headless widget and
+  message tests. (The cross-page drag defect had been found on a private
+  Xwayland before `1d66957`.)
+
+## Physical checks: PENDING (ranked)
+
+The installed package (version 0.1.2) predates all of this: build and install
+with `tools/package-deb.sh`, or run `cargo run --offline --release
+--manifest-path app/cosmic/Cargo.toml`.
+
+1. Drag across pages: select from page 1 into page 2 over the footer and
+   header; hold below and above the window (speed, stopping on release);
+   Shift+click; copy and paste elsewhere.
+2. Menus: Format > Fast Format, Edit > Go To, the File, View and Tools groups.
+3. Preferences: the three pages, nothing overlapping at 900 x 640; Folders.
+4. Format Painter: the toolbar button once and twice, the pointer and status
+   line; Ctrl+Alt+C and Ctrl+Alt+V (does the desktop take them?); Esc.
+5. View > Vertical Ruler: light and dark, drag both margins, restart.
+6. Save As for each "Save new documents as" choice: the name, type and filter
+   the desktop's chooser shows (only what it is given is tested).
+7. Dialogs: Ctrl+G, a number, Enter; Ctrl+W on a changed document (Enter
+   saves, Esc cancels); Enter does nothing in Delete Frame, Revert, Replace.
+8. Promote and Demote icons beside the indent icons, light and dark.
+9. Zoom: documents open at 91% (is that the right size?); change Open
+   documents at; each tab keeps its zoom.
+
+Still outstanding from before: the run C (table data) and run D (objects)
+checklists in `docs/Design/UI_ACCEPTANCE.md`; crash recovery after `kill -9`;
+First line bold against the VM picture; the status bar's Face and Size lists;
+visible IME preedit with a real input method.
 
 ## Open
 
-- `cargo clippy -D warnings` fails in `page_surface.rs:3503` (duplicated
-  `allow` attribute) and `find_bar.rs:346` (needless range loop), files this
-  work did not touch; not compared against the earlier commit. Fix in a
-  separate commit.
-- Nothing is released or tagged. The installed package is a local build of
-  `90a5767` (version 0.1.1+git90a5767); v0.1.1 on GitHub lacks this feature.
-- Decided not to: add DOCX/ODT/RTF/Markdown to the desktop MimeType list (would
-  make the app a default candidate), or set `DBusActivatable=true` (needs a
-  D-Bus service file; the handoff already covers it).
-- Flatpak (Stack's slice 6b) can start from `90a5767`. The `.deb` and a Flatpak
-  share the D-Bus name, so run only one at a time (remove the `.deb` for a
-  clean test).
-- Counts for CLAUDE.md are still the 2026-11-07 ones; default is now 750.
-
-## Physical checks outstanding (unchanged)
-
-1. Run C: the Table data checklist in `docs/Design/UI_ACCEPTANCE.md`.
-2. Run D: the Objects checklist.
-3. Crash recovery: kill -9 with unsaved changes, restart, File > Recover Documents....
-4. First line bold against the VM picture `flb_after.png`; the status bar's Face
-   and Size lists after the SetFontParts fix.
+- The core Clippy failure above: fix in its own commit.
+- Not pushed (this session was told not to): `origin/master` is at `4b944fa`.
+  Push at the end of the session and confirm `origin/master` equals `HEAD`.
+- Nothing is released or tagged for this work.

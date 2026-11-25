@@ -385,3 +385,16 @@ Ami Pro is a **page- and frame-based, desktop-publishing-style** word processor,
 - **Backup (user instruction, 2026-10-13):** the repository's remote is the private `https://github.com/nchiker/AmiPro-Linux` (`origin`, branch `master`). Push to `origin` at the end of every session, after the handoff commit (`git push origin master`), and confirm that `origin/master` equals `HEAD`. Do not push mid-session unless asked. On 2026-11-07 the history was replaced by a fresh one (the old history held four corpus file names) and the repository was made public.
 - `../AmiPro-Reference` (corpus, VM fixtures, decompiler output, VM-related files) is never pushed anywhere; the user backs it up manually, so do not prompt about it.
 - Line numbers in this file are as of `b26fa0d` and may have shifted.
+
+## 2026-11-25: UI work, reviews, and their scenarios
+
+Commits `39ef6c6`..`a5c11eb`: Save new documents as; drag auto-scroll and
+cross-page selection (the next page's header band took the hit); View ›
+Vertical Ruler; Format Painter, Copy and Paste Format; the UI review (panel
+header, menus, Preferences, dialog wording) and the modal dialog review (one
+key table); Promote and Demote icons; `tools/test-changed.sh`; Preferences ›
+Folders; Open documents at. Follow-up `2229639` (the drag's redraw arm hid
+the input-method arm), `d7f8bd2` (iced rounds the drawn scroll offset but
+reports the fraction), `c70c6fd` (five scenario modules; Go To's prefilled
+page was not selected). Automated: core 802; COSMIC 784, 137, 791. Physical
+check pending.

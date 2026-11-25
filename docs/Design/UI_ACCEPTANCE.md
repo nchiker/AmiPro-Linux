@@ -1526,3 +1526,14 @@ Automated (registry order and aliases, the panel header clicked on 25 panels, th
 - [ ] Format › Fast Format ▸: Fast Format (Ctrl+T, also Ctrl+Shift+T) stays on and is ticked; Format Painter takes one selection and is ticked while armed; Copy Format and Paste Format as before.
 - [ ] Edit › Go To ▸ holds Go To… (Ctrl+G), Previous/Next Page, Select Next Frame, Go To Header/Footer/Ruler; File, View, and Tools groups read well; Format › Frame ▸ has dividers.
 - [ ] View › Custom Zoom shows its percentage; Ctrl+PageUp goes to the previous tab.
+
+## UI work of 2026-11-25: scenarios and physical order
+
+AUTOMATED PASS, code at `c70c6fd` (scenarios `selecting`, `format_painter`,
+`vertical_ruler`, `preferences`, `dialogs`; COSMIC 784 default, 137 text
+editor, 791 all features). PHYSICAL PENDING for all of it. The ranked
+checklist is in `docs/SESSION_HANDOFF.md`: drag across pages; menus;
+Preferences pages; Format Painter and Ctrl+Alt+C/V; vertical ruler; Save As
+per preference; dialogs' Enter and Esc; Promote and Demote icons; zoom. The
+UI review checklist above and
+`docs/research/MODAL_DIALOG_REVIEW_2026-11.md` give the details.

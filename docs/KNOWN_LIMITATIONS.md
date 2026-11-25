@@ -1,7 +1,7 @@
 # Known limitations
 
 What Ami Pro for Linux does not do, does differently, or has not been
-checked on a real machine. Last updated 2026-11-07. The evidence behind each
+checked on a real machine. Last updated 2026-11-25. The evidence behind each
 feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 ## Not built, and not planned
@@ -25,6 +25,8 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 - Window › New View (a second view of one document).
 - Draft mode does not draw frame markers.
+- Vertical ruler: inches only (no unit button); the header's and footer's
+  inner margins and a frame's interior margins cannot be dragged on it.
 - Help covers the main areas in a starter set of topics (F1, Help
   Contents, Search Help…); not every command has its own topic yet, and
   dialogs that are not rail panels have no F1 context.
@@ -34,6 +36,14 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 - Table: Paste and Cut into a formula cell are not refused yet; Sort does
   not give Ami Pro's "DDE" and "too large" refusals.
 - Merge: Ami Pro's odd date parsing results, and dBASE memo fields.
+
+## Selection and preferences
+
+- A mouse drag selects within the text it started in: from the main text it
+  does not enter a header, footer, footnote, or text frame (in a table it
+  keeps to that table's cells).
+- With Save new documents as set to Markdown, Save As writes a Markdown copy;
+  the document itself stays unsaved, with no file of its own.
 
 ## Layout differences from Ami Pro
 
@@ -92,7 +102,11 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 ## Not yet checked on a real machine
 
-Built and tested automatically, but waiting for a physical check: table data
+Built and tested automatically, but waiting for a physical check: the
+2026-11-25 work (selection across pages and past the window's edge, the
+vertical ruler, Format Painter and its shortcuts, the regrouped menus,
+Preferences, Save new documents as, the opening zoom, dialog keys, the
+Promote and Demote icons), table data
 (formulas, Quick Add, Sort), objects (OLE, Paste Special, charts, equations),
 Markdown, the Documents folder, the update check against a later release,
 crash recovery after a killed process, First line bold, and the status bar's

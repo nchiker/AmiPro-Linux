@@ -12,6 +12,6 @@ context: command:CustomizeToolbar
 - **Remove**, **Move Up**, and **Move Down** act on the selected bar item.
 - **Add Separator** inserts a divider between groups.
 - **Reset to Standard** restores the original set.
-- **Done** closes the dialog.
+- **Close** closes the dialog (Enter or Esc does the same).
 
 Each change shows in the bar at once and is saved. The bar is shown while you edit even if you had hidden it. Items cannot be dragged, and there is one toolbar, not named sets.

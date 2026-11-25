@@ -16,8 +16,11 @@ use amipro_editing::frame_creation::FrameGeometry;
 use cosmic::iced::Length;
 use cosmic::{Element, widget};
 
-use crate::Message;
 use crate::page_editing::BULLET_NAMES;
+use crate::{Message, dialog_frame};
+
+/// Create Frame's Width field, which takes the keyboard when it opens.
+pub const CREATE_FRAME_FIELD: &str = "create-frame-width";
 
 /// The objects whose character is next to `at` (before or after it): the
 /// ones Ami Pro counts as "at the caret".
@@ -77,6 +80,12 @@ pub enum FloatingOutcome {
 }
 
 impl FloatingDialog {
+    /// Whether Insert or Remove (and Enter) can act: on Remove, at least
+    /// one of the boxes is checked.
+    pub fn ready(&self) -> bool {
+        !self.remove || self.remove_header || self.remove_footer
+    }
+
     /// The dialog with the caret at `at`: on Remove, with each kind there
     /// checked, when a floating header or footer is at the caret (FH3);
     /// otherwise on Insert, Floating header, All pages.
@@ -176,7 +185,7 @@ impl FloatingDialog {
                     widget::column::with_children(vec![
                         kinds("Floating header", HeaderFooterKind::Header),
                         kinds("Floating footer", HeaderFooterKind::Footer),
-                        widget::text::caption("Apply to").into(),
+                        crate::dialog_frame::heading("Apply to"),
                         sides("All pages", PageSides::All),
                         sides("Right pages", PageSides::Right),
                         sides("Left pages", PageSides::Left),
@@ -224,7 +233,7 @@ impl FloatingDialog {
                 .into(),
             );
         }
-        let ready = !remove || self.remove_header || self.remove_footer;
+        let ready = self.ready();
         widget::dialog()
             .title("Floating Header/Footer")
             .body(
@@ -412,12 +421,12 @@ impl PageNumberDialog {
                 widget::checkbox(on)
                     .label(text)
                     .on_toggle(move |on| send(toggle(on)))
-                    .width(Length::Fixed(170.0))
+                    .width(Length::Fixed(dialog_frame::LABEL_WIDTH))
                     .into(),
                 widget::text_input("", value)
                     .on_input(move |text| send(edit(text)))
                     .on_submit(move |_| send(PageNumberAction::Ok))
-                    .width(Length::Fixed(80.0))
+                    .width(Length::Fixed(dialog_frame::SHORT_FIELD))
                     .into(),
             ])
             .spacing(8)
@@ -425,19 +434,14 @@ impl PageNumberDialog {
             .into()
         };
         let mut controls: Vec<Element<'static, Message>> = vec![
-            widget::row::with_children(vec![
-                widget::text::body("Style")
-                    .width(Length::Fixed(170.0))
-                    .into(),
+            dialog_frame::row(
+                "Style",
                 widget::dropdown(STYLE_NAMES.to_vec(), Some(self.style), move |index| {
                     send(PageNumberAction::Style(index))
                 })
                 .width(Length::Fixed(120.0))
                 .into(),
-            ])
-            .spacing(8)
-            .align_y(cosmic::iced::Alignment::Center)
-            .into(),
+            ),
             number_row(
                 "Start on page",
                 self.start_page_on,
@@ -630,38 +634,33 @@ impl CreateFrameDialog {
         let send = Message::CreateFrame;
         let error = self.error.clone();
         let row = |label: &'static str, field: GeometryField, value: String| {
-            let mut column = vec![
-                widget::row::with_children(vec![
-                    widget::text::body(label).width(Length::Fixed(120.0)).into(),
-                    widget::text_input("", value)
-                        .on_input(move |text| send(CreateFrameAction::Input(field, text)))
-                        .on_submit(move |_| send(CreateFrameAction::Create))
-                        .width(Length::Fixed(110.0))
-                        .into(),
-                ])
-                .spacing(8)
-                .align_y(cosmic::iced::Alignment::Center)
-                .into(),
-            ];
+            let mut input = widget::text_input("", value)
+                .on_input(move |text| send(CreateFrameAction::Input(field, text)))
+                .on_submit(move |_| send(CreateFrameAction::Create))
+                .width(Length::Fixed(dialog_frame::SHORT_FIELD));
+            if field == GeometryField::Width {
+                input = input.id(widget::Id::new(CREATE_FRAME_FIELD));
+            }
+            let mut column = vec![dialog_frame::row(label, dialog_frame::length(input.into()))];
             if let Some((failed, reason)) = &error
                 && *failed == field
             {
-                column.push(widget::text::caption(reason.clone()).into());
+                column.push(dialog_frame::indented(dialog_frame::hint(reason.clone())));
             }
             widget::column::with_children(column).spacing(4).into()
         };
         let controls: Vec<Element<'static, Message>> = vec![
-            widget::text::heading("Size").into(),
+            dialog_frame::heading("Size"),
             row("Width", GeometryField::Width, self.width.clone()),
             row("Height", GeometryField::Height, self.height.clone()),
-            widget::text::heading("Position on page").into(),
+            dialog_frame::heading("Position on page"),
             row("Down from top", GeometryField::Top, self.top.clone()),
             row("In from left", GeometryField::Left, self.left.clone()),
         ];
         widget::dialog()
             .title("Create Frame")
             .body(format!(
-                "A new text frame on page {}, measured in inches from the paper's top \
+                "A new text frame on page {}, measured from the paper's top \
                  and left edges. Draw on Page draws one with the pointer instead.",
                 self.page
             ))
@@ -672,9 +671,10 @@ impl CreateFrameDialog {
             .secondary_action(
                 widget::button::standard("Cancel").on_press(send(CreateFrameAction::Cancel)),
             )
-            .tertiary_action(
-                widget::button::text("Draw on Page").on_press(send(CreateFrameAction::Draw)),
-            )
+            .tertiary_action(dialog_frame::alternative(
+                "Draw on Page",
+                Some(send(CreateFrameAction::Draw)),
+            ))
             .into()
     }
 }
@@ -967,6 +967,11 @@ pub enum OutlineNumberingOutcome {
 }
 
 impl OutlineNumberingDialog {
+    /// Whether Apply (and Enter) can act: some style has a level.
+    pub fn ready(&self) -> bool {
+        !self.styles.is_empty()
+    }
+
     pub fn new(document: &Document) -> Self {
         let mut styles: Vec<(u8, String)> = document
             .styles()
@@ -1029,9 +1034,10 @@ impl OutlineNumberingDialog {
                  level after a higher one. Styles without a level keep their numbers.",
             )
             .control(widget::column::with_children(controls).spacing(8))
-            .primary_action(widget::button::suggested("Apply").on_press_maybe(
-                (!self.styles.is_empty()).then_some(send(OutlineNumberingAction::Apply)),
-            ))
+            .primary_action(
+                widget::button::suggested("Apply")
+                    .on_press_maybe(self.ready().then_some(send(OutlineNumberingAction::Apply))),
+            )
             .secondary_action(
                 widget::button::standard("Cancel").on_press(send(OutlineNumberingAction::Cancel)),
             )

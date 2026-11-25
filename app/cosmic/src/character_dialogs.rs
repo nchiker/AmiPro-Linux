@@ -9,10 +9,10 @@ use amipro_editing::CharacterAttribute;
 use cosmic::iced::{Background, Border, Color, Length};
 use cosmic::{Element, widget};
 
-use crate::Message;
 use crate::colour_control::{Context, Target};
 use crate::page_editing::FontChoice;
 use crate::page_layout::display_family;
+use crate::{Message, dialog_frame};
 
 /// The Special Effects dialog's check boxes, in Ami Pro's order; the
 /// fifth, Overstrike character, has a character box beside it.
@@ -274,7 +274,6 @@ pub fn colour(value: Colour) -> Color {
 
 pub fn font_dialog<'a>(state: &'a FontDialog, colours: Context<'a>) -> Element<'a, Message> {
     let enabled = !state.revert;
-    let label = |text: &'static str| widget::text::body(text).width(Length::Fixed(56.0)).into();
     let face = widget::dropdown(&state.families, Some(state.family), |index| {
         Message::FontDialog(FontAction::Family(index))
     });
@@ -312,19 +311,22 @@ pub fn font_dialog<'a>(state: &'a FontDialog, colours: Context<'a>) -> Element<'
             Color::from_rgb8(0x80, 0x80, 0x80)
         }));
     let mut controls: Vec<Element<'_, Message>> = vec![
-        widget::row::with_children(vec![label("Face"), face.width(Length::Fill).into()])
+        dialog_frame::row("Face", face.width(Length::Fill).into()),
+        dialog_frame::row(
+            "Size",
+            widget::row::with_children(vec![
+                sizes.width(Length::Fixed(88.0)).into(),
+                points.into(),
+                widget::text::body("pt").into(),
+            ])
             .spacing(8)
             .align_y(cosmic::iced::Alignment::Center)
             .into(),
-        widget::row::with_children(vec![
-            label("Size"),
-            sizes.width(Length::Fixed(88.0)).into(),
-            points.into(),
-        ])
-        .spacing(8)
-        .align_y(cosmic::iced::Alignment::Center)
-        .into(),
-        colours.control_enabled(Target::FontText, state.colour, enabled),
+        ),
+        dialog_frame::row_top(
+            "Colour",
+            colours.control_enabled(Target::FontText, state.colour, enabled),
+        ),
         widget::checkbox(state.revert)
             .label("Revert to style")
             .on_toggle(|on| Message::FontDialog(FontAction::Revert(on)))

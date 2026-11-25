@@ -125,6 +125,11 @@ impl NewDocumentDialog {
     pub fn selected_sheet(&self) -> Option<&SheetEntry> {
         self.selected.and_then(|index| self.sheets.get(index))
     }
+
+    /// Whether Create (and Enter) can act: a sheet is selected.
+    pub fn ready(&self) -> bool {
+        self.selected_sheet().is_some()
+    }
 }
 
 /// `name` goes to the top of the recent sheets, once.

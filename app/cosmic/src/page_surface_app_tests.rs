@@ -17764,3 +17764,250 @@ fn every_panel_header_has_styles_back_and_an_x_that_closes_the_rail() {
         assert_eq!(rt.app.rail_panel(), RailPanel::Styles);
     }
 }
+
+// ----- Modal dialogs: Enter and the first focus (UI_SPEC.md §50) -----
+
+/// The dialogs whose main action is destructive, or that have no accent
+/// button (Special Character, a palette): Enter does nothing in them.
+const NO_ENTER: [&str; 6] = [
+    "delete frame",
+    "revert to saved",
+    "save as Ami Pro with losses",
+    "export with losses",
+    "replace existing file",
+    "special character",
+];
+
+#[test]
+fn enter_never_confirms_a_destructive_dialog() {
+    let mut checked = 0;
+    for (name, open) in escape_dialogs() {
+        let mut app = escape_app();
+        open(&mut app);
+        let keys = app.dialog_keys().unwrap_or_else(|| panic!("{name} has keys"));
+        if !NO_ENTER.contains(&name) {
+            continue;
+        }
+        assert!(keys.enter.is_none(), "{name} has an Enter action");
+        let before = escape_snapshot(&app);
+        send(&mut app, Message::DialogEnter);
+        assert!(
+            cosmic::Application::dialog(&app).is_some(),
+            "Enter closed {name}"
+        );
+        assert_eq!(before, escape_snapshot(&app), "Enter changed {name}");
+        assert!(!app.revert_pending || name == "revert to saved");
+        checked += 1;
+    }
+    assert_eq!(checked, NO_ENTER.len());
+}
+
+#[test]
+fn every_other_dialog_names_its_enter_and_esc_and_enter_differs_from_esc_in_a_question() {
+    for (name, open) in escape_dialogs() {
+        let mut app = escape_app();
+        open(&mut app);
+        let keys = app.dialog_keys().unwrap_or_else(|| panic!("{name} has keys"));
+        if NO_ENTER.contains(&name) {
+            continue;
+        }
+        // A dialog's Enter is its accent button, which is never its Cancel
+        // (Close-only dialogs send Close for both).
+        if let Some(enter) = &keys.enter {
+            let close_only = [
+                "style management",
+                "preferences",
+                "toolbar editor",
+                "open problem",
+            ];
+            assert_eq!(
+                format!("{enter:?}") == format!("{:?}", keys.cancel),
+                close_only.contains(&name),
+                "{name}: Enter {enter:?}, Esc {:?}",
+                keys.cancel
+            );
+        }
+    }
+}
+
+#[test]
+fn enter_acts_as_the_accent_button_and_waits_while_it_is_disabled() {
+    use crate::character_dialogs::EffectsAction;
+    use crate::style_dialogs::CreateAction;
+    // Font: OK.
+    let mut app = escape_app();
+    send(&mut app, Message::Command(CommandId::Font));
+    send(&mut app, Message::DialogEnter);
+    assert!(app.font_dialog.is_none(), "Enter is OK in Font");
+    // Special Effects: OK applies the box ticked.
+    let mut app = escape_app();
+    send(&mut app, Message::Command(CommandId::SpecialEffects));
+    send(
+        &mut app,
+        Message::SpecialEffects(EffectsAction::Toggle(0, true)),
+    );
+    send(&mut app, Message::DialogEnter);
+    assert!(app.special_effects.is_none(), "Enter is OK in Special Effects");
+    // Insert Bullet: Insert puts the bullet in.
+    let mut app = escape_app();
+    let before = escape_snapshot(&app);
+    send(&mut app, Message::Command(CommandId::InsertBullet));
+    send(&mut app, Message::DialogEnter);
+    assert!(app.bullet_dialog.is_none());
+    assert_ne!(before.0, escape_snapshot(&app).0, "Enter inserted the bullet");
+    // Go To: Go.
+    let mut app = escape_app();
+    send(&mut app, Message::Command(CommandId::GoToPage));
+    send(&mut app, Message::GoTo(GoToAction::Input("2".into())));
+    send(&mut app, Message::DialogEnter);
+    assert!(app.go_to.is_none(), "Enter is Go in Go To");
+    // Create Style: nothing while Create is disabled (no name), Create after.
+    let mut app = escape_app();
+    send(&mut app, Message::Command(CommandId::CreateStyle));
+    assert!(app.dialog_keys().unwrap().enter.is_none());
+    send(&mut app, Message::DialogEnter);
+    assert!(app.create_style.is_some(), "Enter waits for a name");
+    send(
+        &mut app,
+        Message::CreateStyle(CreateAction::Name("Enter Made".into())),
+    );
+    send(&mut app, Message::DialogEnter);
+    assert!(app.create_style.is_none());
+    assert!(
+        app.document
+            .styles()
+            .values()
+            .any(|style| style.name == "Enter Made"),
+        "Enter is Create"
+    );
+    // A Close-only dialog closes.
+    let mut app = escape_app();
+    send(&mut app, Message::Command(CommandId::Preferences));
+    send(&mut app, Message::DialogEnter);
+    assert!(cosmic::Application::dialog(&app).is_none());
+    // With no dialog, Enter that no widget took does nothing.
+    let mut app = escape_app();
+    let before = escape_snapshot(&app);
+    send(&mut app, Message::DialogEnter);
+    assert_eq!(before, escape_snapshot(&app));
+}
+
+/// The subscription's keys: a plain Enter no widget took is the dialog's;
+/// one a widget took (a text field's submit), or with a modifier, is not.
+#[test]
+fn only_a_plain_enter_no_widget_took_goes_to_the_dialog() {
+    use cosmic::iced::event::Status;
+    use cosmic::iced::keyboard::{Key, Modifiers, key::Named};
+    let enter = |modifiers| key_press(Key::Named(Named::Enter), modifiers).0;
+    assert!(matches!(
+        window_event_message(enter(Modifiers::empty()), Status::Ignored),
+        Some(Message::DialogEnter)
+    ));
+    assert!(window_event_message(enter(Modifiers::empty()), Status::Captured).is_none());
+    assert!(!matches!(
+        window_event_message(enter(Modifiers::SHIFT), Status::Ignored),
+        Some(Message::DialogEnter)
+    ));
+    assert!(!matches!(
+        window_event_message(enter(Modifiers::CTRL), Status::Ignored),
+        Some(Message::DialogEnter)
+    ));
+    // Esc still reaches the app whoever took it.
+    let escape = key_press(Key::Named(Named::Escape), Modifiers::empty()).0;
+    assert!(matches!(
+        window_event_message(escape, Status::Captured),
+        Some(Message::Escape)
+    ));
+}
+
+/// Through the real window: with Insert Bullet open over a page that holds
+/// the keyboard, Enter reaches no widget (the page gets no paragraph
+/// break), the subscription sends it to the dialog, and the bullet goes in.
+#[test]
+fn a_modal_dialog_keeps_enter_from_the_page_and_its_accent_button_takes_it() {
+    use cosmic::iced::keyboard::{Key, Modifiers, key::Named};
+    let mut app = escape_app();
+    app.page_keyboard += 1;
+    let mut runtime = Runtime::new(app);
+    runtime.redraw();
+    let paragraphs = runtime.app.document.paragraphs().len();
+    runtime.send(Message::Command(CommandId::InsertBullet));
+    let (event, point) = key_press(Key::Named(Named::Enter), Modifiers::empty());
+    let mut ui = cosmic::iced::runtime::user_interface::UserInterface::build(
+        cosmic::ApplicationExt::view_main(&runtime.app),
+        runtime.window,
+        runtime.cache.take().expect("the interface's cache"),
+        &mut runtime.renderer,
+    );
+    let mut messages = Vec::new();
+    let (_, statuses) = ui.update(
+        std::slice::from_ref(&event),
+        cosmic::iced::mouse::Cursor::Available(point),
+        &mut runtime.renderer,
+        &mut cosmic::iced::advanced::clipboard::Null,
+        &mut messages,
+    );
+    runtime.cache = Some(ui.into_cache());
+    assert!(
+        !messages
+            .iter()
+            .any(|message| matches!(message, cosmic::Action::App(Message::Page(_)))),
+        "the page took Enter under the dialog"
+    );
+    let message = window_event_message(event, statuses[0]);
+    assert!(matches!(message, Some(Message::DialogEnter)), "{message:?}");
+    runtime.send(message.unwrap());
+    assert!(runtime.app.bullet_dialog.is_none());
+    assert_eq!(runtime.app.document.paragraphs().len(), paragraphs);
+}
+
+/// A dialog that asks for a value first puts the keyboard in that field
+/// when it opens: typing goes there with no click (Go To, Create Style,
+/// Create Frame, Insert Table, Rename Style, Save as a Style Sheet, and a
+/// power field's question; the password box as before).
+#[test]
+fn a_dialog_with_a_value_to_type_opens_with_the_keyboard_in_it() {
+    use cosmic::iced::keyboard::{Key, Modifiers};
+    let typed = |runtime: &mut Runtime, text: &str| {
+        let events: Vec<_> = text
+            .chars()
+            .map(|character| {
+                key_press(Key::Character(character.to_string().into()), Modifiers::empty())
+            })
+            .collect();
+        runtime.events(&events);
+    };
+    let mut runtime = Runtime::new(escape_app());
+    runtime.redraw();
+    runtime.send(Message::Command(CommandId::GoToPage));
+    typed(&mut runtime, "3");
+    assert!(
+        runtime.app.go_to.as_ref().unwrap().page.contains('3'),
+        "Go To's page field has the keyboard"
+    );
+    runtime.send(Message::GoTo(GoToAction::Cancel));
+    runtime.send(Message::Command(CommandId::CreateStyle));
+    typed(&mut runtime, "Typed");
+    assert_eq!(runtime.app.create_style.as_ref().unwrap().name, "Typed");
+    runtime.send(Message::CreateStyle(
+        crate::style_dialogs::CreateAction::Cancel,
+    ));
+    runtime.send(Message::Command(CommandId::Frame));
+    typed(&mut runtime, "7");
+    assert!(
+        runtime
+            .app
+            .create_frame_dialog
+            .as_ref()
+            .unwrap()
+            .width
+            .contains('7'),
+        "Create Frame's Width has the keyboard"
+    );
+    runtime.send(Message::CreateFrame(
+        crate::page_dialogs::CreateFrameAction::Cancel,
+    ));
+    runtime.send(Message::Command(CommandId::SaveAsStyleSheet));
+    typed(&mut runtime, "Mine");
+    assert_eq!(runtime.app.save_sheet.as_deref(), Some("Mine"));
+}

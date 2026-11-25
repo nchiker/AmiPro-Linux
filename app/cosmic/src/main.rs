@@ -22,6 +22,7 @@ mod contents_commands;
 mod contents_panel;
 #[cfg(feature = "page-surface")]
 mod data_file;
+mod dialog_frame;
 #[cfg_attr(
     feature = "rich-editor-prototype",
     allow(
@@ -273,6 +274,46 @@ fn main() -> cosmic::iced::Result {
     let launch = launch::Launch::from_args(std::env::args_os().skip(1), &directory);
     cosmic::app::run_single_instance::<AmiProApp>(settings, launch)
 }
+
+/// A dialog's keys: what Esc and Enter send, and the field that takes the
+/// keyboard when it opens (`AmiProApp::dialog_keys`).
+#[derive(Clone, Debug)]
+struct DialogKeys {
+    /// Names the dialog, so that a newly opened one is told from one that
+    /// stays open.
+    name: &'static str,
+    cancel: Message,
+    enter: Option<Message>,
+    focus: Option<&'static str>,
+}
+
+impl DialogKeys {
+    fn new(name: &'static str, cancel: Message, enter: Option<Message>) -> Self {
+        Self {
+            name,
+            cancel,
+            enter,
+            focus: None,
+        }
+    }
+
+    fn focus(self, field: &'static str) -> Self {
+        self.focus_if(true, field)
+    }
+
+    fn focus_if(mut self, condition: bool, field: &'static str) -> Self {
+        if condition {
+            self.focus = Some(field);
+        }
+        self
+    }
+}
+
+/// The text fields that take the keyboard when their dialog opens.
+const RENAME_STYLE_FIELD: &str = "rename-style-name";
+const SAVE_SHEET_FIELD: &str = "save-sheet-description";
+#[cfg(feature = "page-surface")]
+const GO_TO_FIELD: &str = "go-to-page";
 
 /// A Save As SAM the loss check stopped (decision B): where it goes and
 /// what would not be written exactly.
@@ -3309,6 +3350,9 @@ enum Message {
     /// Esc: cancels the topmost open dialog; with none, ends Show Clean
     /// Screen, then closes a focused find bar.
     Escape,
+    /// Enter that no widget took: the open dialog's accent action
+    /// (`dialog_keys`).
+    DialogEnter,
     /// The answer to a field's prompt (`UI_SPEC.md` §28).
     #[cfg(feature = "page-surface")]
     FieldPrompt(field_commands::PromptAction),
@@ -4549,57 +4593,7 @@ impl cosmic::Application for AmiProApp {
         Subscription::batch([
             autosave,
             drag_scroll,
-            event::listen_with(|event, status, _window| {
-                if matches!(event, Event::Window(cosmic::iced::window::Event::Focused)) {
-                    return Some(Message::RefreshClipboard);
-                }
-                if let Event::Window(cosmic::iced::window::Event::Resized(size)) = event {
-                    return Some(Message::WindowResized(size.width));
-                }
-                // The find bar's keys come whoever took them: Esc closes it from
-                // its fields, and Shift+Enter finds backwards.
-                #[cfg(feature = "page-surface")]
-                if let Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) = &event {
-                    return Some(Message::Modifiers(*modifiers));
-                }
-                // Esc comes whoever took it (a dialog's text field does).
-                if let Event::Keyboard(keyboard::Event::KeyPressed {
-                    key: keyboard::Key::Named(keyboard::key::Named::Escape),
-                    ..
-                }) = &event
-                {
-                    return Some(Message::Escape);
-                }
-                if status == event::Status::Captured {
-                    return None;
-                }
-                let Event::Keyboard(keyboard::Event::KeyPressed {
-                    key,
-                    physical_key,
-                    modifiers,
-                    ..
-                }) = event
-                else {
-                    return None;
-                };
-                let command = command::command_for_shortcut(modifiers, &key, Some(&physical_key))
-                    .map(Message::Command);
-                // Plain arrows and Enter no widget took: the Outline navigator's
-                // while it holds the keys (OB.6).
-                #[cfg(feature = "page-surface")]
-                if command.is_none()
-                    && modifiers.is_empty()
-                    && let keyboard::Key::Named(
-                        named @ (keyboard::key::Named::ArrowUp
-                        | keyboard::key::Named::ArrowDown
-                        | keyboard::key::Named::ArrowLeft
-                        | keyboard::key::Named::ArrowRight),
-                    ) = key
-                {
-                    return Some(Message::NavigatorKey(named));
-                }
-                command
-            }),
+            event::listen_with(|event, status, _window| window_event_message(event, status)),
         ])
     }
 
@@ -4615,17 +4609,19 @@ impl cosmic::Application for AmiProApp {
             let label = self.sessions.get(index)?.tab_label();
             return Some(
                 widget::dialog()
-                    .title("Discard unsaved changes?")
-                    .body(format!("{label} has unsaved changes."))
+                    .title(format!("Save changes to {label}?"))
+                    .body("Closing without saving discards them.")
+                    // Save, the safe answer, is the accent button on the
+                    // right (Enter); Discard stays apart on the left.
                     .primary_action(
-                        widget::button::destructive("Discard")
-                            .on_press(Message::ConfirmCloseDiscard),
+                        widget::button::suggested("Save").on_press(Message::SaveAndClose),
                     )
                     .secondary_action(
                         widget::button::standard("Cancel").on_press(Message::CancelClose),
                     )
                     .tertiary_action(
-                        widget::button::suggested("Save").on_press(Message::SaveAndClose),
+                        widget::button::destructive("Discard")
+                            .on_press(Message::ConfirmCloseDiscard),
                     )
                     .into(),
             );
@@ -4640,6 +4636,7 @@ impl cosmic::Application for AmiProApp {
                 .map_or_else(String::new, |style| style.name.clone());
             let mut controls: Vec<Element<'_, Message>> = vec![
                 widget::text_input("Name", name.clone())
+                    .id(widget::Id::new(RENAME_STYLE_FIELD))
                     .on_input(|name| Message::RenameStyle(RenameAction::Name(name)))
                     .on_submit_maybe(
                         problem
@@ -4707,6 +4704,7 @@ impl cosmic::Application for AmiProApp {
                         widget::column::with_children(vec![
                             widget::text::body("Description").into(),
                             widget::text_input("Description", description.clone())
+                                .id(widget::Id::new(SAVE_SHEET_FIELD))
                                 .on_input(|text| {
                                     Message::SaveSheet(SaveSheetAction::Description(text))
                                 })
@@ -4758,25 +4756,33 @@ impl cosmic::Application for AmiProApp {
         #[cfg(feature = "page-surface")]
         if let Some(go_to) = &self.go_to {
             let count = self.page_count();
-            let mut controls: Vec<Element<'_, Message>> = vec![
-                widget::text_input("Page", go_to.page.clone())
-                    .on_input(|text| Message::GoTo(GoToAction::Input(text)))
-                    .on_submit(|_| Message::GoTo(GoToAction::Go))
-                    .width(Length::Fill)
-                    .into(),
-            ];
-            if let Some(error) = &go_to.error {
-                controls.push(widget::text::caption(error.clone()).into());
-            }
-            controls.push(
+            let mut controls: Vec<Element<'_, Message>> = vec![dialog_frame::row(
+                "Page",
                 widget::row::with_children(vec![
-                    widget::button::standard("First page")
+                    widget::text_input("", go_to.page.clone())
+                        .id(widget::Id::new(GO_TO_FIELD))
+                        .on_input(|text| Message::GoTo(GoToAction::Input(text)))
+                        .on_submit(|_| Message::GoTo(GoToAction::Go))
+                        .width(Length::Fixed(dialog_frame::SHORT_FIELD))
+                        .into(),
+                    dialog_frame::hint(format!("1 to {count}")),
+                ])
+                .spacing(8)
+                .align_y(cosmic::iced::Alignment::Center)
+                .into(),
+            )];
+            if let Some(error) = &go_to.error {
+                controls.push(dialog_frame::indented(dialog_frame::hint(error.clone())));
+            }
+            controls.push(dialog_frame::indented(
+                widget::row::with_children(vec![
+                    widget::button::standard("First Page")
                         .on_press(Message::GoTo(GoToAction::First))
                         .into(),
-                    widget::button::standard("Last page")
+                    widget::button::standard("Last Page")
                         .on_press(Message::GoTo(GoToAction::Last))
                         .into(),
-                    widget::button::standard("Next frame")
+                    widget::button::standard("Next Frame")
                         .on_press_maybe(
                             (!self.document.frame_stack().is_empty())
                                 .then_some(Message::GoTo(GoToAction::NextFrame)),
@@ -4785,8 +4791,9 @@ impl cosmic::Application for AmiProApp {
                 ])
                 .spacing(8)
                 .into(),
-            );
-            controls.push(
+            ));
+            controls.push(dialog_frame::row(
+                "Item",
                 widget::row::with_children(vec![
                     widget::dropdown(
                         reference_commands::GO_TO_ITEMS.to_vec(),
@@ -4805,11 +4812,10 @@ impl cosmic::Application for AmiProApp {
                 .spacing(8)
                 .align_y(cosmic::iced::Alignment::Center)
                 .into(),
-            );
+            ));
             return Some(
                 widget::dialog()
                     .title("Go To")
-                    .body(format!("Page number, 1 to {count}"))
                     .control(widget::column::with_children(controls).spacing(8))
                     .primary_action(
                         widget::button::suggested("Go").on_press(Message::GoTo(GoToAction::Go)),
@@ -4951,10 +4957,10 @@ impl cosmic::Application for AmiProApp {
                     .title(format!("Save {name} as an Ami Pro document?"))
                     .body(body)
                     .primary_action(
-                        widget::button::suggested("Cancel").on_press(Message::CancelSamSave),
+                        widget::button::destructive("Save Anyway").on_press(Message::SaveSamAnyway),
                     )
                     .secondary_action(
-                        widget::button::destructive("Save Anyway").on_press(Message::SaveSamAnyway),
+                        widget::button::standard("Cancel").on_press(Message::CancelSamSave),
                     )
                     .into(),
             );
@@ -4982,11 +4988,11 @@ impl cosmic::Application for AmiProApp {
                     .title(format!("Export {name}?"))
                     .body(body)
                     .primary_action(
-                        widget::button::suggested("Cancel").on_press(Message::CancelExport),
-                    )
-                    .secondary_action(
                         widget::button::destructive("Export Anyway")
                             .on_press(Message::ExportAnyway),
+                    )
+                    .secondary_action(
+                        widget::button::standard("Cancel").on_press(Message::CancelExport),
                     )
                     .into(),
             );
@@ -5007,7 +5013,7 @@ impl cosmic::Application for AmiProApp {
                 .title("Replace existing file?")
                 .body(body)
                 .primary_action(
-                    widget::button::suggested("Replace").on_press(Message::ConfirmOverwrite),
+                    widget::button::destructive("Replace").on_press(Message::ConfirmOverwrite),
                 )
                 .secondary_action(
                     widget::button::standard("Cancel").on_press(Message::CancelOverwrite),
@@ -5021,6 +5027,7 @@ impl cosmic::Application for AmiProApp {
             .password_dialog
             .as_ref()
             .map(|dialog| dialog.error.clone());
+        let dialog_before = self.dialog_keys().map(|keys| keys.name);
         #[cfg(feature = "page-surface")]
         let caret_before = (self.active_session, self.page_selection.focus.paragraph);
         // A press on the page takes the keys from the Outline navigator.
@@ -5061,16 +5068,21 @@ impl cosmic::Application for AmiProApp {
                 || self.page_selection.focus.paragraph >= caret_before.1;
             self.sessions[self.active_session].leave_hidden_text(forward);
         }
-        // The password box takes the keyboard when it opens, and again
-        // after a wrong password (Ami Pro's edit has the focus).
-        let task = match &self.password_dialog {
-            Some(dialog) if password_before.as_ref() != Some(&dialog.error) => Task::batch([
+        // A dialog's first text field takes the keyboard when the dialog
+        // opens (`dialog_keys`), and the password box again after a wrong
+        // password (Ami Pro's edit has the focus).
+        let keys = self.dialog_keys();
+        let opened = keys.as_ref().map(|keys| keys.name) != dialog_before;
+        let wrong_password = self
+            .password_dialog
+            .as_ref()
+            .is_some_and(|dialog| password_before.as_ref() != Some(&dialog.error));
+        let task = match keys.and_then(|keys| keys.focus) {
+            Some(field) if opened || wrong_password => Task::batch([
                 task,
-                widget::text_input::focus::<Message>(widget::Id::new(
-                    password_dialog::PASSWORD_FIELD,
-                ))
-                .chain(Task::done(Message::Repaint))
-                .map(cosmic::Action::from),
+                widget::text_input::focus::<Message>(widget::Id::new(field))
+                    .chain(Task::done(Message::Repaint))
+                    .map(cosmic::Action::from),
             ]),
             _ => task,
         };
@@ -5123,128 +5135,270 @@ impl cosmic::Application for AmiProApp {
 }
 
 impl AmiProApp {
-    /// The message Esc sends for the topmost open dialog: what its Cancel
-    /// (or, with none, its OK) button sends, never a confirmation. The order
-    /// is `dialog`'s, so Esc and the view name the same dialog; `escape`
-    /// asserts they agree.
+    /// The message Esc sends for the topmost open dialog (see
+    /// [`Self::dialog_keys`]).
     fn dialog_cancel(&self) -> Option<Message> {
+        self.dialog_keys().map(|keys| keys.cancel)
+    }
+
+    /// The topmost open dialog's keys (`UI_SPEC.md` §50, Dialogs): Esc sends
+    /// what its Cancel (or, with none, its Close or OK) button sends, never a
+    /// confirmation; Enter sends what its accent button sends while that
+    /// button is enabled, and nothing in a dialog whose main action is
+    /// destructive (delete, discard, revert, write over, lose formatting);
+    /// `focus` is the text field that takes the keyboard when the dialog
+    /// opens. The order is `dialog`'s, so the keys and the view name the same
+    /// dialog; `escape` asserts they agree.
+    fn dialog_keys(&self) -> Option<DialogKeys> {
+        let keys = |name, cancel, enter| Some(DialogKeys::new(name, cancel, enter));
         if self.import_dialog.is_some() {
-            return Some(Message::ImportOptions(import::OptionsAction::Cancel));
+            return keys(
+                "import options",
+                Message::ImportOptions(import::OptionsAction::Cancel),
+                Some(Message::ImportOptions(import::OptionsAction::Open)),
+            );
         }
         #[cfg(feature = "page-surface")]
-        if self.field_prompt.is_some() {
-            return Some(Message::FieldPrompt(field_commands::PromptAction::Cancel));
+        if let Some(prompt) = &self.field_prompt {
+            use field_commands::{FieldQuestion, PromptAction};
+            let query = matches!(prompt.question, FieldQuestion::Query { .. });
+            return Some(
+                DialogKeys::new(
+                    "power field",
+                    Message::FieldPrompt(PromptAction::Cancel),
+                    Some(Message::FieldPrompt(PromptAction::Answer(true))),
+                )
+                .focus_if(query, field_commands::QUERY_FIELD),
+            );
         }
         if let Some(index) = self.pending_close {
             self.sessions.get(index)?;
-            return Some(Message::CancelClose);
+            return keys(
+                "discard unsaved changes",
+                Message::CancelClose,
+                Some(Message::SaveAndClose),
+            );
         }
-        if self.rename_style.is_some() {
-            return Some(Message::RenameStyle(RenameAction::Cancel));
+        if let Some((style, name)) = &self.rename_style {
+            let problem =
+                amipro_editing::style_name_problem(self.document.styles(), name, Some(*style));
+            return Some(
+                DialogKeys::new(
+                    "rename style",
+                    Message::RenameStyle(RenameAction::Cancel),
+                    problem
+                        .is_none()
+                        .then_some(Message::RenameStyle(RenameAction::Rename)),
+                )
+                .focus(RENAME_STYLE_FIELD),
+            );
         }
         if self.style_management.is_some() {
-            return Some(Message::StyleManagement(
-                style_dialogs::ManagementAction::Close,
-            ));
+            let close = Message::StyleManagement(style_dialogs::ManagementAction::Close);
+            return keys("style management", close.clone(), Some(close));
         }
-        if self.use_sheet.is_some() {
-            return Some(Message::UseStyleSheet(
-                style_dialogs::UseSheetAction::Cancel,
-            ));
+        if let Some(state) = &self.use_sheet {
+            return keys(
+                "use another style sheet",
+                Message::UseStyleSheet(style_dialogs::UseSheetAction::Cancel),
+                state
+                    .selected
+                    .map(|_| Message::UseStyleSheet(style_dialogs::UseSheetAction::Apply)),
+            );
         }
-        if self.create_style.is_some() {
-            return Some(Message::CreateStyle(style_dialogs::CreateAction::Cancel));
+        if let Some(state) = &self.create_style {
+            let problem =
+                amipro_editing::style_name_problem(self.document.styles(), &state.name, None);
+            return Some(
+                DialogKeys::new(
+                    "create style",
+                    Message::CreateStyle(style_dialogs::CreateAction::Cancel),
+                    (problem.is_none() && !state.name.is_empty())
+                        .then_some(Message::CreateStyle(style_dialogs::CreateAction::Create)),
+                )
+                .focus(style_dialogs::CREATE_STYLE_FIELD),
+            );
         }
         if self.save_sheet.is_some() {
-            return Some(Message::SaveSheet(SaveSheetAction::Cancel));
+            return Some(
+                DialogKeys::new(
+                    "save as a style sheet",
+                    Message::SaveSheet(SaveSheetAction::Cancel),
+                    Some(Message::SaveSheet(SaveSheetAction::Choose)),
+                )
+                .focus(SAVE_SHEET_FIELD),
+            );
         }
         #[cfg(feature = "page-surface")]
         {
-            if self.floating_dialog.is_some() {
-                return Some(Message::FloatingHeaderFooter(
-                    page_dialogs::FloatingAction::Cancel,
-                ));
+            if let Some(dialog) = &self.floating_dialog {
+                return keys(
+                    "floating header/footer",
+                    Message::FloatingHeaderFooter(page_dialogs::FloatingAction::Cancel),
+                    dialog.ready().then_some(Message::FloatingHeaderFooter(
+                        page_dialogs::FloatingAction::Ok,
+                    )),
+                );
             }
             if self.page_number_dialog.is_some() {
-                return Some(Message::PageNumber(page_dialogs::PageNumberAction::Cancel));
+                return keys(
+                    "page number",
+                    Message::PageNumber(page_dialogs::PageNumberAction::Cancel),
+                    Some(Message::PageNumber(page_dialogs::PageNumberAction::Ok)),
+                );
             }
             if self.create_frame_dialog.is_some() {
-                return Some(Message::CreateFrame(
-                    page_dialogs::CreateFrameAction::Cancel,
-                ));
+                return Some(
+                    DialogKeys::new(
+                        "create frame",
+                        Message::CreateFrame(page_dialogs::CreateFrameAction::Cancel),
+                        Some(Message::CreateFrame(
+                            page_dialogs::CreateFrameAction::Create,
+                        )),
+                    )
+                    .focus(page_dialogs::CREATE_FRAME_FIELD),
+                );
             }
             if self.insert_table_dialog.is_some() {
-                return Some(Message::InsertTable(
-                    table_commands::InsertTableAction::Cancel,
-                ));
+                return Some(
+                    DialogKeys::new(
+                        "insert table",
+                        Message::InsertTable(table_commands::InsertTableAction::Cancel),
+                        Some(Message::InsertTable(
+                            table_commands::InsertTableAction::Insert,
+                        )),
+                    )
+                    .focus(table_commands::INSERT_TABLE_FIELD),
+                );
             }
             if self.bullet_dialog.is_some() {
-                return Some(Message::InsertBullet(page_dialogs::BulletAction::Cancel));
+                return keys(
+                    "insert bullet",
+                    Message::InsertBullet(page_dialogs::BulletAction::Cancel),
+                    Some(Message::InsertBullet(page_dialogs::BulletAction::Insert)),
+                );
             }
-            if self.outline_numbering.is_some() {
-                return Some(Message::OutlineNumbering(
-                    page_dialogs::OutlineNumberingAction::Cancel,
-                ));
+            if let Some(dialog) = &self.outline_numbering {
+                return keys(
+                    "outline numbering",
+                    Message::OutlineNumbering(page_dialogs::OutlineNumberingAction::Cancel),
+                    dialog.ready().then_some(Message::OutlineNumbering(
+                        page_dialogs::OutlineNumberingAction::Apply,
+                    )),
+                );
             }
             if self.go_to.is_some() {
-                return Some(Message::GoTo(GoToAction::Cancel));
+                return Some(
+                    DialogKeys::new(
+                        "go to",
+                        Message::GoTo(GoToAction::Cancel),
+                        Some(Message::GoTo(GoToAction::Go)),
+                    )
+                    .focus(GO_TO_FIELD),
+                );
             }
             if self.pending_frame_delete {
-                return Some(Message::CancelFrameDelete);
+                return keys("delete frame", Message::CancelFrameDelete, None);
             }
             if self.special_effects.is_some() {
-                return Some(Message::SpecialEffects(
-                    character_dialogs::EffectsAction::Cancel,
-                ));
+                return keys(
+                    "special effects",
+                    Message::SpecialEffects(character_dialogs::EffectsAction::Cancel),
+                    Some(Message::SpecialEffects(
+                        character_dialogs::EffectsAction::Apply,
+                    )),
+                );
             }
             if self.font_dialog.is_some() {
-                return Some(Message::FontDialog(character_dialogs::FontAction::Cancel));
+                return keys(
+                    "font",
+                    Message::FontDialog(character_dialogs::FontAction::Cancel),
+                    Some(Message::FontDialog(character_dialogs::FontAction::Apply)),
+                );
             }
             if self.special_character {
-                return Some(Message::SpecialCharacter(
-                    special_character::CharacterAction::Cancel,
-                ));
+                // A palette: a click inserts; it has no accent button.
+                return keys(
+                    "special character",
+                    Message::SpecialCharacter(special_character::CharacterAction::Cancel),
+                    None,
+                );
             }
         }
         if self.revert_pending {
-            return Some(Message::RevertToSaved(false));
+            return keys("revert to saved", Message::RevertToSaved(false), None);
         }
         if self.password_dialog.is_some() {
-            return Some(Message::Password(password_dialog::PasswordAction::Cancel));
+            return Some(
+                DialogKeys::new(
+                    "password",
+                    Message::Password(password_dialog::PasswordAction::Cancel),
+                    Some(Message::Password(password_dialog::PasswordAction::Submit)),
+                )
+                .focus(password_dialog::PASSWORD_FIELD),
+            );
         }
         #[cfg(feature = "page-surface")]
         if self.fast_format_ask.is_some() {
-            return Some(Message::FastFormat(fast_format::FastAction::Cancel));
+            return keys(
+                "fast format",
+                Message::FastFormat(fast_format::FastAction::Cancel),
+                Some(Message::FastFormat(fast_format::FastAction::Ok)),
+            );
         }
-        if self.new_document_dialog.is_some() {
-            return Some(Message::NewDocumentDialog(
-                new_document_dialog::NewAction::Cancel,
-            ));
+        if let Some(state) = &self.new_document_dialog {
+            return keys(
+                "new",
+                Message::NewDocumentDialog(new_document_dialog::NewAction::Cancel),
+                state.ready().then_some(Message::NewDocumentDialog(
+                    new_document_dialog::NewAction::Create,
+                )),
+            );
         }
         if self.preferences_dialog.is_some() {
-            return Some(Message::Preferences(
-                preferences_dialog::PreferencesAction::Close,
-            ));
+            let close = Message::Preferences(preferences_dialog::PreferencesAction::Close);
+            return keys("preferences", close.clone(), Some(close));
         }
         if self.toolbar_editor.is_some() {
-            return Some(Message::CloseToolbarEditor);
+            return keys(
+                "customize toolbar",
+                Message::CloseToolbarEditor,
+                Some(Message::CloseToolbarEditor),
+            );
         }
         if self.open_problem.is_some() {
-            return Some(Message::OpenProblemClose);
+            return keys(
+                "open problem",
+                Message::OpenProblemClose,
+                Some(Message::OpenProblemClose),
+            );
         }
         if self.save_problem.is_some() {
-            return Some(Message::SaveProblemClose);
+            return keys(
+                "save problem",
+                Message::SaveProblemClose,
+                Some(Message::SaveProblemRetry),
+            );
         }
         if self.sam_save.is_some() {
-            return Some(Message::CancelSamSave);
+            return keys("save with losses", Message::CancelSamSave, None);
         }
         #[cfg(feature = "page-surface")]
         if self.export_pending.is_some() {
-            return Some(Message::CancelExport);
+            return keys("export with losses", Message::CancelExport, None);
         }
         self.overwrite_confirmation
             .pending()
-            .map(|_| Message::CancelOverwrite)
+            .and_then(|_| keys("replace existing file", Message::CancelOverwrite, None))
+    }
+
+    /// Enter that no widget took: the topmost dialog's accent action, when
+    /// it has one (see [`Self::dialog_keys`]).
+    fn dialog_enter(&mut self) -> Task<cosmic::Action<Message>> {
+        match self.dialog_keys().and_then(|keys| keys.enter) {
+            Some(message) => self.handle_message(message),
+            None => Task::none(),
+        }
     }
 
     /// Esc: cancels the topmost dialog only; with none open, ends Show Clean
@@ -5369,6 +5523,7 @@ impl AmiProApp {
             #[cfg(feature = "page-surface")]
             Message::Find(action) => return self.update_find(action),
             Message::Escape => return self.escape(),
+            Message::DialogEnter => return self.dialog_enter(),
             #[cfg(feature = "page-surface")]
             Message::RailBack(close) => {
                 let task = self.handle_message(*close);
@@ -10914,6 +11069,70 @@ fn action_bar_view(state: ActionBarState, width: f32) -> Element<'static, Messag
     .into()
 }
 
+/// What a window event the widgets saw sends to the app (the
+/// subscription's `listen_with`): focus and size, Esc whoever took it, and
+/// the keys no widget took: shortcuts, Enter for the open dialog, and the
+/// Outline navigator's arrows.
+fn window_event_message(event: Event, status: event::Status) -> Option<Message> {
+    if matches!(event, Event::Window(cosmic::iced::window::Event::Focused)) {
+        return Some(Message::RefreshClipboard);
+    }
+    if let Event::Window(cosmic::iced::window::Event::Resized(size)) = event {
+        return Some(Message::WindowResized(size.width));
+    }
+    // The find bar's keys come whoever took them: Esc closes it from
+    // its fields, and Shift+Enter finds backwards.
+    #[cfg(feature = "page-surface")]
+    if let Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) = &event {
+        return Some(Message::Modifiers(*modifiers));
+    }
+    // Esc comes whoever took it (a dialog's text field does).
+    if let Event::Keyboard(keyboard::Event::KeyPressed {
+        key: keyboard::Key::Named(keyboard::key::Named::Escape),
+        ..
+    }) = &event
+    {
+        return Some(Message::Escape);
+    }
+    if status == event::Status::Captured {
+        return None;
+    }
+    let Event::Keyboard(keyboard::Event::KeyPressed {
+        key,
+        physical_key,
+        modifiers,
+        ..
+    }) = event
+    else {
+        return None;
+    };
+    let command =
+        command::command_for_shortcut(modifiers, &key, Some(&physical_key)).map(Message::Command);
+    // A plain Enter no widget took acts as the open dialog's
+    // accent button (nothing when no dialog is open).
+    if command.is_none()
+        && modifiers.is_empty()
+        && key == keyboard::Key::Named(keyboard::key::Named::Enter)
+    {
+        return Some(Message::DialogEnter);
+    }
+    // Plain arrows and Enter no widget took: the Outline navigator's
+    // while it holds the keys (OB.6).
+    #[cfg(feature = "page-surface")]
+    if command.is_none()
+        && modifiers.is_empty()
+        && let keyboard::Key::Named(
+            named @ (keyboard::key::Named::ArrowUp
+            | keyboard::key::Named::ArrowDown
+            | keyboard::key::Named::ArrowLeft
+            | keyboard::key::Named::ArrowRight),
+        ) = key
+    {
+        return Some(Message::NavigatorKey(named));
+    }
+    command
+}
+
 /// Tools › Customize Toolbar… (Ami Pro's SmartIcons dialog for one
 /// toolbar, `UI_SPEC.md` §12): what can be added beside the toolbar's
 /// items, with Add, Remove, Move Up and Down, Add Separator, and Reset to
@@ -11041,7 +11260,7 @@ fn toolbar_editor_view(
             .spacing(12),
         )
         .width(720)
-        .primary_action(widget::button::suggested("Done").on_press(Message::CloseToolbarEditor))
+        .primary_action(widget::button::suggested("Close").on_press(Message::CloseToolbarEditor))
         .tertiary_action(
             widget::button::standard("Reset to Standard").on_press_maybe(
                 (toolbar != chrome::standard_toolbar())

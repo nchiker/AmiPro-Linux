@@ -456,3 +456,121 @@ fn ui_review_screenshots() {
     send(&mut app, Message::Command(CommandId::Table));
     write(&app, "cmd-Table");
 }
+
+/// Every modal dialog, light and dark, for the modal dialog review
+/// (`docs/research/MODAL_DIALOG_REVIEW_2026-11.md`): the ones a command
+/// opens and the questions and problems the app asks or reports. Ignored;
+/// writes `dialog-*.ppm` to `AMIPRO_SCREENSHOT_DIR`. No portal is opened.
+#[test]
+#[ignore = "writes screenshots for review; set AMIPRO_SCREENSHOT_DIR"]
+fn modal_dialog_screenshots() {
+    use crate::page_surface_app_tests::write_window_ppm;
+    let Some(directory) = std::env::var_os("AMIPRO_SCREENSHOT_DIR") else {
+        eprintln!("AMIPRO_SCREENSHOT_DIR is not set; skipping");
+        return;
+    };
+    let directory = std::path::PathBuf::from(directory);
+    let write = |app: &AmiProApp, name: &str| {
+        assert!(
+            cosmic::Application::dialog(app).is_some(),
+            "{name} shows a dialog"
+        );
+        for dark in [false, true] {
+            let suffix = if dark { "dark" } else { "light" };
+            write_window_ppm(
+                app,
+                &directory.join(format!("dialog-{name}-{suffix}.ppm")),
+                dark,
+            );
+        }
+    };
+    for command in [
+        CommandId::Font,
+        CommandId::SpecialEffects,
+        CommandId::SpecialCharacter,
+        CommandId::NewFromStyleSheet,
+        CommandId::Password,
+        CommandId::GoToPage,
+        CommandId::HeaderFooter,
+        CommandId::PageNumber,
+        CommandId::Frame,
+        CommandId::Table,
+        CommandId::InsertBullet,
+        CommandId::OutlineNumbering,
+        CommandId::CreateStyle,
+        CommandId::StyleManagement,
+        CommandId::UseAnotherStyleSheet,
+        CommandId::SaveAsStyleSheet,
+        CommandId::CustomizeToolbar,
+        CommandId::Preferences,
+    ] {
+        let mut app = page_app(crate::page_surface::page_fixture());
+        send(&mut app, Message::Command(command));
+        if cosmic::Application::dialog(&app).is_none() {
+            eprintln!("{command:?} opened no dialog here");
+            continue;
+        }
+        write(&app, &format!("{command:?}"));
+    }
+    // The questions and problems, set as the app sets them.
+    let fresh = || page_app(crate::page_surface::page_fixture());
+    let mut app = fresh();
+    app.pending_close = Some(0);
+    write(&app, "DiscardChanges");
+    let mut app = fresh();
+    let style = *app.document.styles().keys().next().expect("a style");
+    app.rename_style = Some((style, "Body Text".into()));
+    write(&app, "RenameStyle");
+    let mut app = fresh();
+    app.pending_frame_delete = true;
+    write(&app, "DeleteFrame");
+    let mut app = fresh();
+    app.revert_pending = true;
+    write(&app, "RevertToSaved");
+    let mut app = fresh();
+    app.password_dialog = Some(password_dialog::PasswordDialog {
+        purpose: password_dialog::Purpose::Open("/tmp/LETTER.SAM".into()),
+        password: String::new(),
+        verify: String::new(),
+        error: None,
+    });
+    write(&app, "PasswordOpen");
+    let mut app = fresh();
+    app.fast_format_ask = Some(fast_format::FastFormatAsk {
+        style: false,
+        then: fast_format::Then::KeepOn,
+    });
+    write(&app, "FastFormatAsk");
+    let mut app = fresh();
+    app.open_problem = Some(open_problem(
+        std::path::Path::new("/tmp/REPORT.SAM"),
+        &"the file is not an Ami Pro document",
+    ));
+    write(&app, "OpenProblem");
+    let mut app = fresh();
+    app.save_problem = Some(SaveProblem {
+        title: "Could not save REPORT.SAM".into(),
+        body: "The folder is read-only.".into(),
+        retry: SaveRetry::SaveAs,
+    });
+    write(&app, "SaveProblem");
+    let mut app = fresh();
+    app.sam_save = Some(PendingSamSave {
+        path: "/tmp/REPORT.SAM".into(),
+        losses: vec!["Colours beyond Ami Pro's palette".into()],
+        saved_at: 0,
+        replace: false,
+    });
+    write(&app, "SamLosses");
+    let mut app = fresh();
+    app.overwrite_confirmation.begin("/tmp/REPORT.SAM".into());
+    write(&app, "Overwrite");
+    let mut app = fresh();
+    app.import_dialog = Some(import::OptionsDialog::new(
+        import::Source::File("/tmp/notes.txt".into()),
+        amipro_exchange::import::SourceFormat::Text,
+        import::Purpose::Open,
+        amipro_exchange::import::ImportOptions::default(),
+    ));
+    write(&app, "ImportOptions");
+}

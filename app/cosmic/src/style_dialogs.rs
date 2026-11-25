@@ -13,6 +13,9 @@ use cosmic::{Element, widget};
 
 use crate::Message;
 
+/// Create Style's name field, which takes the keyboard when it opens.
+pub const CREATE_STYLE_FIELD: &str = "create-style-name";
+
 /// A style's name as the dialogs list it: Ami Pro marks the styles stored
 /// in the document with a bullet (Style Management's "Styles in document").
 pub fn listed_name(style: &ParagraphStyle) -> String {
@@ -91,6 +94,7 @@ pub fn create_style_dialog(
     let mut controls: Vec<Element<'static, Message>> = vec![
         widget::text::body("New style").into(),
         widget::text_input("Name", state.name.clone())
+            .id(widget::Id::new(CREATE_STYLE_FIELD))
             .on_input(|name| Message::CreateStyle(CreateAction::Name(name)))
             .on_submit_maybe(ready.then_some(|_| Message::CreateStyle(CreateAction::Create)))
             .width(Length::Fill)

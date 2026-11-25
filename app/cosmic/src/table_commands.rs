@@ -12,7 +12,10 @@ use cosmic::{Element, widget};
 
 use crate::command::CommandId;
 use crate::page_editing::{PageAction, PageSelection};
-use crate::{AmiProApp, Message, table_editing};
+use crate::{AmiProApp, Message, dialog_frame, table_editing};
+
+/// Insert Table's Columns field, which takes the keyboard when it opens.
+pub const INSERT_TABLE_FIELD: &str = "insert-table-columns";
 
 /// The table the caret or the cell selection is in, and the cells the
 /// commands act on: the selection's (as Ami Pro takes them, `14a0:1052` for
@@ -708,25 +711,39 @@ impl InsertTableDialog {
                 .collect::<Vec<Element<'static, Message>>>(),
         )
         .spacing(2);
-        let field = |label: &'static str, value: String, on: fn(String) -> InsertTableAction| {
+        let input = |value: String, on: fn(String) -> InsertTableAction| {
+            widget::text_input("", value)
+                .on_input(move |text| send(on(text)))
+                .on_submit(move |_| send(InsertTableAction::Insert))
+                .width(Length::Fixed(dialog_frame::SHORT_FIELD))
+        };
+        // The grid's fields sit beside the grid, so their labels are short.
+        let count = |label: &'static str, field: Element<'static, Message>| {
             widget::row::with_children(vec![
-                widget::text::body(label).width(Length::Fixed(110.0)).into(),
-                widget::text_input("", value)
-                    .on_input(move |text| send(on(text)))
-                    .on_submit(move |_| send(InsertTableAction::Insert))
-                    .width(Length::Fixed(80.0))
-                    .into(),
+                widget::text::body(label).width(Length::Fixed(80.0)).into(),
+                field,
             ])
             .spacing(8)
             .align_y(cosmic::iced::Alignment::Center)
             .into()
         };
+        let length = |label: &'static str, value: String, on: fn(String) -> InsertTableAction| {
+            dialog_frame::row(label, dialog_frame::length(input(value, on).into()))
+        };
         let mut controls: Vec<Element<'static, Message>> = vec![
             widget::row::with_children(vec![
                 grid.into(),
                 widget::column::with_children(vec![
-                    field("Columns", self.columns.clone(), InsertTableAction::Columns),
-                    field("Rows", self.rows.clone(), InsertTableAction::Rows),
+                    count(
+                        "Columns",
+                        input(self.columns.clone(), InsertTableAction::Columns)
+                            .id(widget::Id::new(INSERT_TABLE_FIELD))
+                            .into(),
+                    ),
+                    count(
+                        "Rows",
+                        input(self.rows.clone(), InsertTableAction::Rows).into(),
+                    ),
                     widget::text::caption(format!("{} × {}", chosen.0, chosen.1)).into(),
                 ])
                 .spacing(8)
@@ -734,6 +751,13 @@ impl InsertTableDialog {
             ])
             .spacing(16)
             .into(),
+            // Ami Pro's Layout button, as a folding section (`UI_SPEC.md`
+            // §50): it shows more of this dialog rather than another one.
+            crate::chrome::section_toggle(
+                "Layout",
+                self.layout,
+                send(InsertTableAction::ToggleLayout),
+            ),
         ];
         if self.layout {
             let check = |label: &'static str, on: bool, action: fn(bool) -> InsertTableAction| {
@@ -742,20 +766,21 @@ impl InsertTableDialog {
                     .on_toggle(move |on| send(action(on)))
                     .into()
             };
-            controls.push(widget::text::heading("Layout").into());
-            controls.push(field(
+            controls.push(length(
                 "Column width",
                 self.column_width.clone(),
                 InsertTableAction::ColumnWidth,
             ));
-            controls.push(widget::text::caption("Empty: the columns fill the space.").into());
+            controls.push(dialog_frame::indented(dialog_frame::hint(
+                "Empty: the columns fill the space.",
+            )));
             controls.push(check(
                 "Automatic row height",
                 self.automatic,
                 InsertTableAction::Automatic,
             ));
             if !self.automatic {
-                controls.push(field(
+                controls.push(length(
                     "Row height",
                     self.height.clone(),
                     InsertTableAction::Height,
@@ -804,10 +829,6 @@ impl InsertTableDialog {
             )
             .secondary_action(
                 widget::button::standard("Cancel").on_press(send(InsertTableAction::Cancel)),
-            )
-            .tertiary_action(
-                widget::button::text(if self.layout { "Less" } else { "Layout…" })
-                    .on_press(send(InsertTableAction::ToggleLayout)),
             )
             .into()
     }

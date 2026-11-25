@@ -163,11 +163,11 @@ pub fn dialog(state: &PasswordDialog) -> Element<'static, Message> {
                 .push(widget::text::body("Confirm password"))
                 .push(verify)
                 .push(widget::text::caption(WARNING));
-            ("Password Protect", "Set Password")
+            ("Password", "Set Password")
         }
     };
     if let Some(error) = &state.error {
-        body = body.push(widget::text::body(error.clone()));
+        body = body.push(crate::dialog_frame::hint(error.clone()));
     }
     let mut dialog = widget::dialog()
         .title(title)

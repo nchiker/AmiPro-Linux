@@ -16,6 +16,9 @@ use amipro_editing::fields::{
 };
 
 use crate::page_editing::PageSelection;
+
+/// The Query$ prompt's answer field, which takes the keyboard when it opens.
+pub const QUERY_FIELD: &str = "power-field-answer";
 use crate::{AmiProApp, DocumentSession, page_surface};
 
 /// A prompt a field asks when it is updated (Ami Pro's Query$ and Decide).
@@ -511,10 +514,11 @@ impl AmiProApp {
         let send = crate::Message::FieldPrompt;
         Some(match &prompt.question {
             FieldQuestion::Query { message, .. } => widget::dialog()
-                .title("Power field")
+                .title("Power Field")
                 .body(message.clone())
                 .control(
                     widget::text_input("", prompt.text.clone())
+                        .id(widget::Id::new(QUERY_FIELD))
                         .on_input(move |text| send(PromptAction::Text(text)))
                         .on_submit(move |_| send(PromptAction::Answer(true))),
                 )
@@ -526,7 +530,7 @@ impl AmiProApp {
                 )
                 .into(),
             FieldQuestion::Decide { message } => widget::dialog()
-                .title("Power field")
+                .title("Power Field")
                 .body(message.clone())
                 .primary_action(
                     widget::button::suggested("Yes").on_press(send(PromptAction::Answer(true))),
@@ -534,9 +538,10 @@ impl AmiProApp {
                 .secondary_action(
                     widget::button::standard("No").on_press(send(PromptAction::Answer(false))),
                 )
-                .tertiary_action(
-                    widget::button::text("Cancel").on_press(send(PromptAction::Cancel)),
-                )
+                .tertiary_action(crate::dialog_frame::alternative(
+                    "Cancel",
+                    Some(send(PromptAction::Cancel)),
+                ))
                 .into(),
         })
     }

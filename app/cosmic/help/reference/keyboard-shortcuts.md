@@ -18,5 +18,6 @@ Help › Keyboard Shortcuts lists every shortcut, taken from the same table that
 - **Tools:** F7 spell check, Shift+F7 thesaurus, F9 update fields.
 - **Windows:** Ctrl+PageDown next document, Ctrl+PageUp (or Ctrl+Shift+Tab) previous document. Ctrl+Tab is taken by the desktop before the program sees it.
 - **Help:** F1.
+- **Dialogs:** Enter does what the highlighted button does (OK, Insert, Create, Go…) once it is available; Esc cancels. A dialog that would delete, discard, or write over something waits for a click on that button. A dialog that asks for a value opens with the keyboard in its first box.
 
 The shortcuts follow modern desktop habits rather than Ami Pro's old ones where they differ; the list in the menu is authoritative.

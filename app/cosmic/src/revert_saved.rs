@@ -7,9 +7,9 @@ use cosmic::{Element, widget};
 
 use crate::{AmiProApp, DocumentLocation, Message};
 
-/// Ami Pro's question (string of command 0x69).
-pub const QUESTION: &str =
-    "This will undo all the changes you have made since you last saved. Are you sure?";
+/// What Revert does, in the program's own words (`UI_SPEC.md` §50).
+pub const QUESTION: &str = "The changes made since the document was last saved are discarded, \
+     and it shows the saved file again.";
 
 pub fn dialog(name: &str) -> Element<'static, Message> {
     widget::dialog()

@@ -242,7 +242,7 @@ pub fn dialog(state: &NewDocumentDialog) -> Element<'_, Message> {
         );
     }
     widget::dialog()
-        .title("New Document")
+        .title("New")
         .control(
             widget::column::with_children(vec![
                 widget::row::with_children(vec![list.into(), preview])

@@ -101,7 +101,7 @@ pub fn special_effects_dialog(state: &SpecialEffects) -> Element<'_, Message> {
         .collect();
     let overstrike = widget::row::with_children(vec![
         widget::checkbox(state.overstrike)
-            .label("Overstrike character:")
+            .label("Overstrike character")
             .on_toggle(|on| Message::SpecialEffects(EffectsAction::Overstrike(on)))
             .into(),
         widget::text_input("", state.overstrike_text.clone())

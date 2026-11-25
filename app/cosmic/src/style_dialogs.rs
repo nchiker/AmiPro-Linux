@@ -102,7 +102,7 @@ pub fn create_style_dialog(
     controls.extend([
         widget::text::body("Based on").into(),
         widget::row::with_children(vec![
-            widget::radio("Style:", false, Some(state.selected_text), choose).into(),
+            widget::radio("Style", false, Some(state.selected_text), choose).into(),
             widget::dropdown(names, Some(state.based_on), |index| {
                 Message::CreateStyle(CreateAction::BasedOn(index))
             })

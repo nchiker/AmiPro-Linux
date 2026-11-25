@@ -16,9 +16,10 @@ use crate::Message;
 /// The password box's id: it takes the keyboard when the box opens.
 pub const PASSWORD_FIELD: &str = "password-dialog-password";
 
-/// Ami Pro's warning under Verify password (dialog 1043).
+/// The warning under the second password box (Ami Pro's dialog 1043 has
+/// one; the wording is the program's own, UI review 2026-11).
 pub const WARNING: &str =
-    "WARNING - the contents of protected files cannot be recovered if the password is lost";
+    "Keep the password safe: a protected document cannot be opened without it.";
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Purpose {
@@ -143,9 +144,9 @@ pub fn dialog(state: &PasswordDialog) -> Element<'static, Message> {
                     "{} is password protected.",
                     crate::file_name(path)
                 )))
-                .push(widget::text::body("Enter password:"))
+                .push(widget::text::body("Password"))
                 .push(password);
-            ("Password Protect", "Open")
+            ("Protected Document", "Open")
         }
         Purpose::Set { protected } => {
             let verify = widget::secure_input("", state.verify.clone(), None, true)
@@ -155,11 +156,11 @@ pub fn dialog(state: &PasswordDialog) -> Element<'static, Message> {
                 .push(widget::text::body(if *protected {
                     "The document is saved with a password. A new one replaces it."
                 } else {
-                    "Saves of this document as an Ami Pro document ask for this password to open them."
+                    "Saving this document as an Ami Pro document protects it: opening it then asks for this password."
                 }))
-                .push(widget::text::body("Enter password:"))
+                .push(widget::text::body("Password"))
                 .push(password)
-                .push(widget::text::body("Verify password:"))
+                .push(widget::text::body("Confirm password"))
                 .push(verify)
                 .push(widget::text::caption(WARNING));
             ("Password Protect", "Set Password")

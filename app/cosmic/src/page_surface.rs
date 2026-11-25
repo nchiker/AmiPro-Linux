@@ -388,6 +388,9 @@ struct State<P> {
     /// Where the pointer (or a drag over the page) last was, for a drop.
     pointer: Option<Point>,
     dragging: bool,
+    /// How far the pointer was past the visible pages during the drag
+    /// (the last `PageAction::DragEdge` sent).
+    drag_edge: f32,
     drag_hit: Option<(TextPosition, u32)>,
     modifiers: keyboard::Modifiers,
     preedit: Option<input_method::Preedit>,
@@ -451,6 +454,7 @@ impl<P> Default for State<P> {
             window_focused: true,
             pointer: None,
             dragging: false,
+            drag_edge: 0.0,
             drag_hit: None,
             modifiers: keyboard::Modifiers::default(),
             preedit: None,
@@ -3303,6 +3307,44 @@ impl<'a, Message> PageSurface<'a, Message> {
         ))
     }
 
+    /// A selection drag with the pointer at `position` (content
+    /// coordinates): extends the selection to the text under the pointer
+    /// clamped to the visible part of the pages, and reports how far the
+    /// pointer is past it so the app can scroll.
+    fn drag_to<P: text::Paragraph>(
+        &self,
+        state: &mut State<P>,
+        position: Point,
+        bounds: Rectangle,
+        viewport: &Rectangle,
+        shell: &mut Shell<'_, Message>,
+    ) {
+        let top = viewport.y.max(bounds.y);
+        let bottom = (viewport.y + viewport.height).min(bounds.y + bounds.height);
+        let edge = if position.y < top {
+            position.y - top
+        } else if position.y > bottom {
+            position.y - bottom
+        } else {
+            0.0
+        };
+        if edge != state.drag_edge {
+            state.drag_edge = edge;
+            shell.publish((self.on_action)(PageAction::DragEdge(edge)));
+        }
+        let local = Point::new(
+            (position.x - bounds.x).clamp(0.0, bounds.width),
+            (position.y.clamp(top, bottom.max(top)) - bounds.y).clamp(0.0, bounds.height),
+        );
+        if let Some((position, page)) = self.hit(state, local)
+            && state.drag_hit != Some((position, page))
+        {
+            state.drag_hit = Some((position, page));
+            shell.publish((self.on_action)(PageAction::Drag { position, page }));
+            shell.request_redraw();
+        }
+    }
+
     /// For a page without main text: the end of the main text before it, or
     /// the start of the main text after it.
     fn nearest_main<P>(&self, state: &State<P>, page_index: usize) -> Option<(TextPosition, u32)> {
@@ -4876,6 +4918,7 @@ where
                         return;
                     }
                     state.dragging = true;
+                    state.drag_edge = 0.0;
                     if let Some((position, page)) = self.hit(state, position) {
                         state.drag_hit = Some((position, page));
                         shell.publish((self.on_action)(PageAction::MoveTo {
@@ -5058,23 +5101,20 @@ where
                 }
             }
             Event::Mouse(mouse::Event::CursorMoved { .. }) if state.dragging => {
-                if let Some(position) = cursor.position() {
-                    let local = Point::new(
-                        (position.x - bounds.x).clamp(0.0, bounds.width),
-                        (position.y - bounds.y).clamp(0.0, bounds.height),
-                    );
-                    if let Some((position, page)) = self.hit(state, local)
-                        && state.drag_hit != Some((position, page))
-                    {
-                        state.drag_hit = Some((position, page));
-                        shell.publish((self.on_action)(PageAction::MoveTo {
-                            position,
-                            page,
-                            extend: true,
-                        }));
-                        shell.request_redraw();
-                    }
+                // The pointer may be past the scrollable (it then only
+                // levitates): the selection follows it, clamped to the
+                // visible pages, and the app scrolls on a timer.
+                if let Some(position) = cursor.land().position() {
+                    self.drag_to(state, position, bounds, viewport, shell);
                     shell.capture_event();
+                }
+            }
+            Event::Window(cosmic::iced::window::Event::RedrawRequested(_))
+                if state.dragging && state.drag_edge != 0.0 =>
+            {
+                // The pages scrolled under a pointer that has not moved.
+                if let Some(position) = cursor.land().position() {
+                    self.drag_to(state, position, bounds, viewport, shell);
                 }
             }
             Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
@@ -5094,6 +5134,10 @@ where
                 }
                 state.dragging = false;
                 state.drag_hit = None;
+                if state.drag_edge != 0.0 {
+                    state.drag_edge = 0.0;
+                    shell.publish((self.on_action)(PageAction::DragEdge(0.0)));
+                }
             }
             Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) => {
                 state.modifiers = *modifiers;
@@ -6769,6 +6813,8 @@ mod tests {
                 page,
                 extend,
             }) => (*position, *page, *extend),
+            // A drag extends the selection (it does not scroll to it).
+            Sent::Page(PageAction::Drag { position, page }) => (*position, *page, true),
             other => panic!("expected MoveTo, got {other:?}"),
         }
     }

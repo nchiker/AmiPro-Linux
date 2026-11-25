@@ -5814,3 +5814,17 @@ choice. A document that already has a file keeps its own type. Writing
 goes through the existing paths: SAM after the loss check, Markdown as an
 export with its loss list and replace confirmation; imports are never
 written over.
+
+## 47. Selecting past the window's edge
+
+While the left button is held in a text drag on the page surface, a pointer
+above or below the visible pages scrolls the workspace: the widget sends
+`PageAction::DragEdge(distance)` (negative above, positive below, 0 inside
+or on release) and the app scrolls through `scroll_workspace` on a 30 ms
+timer (`Message::DragScrollTick`, a subscription active while the distance
+is not 0), by half the distance per step (3 to 80 px), also
+while the pointer is still. The selection extends to the text under the
+pointer clamped to the visible pages (`PageAction::Drag`, which does not
+itself scroll); after each scroll the widget re-hits at the pointer on the
+next redraw. The same path serves cells and frames. Shift+click and the
+Shift keys already scroll to the caret (`MoveTo` extend).

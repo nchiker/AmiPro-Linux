@@ -17365,3 +17365,151 @@ fn an_input_method_commit_is_one_undo_step() {
     send(&mut app, Message::Command(CommandId::Undo));
     assert_eq!(app.document, before);
 }
+
+/// A document of `count` numbered paragraphs, far longer than the window.
+fn long_document(count: usize) -> Document {
+    let text: Vec<String> = (0..count)
+        .map(|index| {
+            format!("Paragraph {index} of the long document, with enough words to be a real line.")
+        })
+        .collect();
+    Document::from_plain_text(&text.join("\n"))
+}
+
+/// A selection drag held below the visible pages (the pointer past the
+/// workspace, in the window's status area) scrolls the workspace on its
+/// timer and takes in the text that scrolls into view (user, 2026-11-25:
+/// text that flows off the screen could not be selected).
+#[test]
+fn a_drag_held_below_the_pages_scrolls_and_selects_the_text_that_was_off_screen() {
+    use cosmic::iced::mouse::{Button, Event as Mouse};
+    let mut app = page_app(long_document(150));
+    send(&mut app, Message::ZoomTo(100));
+    let mut runtime = Runtime::new(app);
+    runtime.redraw();
+    let (bounds, _) = runtime.workspace_view();
+    let start = runtime.on_page(1_500.0, 1_560.0);
+    let event = |event, at| (event, at);
+    runtime.events(&[
+        event(
+            cosmic::iced::Event::Mouse(Mouse::CursorMoved { position: start }),
+            start,
+        ),
+        event(
+            cosmic::iced::Event::Mouse(Mouse::ButtonPressed(Button::Left)),
+            start,
+        ),
+    ]);
+    let anchor = runtime.app.page_selection.anchor;
+    assert_eq!(runtime.workspace_scroll(), 0.0);
+    // Past the bottom edge of the workspace, still inside the window.
+    let below = cosmic::iced::Point::new(start.x + 40.0, bounds.y + bounds.height + 12.0);
+    assert!(below.y < runtime.window.height, "{below:?}");
+    let published = runtime.events(&[event(
+        cosmic::iced::Event::Mouse(Mouse::CursorMoved { position: below }),
+        below,
+    )]);
+    assert!(
+        published.iter().any(
+            |message| matches!(message, Message::Page(PageAction::DragEdge(edge)) if *edge > 0.0)
+        ),
+        "{published:?}"
+    );
+    assert!(runtime.app.workspace.drag_edge > 0.0);
+    // The first extension is at the visible bottom, not below it.
+    let first = runtime.app.page_selection.focus.paragraph;
+    assert!(first > anchor.paragraph);
+    // The pointer stays still; the timer's ticks scroll and the redraw
+    // after each extends the selection.
+    for _ in 0..60 {
+        runtime.send(Message::DragScrollTick);
+        runtime.events(&[event(
+            cosmic::iced::Event::Window(cosmic::iced::window::Event::RedrawRequested(
+                Instant::now(),
+            )),
+            below,
+        )]);
+    }
+    let scrolled = runtime.workspace_scroll();
+    assert!(scrolled > 300.0, "the workspace scrolled: {scrolled}");
+    let last = runtime.app.page_selection.focus.paragraph;
+    assert!(
+        last > first + 10,
+        "the selection reached text that was off screen: {first} to {last}"
+    );
+    assert_eq!(runtime.app.page_selection.anchor, anchor);
+    // Releasing stops the scrolling.
+    runtime.events(&[event(
+        cosmic::iced::Event::Mouse(Mouse::ButtonReleased(Button::Left)),
+        below,
+    )]);
+    assert_eq!(runtime.app.workspace.drag_edge, 0.0);
+    runtime.send(Message::DragScrollTick);
+    assert_eq!(runtime.workspace_scroll(), scrolled);
+    assert_eq!(runtime.app.page_selection.focus.paragraph, last);
+    // A new drag from inside, held above the top, scrolls back up.
+    let inside = cosmic::iced::Point::new(start.x, bounds.y + 200.0);
+    runtime.events(&[
+        event(
+            cosmic::iced::Event::Mouse(Mouse::CursorMoved { position: inside }),
+            inside,
+        ),
+        event(
+            cosmic::iced::Event::Mouse(Mouse::ButtonPressed(Button::Left)),
+            inside,
+        ),
+    ]);
+    let anchor = runtime.app.page_selection.anchor.paragraph;
+    let above = cosmic::iced::Point::new(start.x, bounds.y - 10.0);
+    runtime.events(&[event(
+        cosmic::iced::Event::Mouse(Mouse::CursorMoved { position: above }),
+        above,
+    )]);
+    assert!(runtime.app.workspace.drag_edge < 0.0);
+    for _ in 0..10 {
+        runtime.send(Message::DragScrollTick);
+        runtime.events(&[event(
+            cosmic::iced::Event::Window(cosmic::iced::window::Event::RedrawRequested(
+                Instant::now(),
+            )),
+            above,
+        )]);
+    }
+    assert!(runtime.workspace_scroll() < scrolled);
+    assert!(runtime.app.page_selection.focus.paragraph < anchor);
+    runtime.events(&[event(
+        cosmic::iced::Event::Mouse(Mouse::ButtonReleased(Button::Left)),
+        above,
+    )]);
+    assert_eq!(runtime.app.workspace.drag_edge, 0.0);
+}
+
+#[test]
+fn the_drag_scroll_speed_follows_the_distance() {
+    assert_eq!(drag_scroll_step(0.0), 0.0);
+    assert_eq!(drag_scroll_step(1.0), 3.0);
+    assert_eq!(drag_scroll_step(-1.0), -3.0);
+    assert!(drag_scroll_step(40.0) < drag_scroll_step(120.0));
+    assert_eq!(drag_scroll_step(10_000.0), 80.0);
+}
+
+/// Shift+click and Shift+PageDown/arrows reach the app as `MoveTo` with
+/// `extend`: the page scrolls to keep the caret's line in view.
+#[test]
+fn an_extended_selection_keeps_the_caret_in_view() {
+    let mut app = page_app(long_document(150));
+    send(&mut app, Message::ZoomTo(100));
+    let mut runtime = Runtime::new(app);
+    runtime.redraw();
+    assert_eq!(runtime.workspace_scroll(), 0.0);
+    let main = runtime.app.document.main_flow_id();
+    let page = runtime.app.page_selection.page;
+    runtime.send(Message::Page(PageAction::MoveTo {
+        position: at(main, 120, 3),
+        page,
+        extend: true,
+    }));
+    assert!(runtime.workspace_scroll() > 1_000.0);
+    assert_eq!(runtime.app.page_selection.focus.paragraph, 120);
+    assert_eq!(runtime.app.page_selection.anchor.paragraph, 0);
+}

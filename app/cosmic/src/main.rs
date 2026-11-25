@@ -82,9 +82,9 @@ mod import;
 mod import_folder;
 #[cfg(feature = "page-surface")]
 mod import_report;
+mod launch;
 #[cfg(test)]
 mod layout_comparison;
-mod launch;
 #[cfg(feature = "page-surface")]
 mod lengths;
 #[cfg(feature = "page-surface")]
@@ -2435,6 +2435,22 @@ struct WorkspaceState {
     /// has not received an event yet takes it from here.
     #[cfg(feature = "page-surface")]
     viewport: cosmic::iced::Size,
+    /// How far the pointer is past the visible pages (negative above,
+    /// positive below) while a selection drag holds the left button; the
+    /// workspace scrolls on a timer while it is not 0 (`DragScrollTick`).
+    drag_edge: f32,
+}
+
+/// The milliseconds between auto-scroll steps of a selection drag.
+const DRAG_SCROLL_MS: u64 = 30;
+
+/// The pixels the pages scroll in one step for a pointer `edge` pixels past
+/// the visible pages: proportional to the distance, at least 3, at most 80.
+fn drag_scroll_step(edge: f32) -> f32 {
+    if edge == 0.0 {
+        return 0.0;
+    }
+    (edge.abs() * 0.5).clamp(3.0, 80.0).copysign(edge)
 }
 
 /// The context rail's state beyond the docked panel's visibility
@@ -3244,6 +3260,9 @@ enum Message {
     /// Nothing to change: asks the runtime for a new frame (see
     /// [`scroll_workspace`]).
     Repaint,
+    /// One step of the selection drag's auto-scroll (every
+    /// [`DRAG_SCROLL_MS`] while the pointer is past the visible pages).
+    DragScrollTick,
     /// The Go To dialog.
     #[cfg(feature = "page-surface")]
     GoTo(GoToAction),
@@ -4472,8 +4491,15 @@ impl cosmic::Application for AmiProApp {
             });
         #[cfg(not(feature = "page-surface"))]
         let autosave = Subscription::none();
+        let drag_scroll = if self.workspace.drag_edge == 0.0 {
+            Subscription::none()
+        } else {
+            cosmic::iced::time::every(std::time::Duration::from_millis(DRAG_SCROLL_MS))
+                .map(|_| Message::DragScrollTick)
+        };
         Subscription::batch([
             autosave,
+            drag_scroll,
             event::listen_with(|event, status, _window| {
                 if matches!(event, Event::Window(cosmic::iced::window::Event::Focused)) {
                     return Some(Message::RefreshClipboard);
@@ -5275,6 +5301,18 @@ impl AmiProApp {
     fn handle_message(&mut self, message: Message) -> Task<cosmic::Action<Message>> {
         match message {
             Message::Repaint => trace_scroll(|| "repaint".to_owned()),
+            Message::DragScrollTick => {
+                let step = drag_scroll_step(self.workspace.drag_edge);
+                if step == 0.0 {
+                    return Task::none();
+                }
+                let session = &self.sessions[self.active_session];
+                let offset = cosmic::iced::widget::scrollable::AbsoluteOffset {
+                    x: Some(session.scroll_offset.x),
+                    y: Some((session.scroll_offset.y + step).max(0.0)),
+                };
+                return scroll_workspace(workspace_scroll_id(), offset);
+            }
             #[cfg(feature = "page-surface")]
             Message::GoTo(action) => return self.update_go_to(action),
             #[cfg(feature = "page-surface")]
@@ -6490,6 +6528,23 @@ impl AmiProApp {
     ) -> Task<cosmic::Action<Message>> {
         let session = &mut self.sessions[self.active_session];
         match &action {
+            PageAction::DragEdge(edge) => {
+                self.workspace.drag_edge = *edge;
+                return Task::none();
+            }
+            PageAction::Drag { .. } => {
+                if let Some(selection) = page_editing::moved_selection(
+                    &session.document,
+                    session.page_selection,
+                    &action,
+                ) {
+                    session.typing_run = None;
+                    session.frame_selection = None;
+                    session.page_selection = selection;
+                    session.sync_editor_to_page();
+                }
+                return Task::none();
+            }
             PageAction::Viewport(size) => {
                 session.viewport = *size;
                 self.workspace.viewport = *size;
@@ -12444,9 +12499,7 @@ impl AmiProApp {
                 SaveFormat::Sam => FileFilter::new("Ami Pro 3.1 documents (.SAM)")
                     .glob("*.sam")
                     .glob("*.SAM"),
-                SaveFormat::Markdown => FileFilter::new("Markdown (.md)")
-                    .glob("*.md")
-                    .glob("*.MD"),
+                SaveFormat::Markdown => FileFilter::new("Markdown (.md)").glob("*.md").glob("*.MD"),
             };
             let mut format = file_chooser::Choice::new("format", "Format", first.key());
             for each in SaveFormat::ALL {
@@ -15665,7 +15718,8 @@ impl AmiProApp {
         for path in paths {
             match std::fs::File::open(&path) {
                 Ok(_) if path.is_dir() => {
-                    self.open_problem = Some(open_problem(&path, &"it is a folder, not a document"));
+                    self.open_problem =
+                        Some(open_problem(&path, &"it is a folder, not a document"));
                 }
                 Ok(_) => self.open_document_path(path),
                 Err(error) => {

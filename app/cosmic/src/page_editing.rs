@@ -84,6 +84,17 @@ pub enum PageAction {
         page: u32,
         extend: bool,
     },
+    /// The mouse extends the selection to a hit position while the left
+    /// button is held. Unlike `MoveTo`, it does not scroll to the caret: the
+    /// edge auto-scroll ([`PageAction::DragEdge`]) does that.
+    Drag {
+        position: TextPosition,
+        page: u32,
+    },
+    /// How far the pointer is above (negative) or below (positive) the
+    /// visible pages while the left button is held in a selection drag, in
+    /// pixels; 0 when inside or released. The app scrolls on a timer.
+    DragEdge(f32),
     Insert(String),
     Backspace,
     Delete,
@@ -726,6 +737,13 @@ pub fn moved_selection(
 ) -> Option<PageSelection> {
     let page = selection.page;
     match action {
+        PageAction::Drag { position, page } => Some(crate::table_editing::extended(
+            document,
+            selection,
+            outside_protected(document, valid_position(document, *position)),
+            *page,
+            true,
+        )),
         PageAction::MoveTo {
             position,
             page,

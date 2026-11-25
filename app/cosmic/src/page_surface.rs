@@ -4804,6 +4804,18 @@ where
         if let Event::Mouse(mouse::Event::CursorMoved { .. }) = event {
             state.pointer = cursor.position_in(bounds);
         }
+        // The pages scrolled under a pointer that has not moved. Not a
+        // match arm: the redraw's own arm below must still run, since it
+        // asks for the input method (a preedit while drag auto-scroll runs).
+        if matches!(
+            event,
+            Event::Window(cosmic::iced::window::Event::RedrawRequested(_))
+        ) && state.dragging
+            && state.drag_edge != 0.0
+            && let Some(position) = cursor.land().position()
+        {
+            self.drag_to(state, position, bounds, viewport, shell);
+        }
         match event {
             // A picture file dropped on the page goes in where it was
             // dropped (P7): the caret moves there first, and the file
@@ -5180,14 +5192,6 @@ where
                 if let Some(position) = cursor.land().position() {
                     self.drag_to(state, position, bounds, viewport, shell);
                     shell.capture_event();
-                }
-            }
-            Event::Window(cosmic::iced::window::Event::RedrawRequested(_))
-                if state.dragging && state.drag_edge != 0.0 =>
-            {
-                // The pages scrolled under a pointer that has not moved.
-                if let Some(position) = cursor.land().position() {
-                    self.drag_to(state, position, bounds, viewport, shell);
                 }
             }
             Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
@@ -8408,6 +8412,82 @@ mod tests {
             }
         }
         driver.draw(&surface);
+    }
+
+    /// While a selection drag is held past the viewport (drag
+    /// auto-scroll), a redraw both extends the selection and asks for the
+    /// input method with the preedit, as any redraw of the focused page
+    /// does.
+    #[test]
+    fn a_redraw_during_drag_auto_scroll_still_asks_for_the_input_method() {
+        let fixture = Fixture::new(page_fixture());
+        let view = fixture.view(Zoom::Percent(100));
+        let main = fixture.document.main_flow_id();
+        let line = main_lines(fixture.pages.layout(), 0)[2];
+        let selection = PageSelection::caret(
+            TextPosition {
+                flow: main,
+                paragraph: line.paragraph_index,
+                byte: line.bytes.start,
+            },
+            1,
+        );
+        let mut surface = fixture.surface(view.clone(), selection);
+        let mut driver = Driver::new(&mut surface, Vector::ZERO);
+        let start = fixture.point(&view, 0, line, line.x + 1.0);
+        driver.send(&mut surface, press(), start);
+        driver.send(
+            &mut surface,
+            Event::InputMethod(input_method::Event::Preedit("にほ".into(), None)),
+            Point::ORIGIN,
+        );
+        // Below the 700 px viewport: the drag asks the app to scroll.
+        let below = Point::new(start.x, 760.0);
+        let sent = driver.send(
+            &mut surface,
+            Event::Mouse(mouse::Event::CursorMoved { position: below }),
+            below,
+        );
+        assert!(
+            sent.iter().any(
+                |message| matches!(message, Sent::Page(PageAction::DragEdge(edge)) if *edge > 0.0)
+            ),
+            "{sent:?}"
+        );
+        // A drag position the redraw has not reported yet, so that it has
+        // an extension to publish too.
+        driver
+            .tree
+            .state
+            .downcast_mut::<State<<Renderer as text::Renderer>::Paragraph>>()
+            .drag_hit = None;
+        let redraw = Event::Window(cosmic::iced::window::Event::RedrawRequested(
+            std::time::Instant::now(),
+        ));
+        let mut messages = Vec::new();
+        let mut shell = Shell::new(&mut messages);
+        Widget::<Sent, cosmic::Theme, Renderer>::update(
+            &mut surface,
+            &mut driver.tree,
+            &redraw,
+            Layout::new(&driver.node),
+            mouse::Cursor::Available(below),
+            &driver.renderer,
+            &mut cosmic::iced::advanced::clipboard::Null,
+            &mut shell,
+            &Rectangle::new(Point::ORIGIN, Size::new(900.0, 700.0)),
+        );
+        let asked = matches!(
+            shell.input_method(),
+            InputMethod::Enabled { preedit: Some(preedit), .. } if preedit.content == "にほ"
+        );
+        assert!(asked, "{:?}", shell.input_method());
+        assert!(
+            messages
+                .iter()
+                .any(|message| matches!(message, Sent::Page(PageAction::Drag { .. }))),
+            "{messages:?}"
+        );
     }
 
     #[test]

@@ -1450,7 +1450,7 @@ shows them as its own).
   hidden it leaves a one-pixel slot so that the pages keep their scroll.
 - **Text › Normal** keeps a paragraph's own ruler, as Ami Pro's does; the
   SAM writer writes `<:R>` after a paragraph with a ruler, as Ami Pro's does.
-- **Not built:** the vertical ruler (R4), Ami Pro's unit button (inches
+- **Not built:** the vertical ruler (built later, §48), Ami Pro's unit button (inches
   throughout), a tab type change by Space+arrow.
 
 
@@ -5828,3 +5828,37 @@ pointer clamped to the visible pages (`PageAction::Drag`, which does not
 itself scroll); after each scroll the widget re-hits at the pointer on the
 next redraw. The same path serves cells and frames. Shift+click and the
 Shift keys already scroll to the caret (`MoveTo` extend).
+
+## 48. View › Vertical Ruler (CK11)
+
+*Ami Pro.* View Preferences' "Vertical ruler" box (display bit `0x200`,
+off by default) shows a ruler down the window's left side whose markers set
+the top and bottom margins; its release sends the list `1, 0, top, bottom`
+(`docs/research/RULER_NOTES.md`, `COMMANDS_NOTES.md`).
+
+*Here.* View › Vertical Ruler (after Ruler; checked when shown, and a switch
+on Preferences › View) is saved with the preferences and off by default.
+Shown, a 22 px strip stands beside the page workspace and is part of the
+same row, so the pages keep their scroll; the horizontal ruler gets a corner
+of the same width so its x stays true. It scrolls with the pages and scales
+with the zoom. For every page on screen it draws that page's own layout
+(Right or Left page of the layout, as the horizontal ruler picks it): grey
+margins, white text area, the header's and footer's areas tinted when the
+layout has them, quarter-inch ticks from the page's top with the inches
+numbered (inches are the only unit, as on the horizontal ruler), and a bar
+along the inner side for the caret's frame or table on its page. The
+colours are the horizontal ruler's, so both themes look alike.
+
+*Margin markers.* Two dark bars mark where the top margin ends and the
+bottom margin starts. They drag with the horizontal ruler's rules: the
+position snaps to the 1/16 in grid (`ruler::snap`), keeps the text area at
+least half an inch, and the status bar reads "Top margin: 1.00 in (page 1)"
+while it moves, with a guide across the page. A release is one
+`ModifyLayout` of the page's layout through `LayoutSettings::set_margin` for
+the same Pages (All, Right, Left) Page Layout Properties edits; a top or
+bottom margin is also the header's or footer's height, as there. One undo
+step; a release where it began does nothing. Esc during a drag abandons it.
+Hidden in Outline mode, which has no pages.
+
+*Not done:* a unit button, dragging the header's or footer's own inner
+margins, the vertical ruler for a frame's interior.

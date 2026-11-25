@@ -43,6 +43,7 @@ impl Page {
 pub enum ViewSetting {
     Toolbar,
     Ruler,
+    VerticalRuler,
     FieldShading,
     Notes,
     Bookmarks,
@@ -54,9 +55,10 @@ pub enum ViewSetting {
 }
 
 impl ViewSetting {
-    pub const ALL: [(Self, &'static str); 10] = [
+    pub const ALL: [(Self, &'static str); 11] = [
         (Self::Toolbar, "Toolbar"),
         (Self::Ruler, "Ruler"),
+        (Self::VerticalRuler, "Vertical ruler"),
         (Self::FieldShading, "Field shading"),
         (Self::Notes, "Notes"),
         (Self::Bookmarks, "Bookmarks"),
@@ -133,7 +135,7 @@ pub struct Shown<'a> {
     pub documents_folder: Option<&'a std::path::Path>,
     /// Folders from `AMIPRO_STYLES`, listed but not removable here.
     pub environment_folders: Vec<PathBuf>,
-    pub view: [bool; 10],
+    pub view: [bool; 11],
     /// The text editor has only the toolbar of the View page.
     pub page_surface: bool,
 }
@@ -389,7 +391,7 @@ fn folders<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
 }
 
 fn view_page<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
-    let shown_settings = if shown.page_surface { 10 } else { 1 };
+    let shown_settings = if shown.page_surface { 11 } else { 1 };
     ViewSetting::ALL
         .iter()
         .zip(shown.view)

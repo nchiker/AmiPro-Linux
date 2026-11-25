@@ -17513,3 +17513,157 @@ fn an_extended_selection_keeps_the_caret_in_view() {
     assert_eq!(runtime.app.page_selection.focus.paragraph, 120);
     assert_eq!(runtime.app.page_selection.anchor.paragraph, 0);
 }
+
+impl Runtime {
+    /// Where page twips `y` on the first page is on the vertical ruler
+    /// beside the workspace, `across` pixels from its left edge.
+    fn on_vertical_ruler(&mut self, y: f32, across: f32) -> cosmic::iced::Point {
+        let (bounds, view) = self.workspace_view();
+        let page = view.pages[0];
+        cosmic::iced::Point::new(
+            bounds.x - crate::ruler_vertical::WIDTH + across,
+            bounds.y + page.y - self.app.scroll_offset.y + y * view.scale,
+        )
+    }
+}
+
+/// A runtime on a page document with the vertical ruler shown, at `zoom`.
+fn vertical_ruler_runtime(zoom: u16) -> Runtime {
+    let mut app = page_app(Document::from_plain_text(
+        "First paragraph of the ruler base.\nSecond one.\nThird one.\nFourth one.",
+    ));
+    send(&mut app, Message::ZoomTo(zoom));
+    let mut runtime = Runtime::new(app);
+    runtime.redraw();
+    assert!(
+        !runtime.app.preferences.vertical_ruler_visible,
+        "off at first"
+    );
+    runtime.send(Message::Command(CommandId::VerticalRuler));
+    assert!(runtime.app.preferences.vertical_ruler_visible);
+    runtime.redraw();
+    runtime
+}
+
+#[test]
+fn the_vertical_ruler_is_drawn_to_the_pages_scale_in_both_themes_cm11() {
+    // At 50% a page's top and bottom margins are both on the screen.
+    let mut runtime = vertical_ruler_runtime(50);
+    for theme in [cosmic::Theme::light(), cosmic::Theme::dark()] {
+        let picture = runtime.screenshot(&theme);
+        let width = runtime.window.width as usize;
+        let pixel = |point: cosmic::iced::Point| {
+            let at = (point.y as usize * width + point.x as usize) * 3;
+            [picture[at], picture[at + 1], picture[at + 2]]
+        };
+        // Beside the header and footer tinted, over the text area white (the
+        // horizontal ruler's own colours), the markers dark across.
+        let margin = runtime.on_vertical_ruler(720.0, 3.0);
+        // A page layout's header and footer areas are tinted.
+        assert_eq!(pixel(margin), [204, 217, 237], "header area");
+        let body = runtime.on_vertical_ruler(5_000.0, 3.0);
+        assert_eq!(pixel(body), [255, 255, 255], "text area");
+        let footer = runtime.on_vertical_ruler(15_000.0, 3.0);
+        assert_eq!(pixel(footer), [204, 217, 237], "footer area");
+        for twips in [1_440.0, 14_400.0] {
+            let mut marker = runtime.on_vertical_ruler(twips, 3.0);
+            marker.y = marker.y.round();
+            assert_eq!(pixel(marker), [64, 64, 64], "marker at {twips}");
+        }
+    }
+    // The ruler's geometry is the page view's: a position on the page and
+    // on the ruler are the same pixel row.
+    let (bounds, view) = runtime.workspace_view();
+    let ruler = crate::ruler_vertical::vertical_ruler_view::<Message>(
+        view.clone(),
+        runtime.app.scroll_offset.y,
+        crate::ruler_vertical::VerticalRuler::at(
+            &runtime.app.document,
+            runtime.app.pages.layout(),
+            runtime.app.page_selection,
+        ),
+        |_| Message::Repaint,
+    );
+    let on_page = runtime.on_page(0.0, 3_000.0).y - bounds.y;
+    assert!((ruler.at(0, 3_000.0) - on_page).abs() < 0.01);
+    assert!((ruler.twips(0, on_page) - 3_000.0).abs() < 0.01);
+    // The horizontal ruler stays over the pages' columns, shown or not.
+    let aligned = |runtime: &mut Runtime| {
+        let ruler = runtime.on_ruler(1_440.0, 5.0).x;
+        let page = runtime.on_page(1_440.0, 3_000.0).x;
+        assert!((ruler - page).abs() < 0.01, "{ruler} against {page}");
+    };
+    aligned(&mut runtime);
+    runtime.send(Message::Command(CommandId::VerticalRuler));
+    runtime.redraw();
+    assert!(!runtime.app.preferences.vertical_ruler_visible);
+    aligned(&mut runtime);
+}
+
+#[test]
+fn dragging_the_vertical_rulers_margin_markers_sets_the_layout_margins_and_undoes_cm11() {
+    use cosmic::iced::mouse::Button;
+    let mut runtime = vertical_ruler_runtime(50);
+    let text = runtime.on_page(1_800.0, 1_700.0);
+    runtime.click(Button::Left, text);
+    let scale = runtime.workspace_view().1.scale;
+    let margins = |runtime: &Runtime| {
+        let margins = runtime.app.document.document_layout().right.layout.margins;
+        (margins.top, margins.bottom)
+    };
+    assert_eq!(margins(&runtime), (1_440, 1_440));
+    let steps = runtime.app.history.undo_len();
+    // The hover names the marker and its margin in the status bar.
+    let at = runtime.on_vertical_ruler(1_440.0, 11.0);
+    let hover = runtime.events(&[(
+        cosmic::iced::Event::Mouse(cosmic::iced::mouse::Event::CursorMoved { position: at }),
+        at,
+    )]);
+    assert!(
+        hover.iter().any(|message| matches!(
+            message,
+            Message::VerticalRuler(crate::ruler_vertical::VerticalEvent::Hover(Some((
+                crate::ruler_vertical::Edge::Top,
+                0,
+                _
+            ))))
+        )),
+        "{hover:?}"
+    );
+    assert!(runtime.app.status.contains("Top margin: 1.00 in"));
+    // The top marker 365 twips down: snapped to the grid, 1,800, live
+    // readout and guide while it moves, one step on release.
+    let from = runtime.on_vertical_ruler(1_440.0, 11.0);
+    let to = cosmic::iced::Point::new(from.x, from.y + 365.0 * scale);
+    let published = runtime.drag(from, to);
+    assert!(
+        published.iter().any(|message| matches!(
+            message,
+            Message::VerticalRuler(crate::ruler_vertical::VerticalEvent::Drag(
+                crate::ruler_vertical::Edge::Top,
+                0,
+                at
+            )) if *at == 1_800.0
+        )),
+        "{published:?}"
+    );
+    assert_eq!(margins(&runtime), (1_800, 1_440));
+    assert_eq!(runtime.app.vertical_guide, None);
+    assert_eq!(runtime.app.history.undo_len(), steps + 1);
+    // The bottom marker 365 twips up: the margin grows to 1,890.
+    let from = runtime.on_vertical_ruler(14_400.0, 11.0);
+    let to = cosmic::iced::Point::new(from.x, from.y - 365.0 * scale);
+    runtime.drag(from, to);
+    assert_eq!(margins(&runtime), (1_800, 1_890));
+    assert_eq!(runtime.app.history.undo_len(), steps + 2);
+    // Each is one undo step, and the layout's own settings are what
+    // changed, as Page Layout Properties changes them.
+    runtime.send(Message::Command(CommandId::Undo));
+    assert_eq!(margins(&runtime), (1_800, 1_440));
+    runtime.send(Message::Command(CommandId::Undo));
+    assert_eq!(margins(&runtime), (1_440, 1_440));
+    // A drag that ends where it began changes nothing.
+    let from = runtime.on_vertical_ruler(1_440.0, 11.0);
+    runtime.drag(from, from);
+    assert_eq!(runtime.app.history.undo_len(), steps);
+}

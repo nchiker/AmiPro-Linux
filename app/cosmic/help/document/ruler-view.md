@@ -3,7 +3,7 @@ id: ruler-view
 title: The ruler
 area: document
 keywords: ruler, indents, margins, tabs, show ruler, hide ruler
-see_also: pages-frames-layouts, text-formatting, go-to
+see_also: pages-frames-layouts, text-formatting, go-to, vertical-ruler
 context: command:Ruler
 ---
 **View › Ruler** shows or hides the ruler above the pages. It reflects the paragraph at the caret: the left and right margins, column edges, indents, and tab stops. Dragging its markers changes the layout or paragraph.

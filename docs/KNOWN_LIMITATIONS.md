@@ -23,7 +23,7 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 ## Not built yet
 
-- Window › New View (a second view of one document) and the Vertical Ruler.
+- Window › New View (a second view of one document).
 - Draft mode does not draw frame markers.
 - Help covers the main areas in a starter set of topics (F1, Help
   Contents, Search Help…); not every command has its own topic yet, and

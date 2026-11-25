@@ -501,6 +501,9 @@ pub struct PageSurface<'a, Message> {
     /// While a ruler marker moves: a guide down that page at this x (page
     /// index, twips; `UI_SPEC.md` §19).
     guide: Option<(usize, f32)>,
+    /// While a margin marker of the vertical ruler moves: a guide across
+    /// that page at this y (page index, twips; `UI_SPEC.md` §48).
+    guide_across: Option<(usize, f32)>,
     /// Insert › Draw Frame: the next press on a page draws a frame
     /// (`UI_SPEC.md` §20).
     drawing: bool,
@@ -581,6 +584,7 @@ pub fn page_surface<'a, Message>(
         frames: None,
         on_frame: None,
         guide: None,
+        guide_across: None,
         drawing: false,
         fast_format: false,
         view_marks: ViewMarks::default(),
@@ -644,6 +648,12 @@ impl<'a, Message> PageSurface<'a, Message> {
     /// A guide line down a page while a ruler marker moves.
     pub fn guide(mut self, guide: Option<(usize, f32)>) -> Self {
         self.guide = guide;
+        self
+    }
+
+    /// A guide line across a page while a vertical ruler marker moves.
+    pub fn guide_across(mut self, guide: Option<(usize, f32)>) -> Self {
+        self.guide_across = guide;
         self
     }
 
@@ -5668,6 +5678,21 @@ where
                             bounds: Rectangle::new(
                                 Point::new(x, paper.y),
                                 Size::new(1.0, paper.height),
+                            ),
+                            ..renderer::Quad::default()
+                        },
+                        ACCENT,
+                    );
+                }
+                if let Some((page, y)) = self.guide_across
+                    && page == page_index
+                {
+                    let y = (paper.y + y * self.view.scale).round();
+                    renderer.fill_quad(
+                        renderer::Quad {
+                            bounds: Rectangle::new(
+                                Point::new(paper.x, y),
+                                Size::new(paper.width, 1.0),
                             ),
                             ..renderer::Quad::default()
                         },

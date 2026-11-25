@@ -188,6 +188,8 @@ pub enum CommandId {
     ShowToolbar,
     StylesPanel,
     Ruler,
+    /// View › Vertical Ruler (CK11; `UI_SPEC.md` §48).
+    VerticalRuler,
     StatusBar,
     ZoomIn,
     ZoomOut,
@@ -1151,6 +1153,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
     page_surface_view(CommandId::Enlarged, "Enlarged (200%)", None),
     page_surface_view(CommandId::CustomZoom, "Custom Zoom", None),
     page_surface_view(
+    page_surface_view(CommandId::VerticalRuler, "Vertical Ruler", None),
         CommandId::DraftMode,
         "Draft Mode",
         character(CTRL_SHIFT, "d"),
@@ -2317,6 +2320,7 @@ const OUTLINE_MENU: &[MenuSlot] = &[
     Item(C::ShowLevel4),
     Item(C::ShowLevel5),
     Item(C::ShowLevel6),
+    Item(C::VerticalRuler),
     Item(C::ShowLevel7),
     Item(C::ShowLevel8),
     Item(C::ShowLevel9),
@@ -2865,6 +2869,7 @@ mod tests {
             command_order(MenuRoot::Insert),
             [
                 C::PageBreak,
+                C::VerticalRuler,
                 C::ColumnBreak,
                 C::Frame,
                 C::DrawFrame,

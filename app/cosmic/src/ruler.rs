@@ -131,7 +131,7 @@ pub fn snap(x: f32) -> f32 {
     }
 }
 
-fn pages_of(document: &Document, layout: LayoutId, side: PageSide) -> Pages {
+pub(crate) fn pages_of(document: &Document, layout: LayoutId, side: PageSide) -> Pages {
     match document.layout(layout).map(|layout| layout.left.is_some()) {
         Some(true) if side == PageSide::Left => Pages::Left,
         Some(true) => Pages::Right,

@@ -5830,6 +5830,15 @@ itself scroll); after each scroll the widget re-hits at the pointer on the
 next redraw. The same path serves cells and frames. Shift+click and the
 Shift keys already scroll to the caret (`MoveTo` extend).
 
+A drag stays in the flow it started in (`PageSurface::drag_hit`): with the
+pointer over another flow's text or band (a page's footer, the gap
+between pages, the next page's header, a text frame, the footnote area),
+the selection extends to the nearest place in the anchor's flow on that
+page; the main text, on a page without any, to the nearest main text
+before or after. A drag in a table cell keeps to the cells of its table.
+(Before 2026-11-25, crossing page 2's header band collapsed the selection
+to a caret in the header, so a drag could not span pages.)
+
 ## 48. View › Vertical Ruler (CK11)
 
 *Ami Pro.* View Preferences' "Vertical ruler" box (display bit `0x200`,

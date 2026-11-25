@@ -392,6 +392,8 @@ struct State<P> {
     /// (the last `PageAction::DragEdge` sent).
     drag_edge: f32,
     drag_hit: Option<(TextPosition, u32)>,
+    /// The flow the selection drag's anchor is in: the drag stays in it.
+    drag_anchor: Option<FlowId>,
     modifiers: keyboard::Modifiers,
     preedit: Option<input_method::Preedit>,
     viewport: Size,
@@ -456,6 +458,7 @@ impl<P> Default for State<P> {
             dragging: false,
             drag_edge: 0.0,
             drag_hit: None,
+            drag_anchor: None,
             modifiers: keyboard::Modifiers::default(),
             preedit: None,
             viewport: Size::ZERO,
@@ -3186,6 +3189,47 @@ impl<'a, Message> PageSurface<'a, Message> {
         state: &State<P>,
         point: Point,
     ) -> Option<(TextPosition, u32)> {
+        self.hit_in(state, point, None)
+    }
+
+    /// Where a selection drag that started in `anchor`'s flow goes with the
+    /// pointer at `point`: the text under it when that is the same flow (or
+    /// a cell of the same table), else the nearest place in the anchor's
+    /// own flow. A drag through a header, footer, frame or footnote area
+    /// (between two pages, for one) keeps selecting the text it started in
+    /// instead of starting over there.
+    fn drag_hit<P: text::Paragraph>(
+        &self,
+        state: &State<P>,
+        point: Point,
+        anchor: FlowId,
+    ) -> Option<(TextPosition, u32)> {
+        let hit = self.hit(state, point)?;
+        let same_table = || {
+            matches!(
+                (
+                    crate::table_editing::cell_of(self.document, anchor),
+                    crate::table_editing::cell_of(self.document, hit.0.flow),
+                ),
+                (Some((frame, ..)), Some((other, ..))) if frame == other
+            )
+        };
+        if hit.0.flow == anchor || same_table() {
+            return Some(hit);
+        }
+        self.hit_in(state, point, Some(anchor))
+    }
+
+    /// [`Self::hit`], or with `only` the nearest text of that flow on the
+    /// page under `point` (the main text: the nearest main text before or
+    /// after a page without any; another flow: nothing on a page without
+    /// it).
+    fn hit_in<P: text::Paragraph>(
+        &self,
+        state: &State<P>,
+        point: Point,
+        only: Option<FlowId>,
+    ) -> Option<(TextPosition, u32)> {
         if state.pages.is_empty() {
             return None;
         }
@@ -3199,8 +3243,17 @@ impl<'a, Message> PageSurface<'a, Message> {
                 && y >= frame.bounds.y
                 && y <= frame.bounds.bottom()
         };
-        let mut wanted: Option<LineFilter> = None;
+        let main = self.document.main_flow_id();
+        let mut wanted: Option<LineFilter> = match only {
+            Some(flow) if flow != main => {
+                Some(Box::new(move |line: &LineBox| line.flow == flow))
+            }
+            _ => None,
+        };
         for frame in page.frames.iter().rev() {
+            if only.is_some() {
+                break;
+            }
             // A cell's picture takes the caret to its cell, beneath (T1).
             if !inside(frame)
                 || self
@@ -3255,6 +3308,9 @@ impl<'a, Message> PageSurface<'a, Message> {
         // A click in the footnote area edits the footnotes there, as in Ami
         // Pro's Layout mode (NR8); its continued messages take no caret.
         let wanted = wanted.or_else(|| {
+            if only.is_some() {
+                return None;
+            }
             let separator = page.footnote_separator?;
             (y >= separator.y).then(|| {
                 Box::new(|line: &LineBox| {
@@ -3279,7 +3335,9 @@ impl<'a, Message> PageSurface<'a, Message> {
             .filter(|(_, line)| wanted(line))
             .map(|(index, _)| index)
             .collect();
-        let candidates = if candidates.is_empty() {
+        let candidates = if candidates.is_empty() && only.is_some_and(|flow| flow != main) {
+            return None;
+        } else if candidates.is_empty() {
             // A column without text: any main line on the page.
             page.lines
                 .iter()
@@ -3346,7 +3404,11 @@ impl<'a, Message> PageSurface<'a, Message> {
             (position.x - bounds.x).clamp(0.0, bounds.width),
             (position.y.clamp(top, bottom.max(top)) - bounds.y).clamp(0.0, bounds.height),
         );
-        if let Some((position, page)) = self.hit(state, local)
+        let hit = match state.drag_anchor {
+            Some(anchor) => self.drag_hit(state, local, anchor),
+            None => self.hit(state, local),
+        };
+        if let Some((position, page)) = hit
             && state.drag_hit != Some((position, page))
         {
             state.drag_hit = Some((position, page));
@@ -4928,8 +4990,12 @@ where
                     }
                     state.dragging = true;
                     state.drag_edge = 0.0;
+                    state.drag_anchor = None;
                     if let Some((position, page)) = self.hit(state, position) {
                         state.drag_hit = Some((position, page));
+                        // Shift+press extends only within the same flow,
+                        // so the press's flow is the anchor's either way.
+                        state.drag_anchor = Some(position.flow);
                         shell.publish((self.on_action)(PageAction::MoveTo {
                             position,
                             page,

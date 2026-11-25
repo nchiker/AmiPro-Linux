@@ -17487,6 +17487,79 @@ fn a_drag_held_below_the_pages_scrolls_and_selects_the_text_that_was_off_screen(
     assert_eq!(runtime.app.workspace.drag_edge, 0.0);
 }
 
+/// A selection drag from page 1's text to page 2's passes the pointer over
+/// page 1's footer band, the gap between the pages and page 2's header
+/// band. The selection stays anchored where the press was and ends in page
+/// 2's main text (user, 2026-11-25, found on a private Xwayland: the
+/// header band took the hit, the selection collapsed to a caret there,
+/// and the drag started over from page 2's first line).
+#[test]
+fn a_drag_from_page_one_to_page_two_keeps_its_anchor_through_the_header_band() {
+    use cosmic::iced::mouse::{Button, Event as Mouse};
+    let mut app = page_app(long_document(150));
+    let main = app.document.main_flow_id();
+    // Both pages' meeting place in view.
+    send(&mut app, Message::ZoomTo(25));
+    let mut runtime = Runtime::new(app);
+    runtime.redraw();
+    let (bounds, view) = runtime.workspace_view();
+    let scroll = runtime.app.scroll_offset;
+    let at = |page: usize, x: f32, y: f32| {
+        let rect = view.pages[page];
+        cosmic::iced::Point::new(
+            bounds.x + rect.x - scroll.x + x * view.scale,
+            bounds.y + rect.y - scroll.y + y * view.scale,
+        )
+    };
+    let start = at(0, 3_000.0, 12_000.0);
+    let gap = cosmic::iced::Point::new(
+        start.x,
+        (view.pages[0].y + view.pages[0].height + view.pages[1].y) / 2.0 + bounds.y - scroll.y,
+    );
+    let path = [
+        at(0, 3_000.0, 14_000.0),
+        at(0, 3_000.0, 15_200.0), // page 1's footer band
+        gap,
+        at(1, 3_000.0, 300.0), // page 2's header band
+        at(1, 3_000.0, 900.0),
+        at(1, 3_000.0, 2_400.0), // page 2's text
+    ];
+    let end = path[path.len() - 1];
+    assert!(end.y < bounds.y + bounds.height, "page 2's text in view: {end:?}");
+    let moved = |to: cosmic::iced::Point| {
+        (
+            cosmic::iced::Event::Mouse(Mouse::CursorMoved { position: to }),
+            to,
+        )
+    };
+    runtime.events(&[
+        moved(start),
+        (
+            cosmic::iced::Event::Mouse(Mouse::ButtonPressed(Button::Left)),
+            start,
+        ),
+    ]);
+    let anchor = runtime.app.page_selection.anchor;
+    assert_eq!(anchor.flow, main);
+    assert_eq!(runtime.app.page_selection.page, 1);
+    for point in path {
+        runtime.events(&[moved(point)]);
+        assert_eq!(
+            runtime.app.page_selection.anchor, anchor,
+            "the anchor stays at the press with the pointer at {point:?}"
+        );
+    }
+    runtime.events(&[(
+        cosmic::iced::Event::Mouse(Mouse::ButtonReleased(Button::Left)),
+        end,
+    )]);
+    let selection = runtime.app.page_selection;
+    assert_eq!(selection.anchor, anchor);
+    assert_eq!(selection.focus.flow, main);
+    assert_eq!(selection.page, 2, "the drag ends on page 2");
+    assert!(selection.focus.paragraph > anchor.paragraph);
+}
+
 #[test]
 fn the_drag_scroll_speed_follows_the_distance() {
     assert_eq!(drag_scroll_step(0.0), 0.0);

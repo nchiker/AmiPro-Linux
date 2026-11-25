@@ -457,6 +457,44 @@ fn ui_review_screenshots() {
     write(&app, "cmd-Table");
 }
 
+/// Preferences › Folders and View with real-looking content: a long
+/// Documents folder, two remembered style-sheet folders (one long), and
+/// whatever `AMIPRO_STYLES` holds; light and dark. Ignored; writes
+/// `prefs-folders-*.ppm` and `prefs-view-*.ppm` to `AMIPRO_SCREENSHOT_DIR`.
+#[test]
+#[ignore = "writes screenshots for review; set AMIPRO_SCREENSHOT_DIR"]
+fn preferences_folders_screenshots() {
+    use crate::page_surface_app_tests::write_window_ppm;
+    use crate::preferences_dialog::{Page, PreferencesAction};
+    let Some(directory) = std::env::var_os("AMIPRO_SCREENSHOT_DIR") else {
+        eprintln!("AMIPRO_SCREENSHOT_DIR is not set; skipping");
+        return;
+    };
+    let directory = std::path::PathBuf::from(directory);
+    let mut app = app_for_every_panel();
+    app.preferences.documents_folder = Some(std::path::PathBuf::from(
+        "/home/someone/Documents/Correspondence/2026/Clients and Suppliers/Letters",
+    ));
+    app.preferences.style_folders = vec![
+        std::path::PathBuf::from("/home/someone/Styles"),
+        std::path::PathBuf::from(
+            "/home/someone/Documents/Lotus/AmiPro/Old Machine Backup/Styles/Letterheads",
+        ),
+    ];
+    send(&mut app, Message::Command(CommandId::Preferences));
+    for (page, name) in [(Page::Folders, "folders"), (Page::View, "view")] {
+        send(&mut app, Message::Preferences(PreferencesAction::Page(page)));
+        for dark in [false, true] {
+            let suffix = if dark { "dark" } else { "light" };
+            write_window_ppm(
+                &app,
+                &directory.join(format!("prefs-{name}-{suffix}.ppm")),
+                dark,
+            );
+        }
+    }
+}
+
 /// Every modal dialog, light and dark, for the modal dialog review
 /// (`docs/research/MODAL_DIALOG_REVIEW_2026-11.md`): the ones a command
 /// opens and the questions and problems the app asks or reports. Ignored;

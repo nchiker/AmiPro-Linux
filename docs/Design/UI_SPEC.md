@@ -6037,3 +6037,15 @@ bar, which had no switch here), Zoom (Custom zoom, moved from General), Show
 on the page (View › Show's marks in its order). The Toolbar page went: its
 switch duplicated the View page's.
 
+*Preferences › Folders* (user report 2026-11-25: hard to read). Two titled
+sections as on the other pages, Documents and Style-sheet folders, each a
+caption then a libcosmic list (`list_column`): one row per folder with a
+folder icon, the path on one line, shortened in the middle past 36
+characters (`preferences_dialog::elide_middle`, the folder's own name kept)
+with the whole path in a tooltip, and the row's button on the right, all
+96 px wide so they line up (Choose…, Remove). A folder from `AMIPRO_STYLES`
+comes first, with a caption under its path ("From AMIPRO_STYLES: always
+searched, not removable") and no button. Use the Desktop's Default (was
+Clear, always shown) appears under the Documents row only while a folder is
+set; Add Folder… (was Add…) sits under the list on the right.
+

@@ -367,73 +367,147 @@ pub fn documents_text(folder: Option<&std::path::Path>) -> String {
     )
 }
 
-fn folders<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
-    let mut clear = widget::button::text("Clear");
-    if shown.documents_folder.is_some() {
-        clear = clear.on_press(send(PreferencesAction::ClearDocuments));
+/// The characters of a path a Folders row shows; a longer one loses its
+/// middle, keeping where it starts and the folder's own name.
+const PATH_CHARS: usize = 36;
+
+/// `text` in at most `max` characters: whole when it fits, else its start
+/// and its end around an ellipsis, more of the end (the folder's name).
+pub fn elide_middle(text: &str, max: usize) -> String {
+    let count = text.chars().count();
+    if count <= max || max < 5 {
+        return text.to_owned();
     }
+    let keep = max - 1;
+    let head = keep * 2 / 5;
+    let tail = keep - head;
+    let start: String = text.chars().take(head).collect();
+    let end: String = text.chars().skip(count - tail).collect();
+    format!("{start}…{end}")
+}
+
+/// One folder in a Folders list: its icon, the path (middle elided, the
+/// whole path in a tooltip), a note under it, and its button on the right.
+fn folder_row<'a>(
+    path: &str,
+    note: Option<&'static str>,
+    button: Option<Element<'a, Message>>,
+) -> Element<'a, Message> {
+    let shown = elide_middle(path, PATH_CHARS);
+    let mut text: Vec<Element<'a, Message>> = vec![
+        widget::text::body(shown)
+            .wrapping(cosmic::iced::widget::text::Wrapping::None)
+            .into(),
+    ];
+    if let Some(note) = note {
+        text.push(widget::text::caption(note).into());
+    }
+    let text: Element<'a, Message> = widget::column::with_children(text).spacing(2).into();
+    let text = widget::tooltip(
+        text,
+        widget::text::body(path.to_owned()),
+        widget::tooltip::Position::Bottom,
+    );
     let mut children: Vec<Element<'a, Message>> = vec![
-        widget::text::heading("Documents").into(),
+        widget::icon::from_name("folder-symbolic").size(16).into(),
+        widget::container(text).width(Length::Fill).into(),
+    ];
+    if let Some(button) = button {
+        children.push(button);
+    }
+    widget::row::with_children(children)
+        .spacing(12)
+        .align_y(cosmic::iced::Alignment::Center)
+        .into()
+}
+
+/// A Folders row's button: one width, so the buttons line up.
+fn row_button<'a>(label: &'static str, message: Option<Message>) -> Element<'a, Message> {
+    widget::button::standard(label)
+        .on_press_maybe(message)
+        .width(Length::Fixed(96.0))
+        .into()
+}
+
+fn folders<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
+    // Documents: the folder (or what unset means), Choose… and Clear.
+    let documents_path = documents_text(shown.documents_folder);
+    let documents = widget::list_column()
+        .add(folder_row(
+            &documents_path,
+            None,
+            Some(row_button(
+                "Choose…",
+                Some(send(PreferencesAction::ChooseDocuments)),
+            )),
+        ))
+        .into_element();
+    let mut documents_rows = vec![
         widget::text::caption(
             "Where Open, Save As, Insert File, Import, Export, and Insert Image start \
              when the document has no folder of its own.",
         )
         .into(),
-        widget::row::with_children(vec![
-            widget::text::body(documents_text(shown.documents_folder))
-                .width(Length::Fill)
-                .into(),
-            widget::button::standard("Choose…")
-                .on_press(send(PreferencesAction::ChooseDocuments))
-                .into(),
-            clear.into(),
-        ])
-        .spacing(8)
-        .align_y(cosmic::iced::Alignment::Center)
-        .into(),
-        widget::divider::horizontal::default().into(),
-        widget::text::heading("Style-sheet folders").into(),
+        documents,
+    ];
+    if shown.documents_folder.is_some() {
+        documents_rows.push(
+            widget::row::with_children(vec![
+                widget::space().width(Length::Fill).into(),
+                widget::button::text("Use the Desktop's Default")
+                    .on_press(send(PreferencesAction::ClearDocuments))
+                    .into(),
+            ])
+            .into(),
+        );
+    }
+    // Style-sheet folders: the environment's first, marked and fixed, then
+    // the user's, each with Remove.
+    let mut list = widget::list_column();
+    let mut any = false;
+    for folder in &shown.environment_folders {
+        any = true;
+        list = list.add(folder_row(
+            &folder.display().to_string(),
+            Some("From AMIPRO_STYLES: always searched, not removable"),
+            None,
+        ));
+    }
+    for (index, folder) in shown.style_folders.iter().enumerate() {
+        any = true;
+        list = list.add(folder_row(
+            &folder.display().to_string(),
+            None,
+            Some(row_button(
+                "Remove",
+                Some(send(PreferencesAction::RemoveFolder(index))),
+            )),
+        ));
+    }
+    let mut styles_rows: Vec<Element<'a, Message>> = vec![
         widget::text::caption(
             "Searched for a document's style sheet and listed by Use Another Style Sheet.",
         )
         .into(),
     ];
-    for folder in &shown.environment_folders {
-        children.push(
-            widget::row::with_children(vec![
-                widget::text::body(folder.display().to_string())
-                    .width(Length::Fill)
-                    .into(),
-                widget::text::caption("AMIPRO_STYLES").into(),
-            ])
-            .spacing(8)
-            .into(),
-        );
+    if any {
+        styles_rows.push(list.into_element());
+    } else {
+        styles_rows.push(widget::text::body("No folders yet.").into());
     }
-    for (index, folder) in shown.style_folders.iter().enumerate() {
-        children.push(
-            widget::row::with_children(vec![
-                widget::text::body(folder.display().to_string())
-                    .width(Length::Fill)
-                    .into(),
-                widget::button::text("Remove")
-                    .on_press(send(PreferencesAction::RemoveFolder(index)))
-                    .into(),
-            ])
-            .spacing(8)
-            .align_y(cosmic::iced::Alignment::Center)
-            .into(),
-        );
-    }
-    if shown.style_folders.is_empty() && shown.environment_folders.is_empty() {
-        children.push(widget::text::body("None yet.").into());
-    }
-    children.push(
-        widget::button::standard("Add…")
-            .on_press(send(PreferencesAction::AddFolder))
-            .into(),
+    styles_rows.push(
+        widget::row::with_children(vec![
+            widget::space().width(Length::Fill).into(),
+            widget::button::standard("Add Folder…")
+                .on_press(send(PreferencesAction::AddFolder))
+                .into(),
+        ])
+        .into(),
     );
-    children
+    vec![
+        section("Documents", documents_rows),
+        section("Style-sheet folders", styles_rows),
+    ]
 }
 
 fn view_page<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
@@ -563,6 +637,20 @@ mod tests {
     fn the_documents_row_says_when_nothing_is_set() {
         assert_eq!(documents_text(None), "Not set — the desktop's own default");
         assert_eq!(documents_text(Some(std::path::Path::new("/d"))), "/d");
+    }
+
+    #[test]
+    fn long_paths_lose_their_middle_and_keep_the_folders_name() {
+        assert_eq!(elide_middle("/home/me/styles", 44), "/home/me/styles");
+        let long = "/home/someone/Documents/Lotus/AmiPro/Styles/Letterheads/Company";
+        let shown = elide_middle(long, 30);
+        assert_eq!(shown.chars().count(), 30);
+        assert!(shown.starts_with("/home/some"), "{shown}");
+        assert!(shown.ends_with("heads/Company"), "{shown}");
+        assert!(shown.contains('…'));
+        // Characters, not bytes.
+        let accented = "/é".repeat(40);
+        assert_eq!(elide_middle(&accented, 21).chars().count(), 21);
     }
 
     #[test]

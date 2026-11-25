@@ -3539,7 +3539,6 @@ impl<'a, Message> PageSurface<'a, Message> {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
     /// A cell's leader (Table › Leaders) on its last line on this page, in
     /// the line's size, by [`cell_leader_span`].
     #[allow(clippy::too_many_arguments)]

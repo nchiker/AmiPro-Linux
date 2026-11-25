@@ -343,8 +343,15 @@ fn selected_text(document: &Document, start: TextPosition, end: TextPosition) ->
         return String::new();
     };
     let mut text = String::new();
-    for index in start.paragraph..=end.paragraph.min(flow.paragraphs.len().saturating_sub(1)) {
-        let paragraph = &flow.paragraphs[index].text;
+    let last = end.paragraph.min(flow.paragraphs.len().saturating_sub(1));
+    for (index, para) in flow
+        .paragraphs
+        .iter()
+        .enumerate()
+        .take(last + 1)
+        .skip(start.paragraph)
+    {
+        let paragraph = &para.text;
         let from = if index == start.paragraph {
             start.byte
         } else {

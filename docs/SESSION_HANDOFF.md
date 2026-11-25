@@ -35,9 +35,9 @@ from outside) is in `docs/HANDOFF_ARCHIVE.md`.
   features 791 (88 ignored); core 802 (30 ignored).
 - App Clippy (`--all-features --all-targets -D warnings`) and `cargo fmt
   --check` (core and app) pass.
-- Core `cargo clippy --workspace --all-targets -- -D warnings` FAILS: two
-  `needless_range_loop` errors in `crates/ami-formats/src/info.rs` (lines 291
-  and 308), a file this work did not touch (rustc 1.100.0). Not fixed.
+- Core `cargo clippy --workspace --all-targets -- -D warnings` passes after two
+  `needless_range_loop` fixes in `crates/ami-formats/src/info.rs` (rustc
+  1.100.0); core tests rerun afterwards: 802 pass (30 ignored).
 - Corpus audit, release build and VM comparison were not run.
 - Layer 3: nothing newly accepted. The scenarios are headless widget and
   message tests. (The cross-page drag defect had been found on a private
@@ -72,7 +72,6 @@ visible IME preedit with a real input method.
 
 ## Open
 
-- The core Clippy failure above: fix in its own commit.
 - Not pushed (this session was told not to): `origin/master` is at `4b944fa`.
   Push at the end of the session and confirm `origin/master` equals `HEAD`.
 - Nothing is released or tagged for this work.

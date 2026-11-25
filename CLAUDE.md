@@ -73,7 +73,7 @@ cargo clippy --offline --manifest-path app/cosmic/Cargo.toml --all-features --al
 cargo run --offline --manifest-path app/cosmic/Cargo.toml                     # the app
 ```
 
-- Last counts (2026-11-25): core 802 (+30 ignored); COSMIC 784 default, 137 text editor, 791 all features (88, 9, 88 ignored). A full default or all-features app run takes about 10–11 minutes in debug (over the 10-minute foreground limit: run it in the background). Core Clippy fails on two `needless_range_loop` in `ami-formats/src/info.rs` (rustc 1.100.0); app Clippy passes. `tools/test-changed.sh` runs only the affected tests. Run the test steps with `AMIPRO_STYLES` unset (the style-sheet tests count sheets); set it for corpus and layout runs only.
+- Last counts (2026-11-25): core 802 (+30 ignored); COSMIC 784 default, 137 text editor, 791 all features (88, 9, 88 ignored). A full default or all-features app run takes about 10–11 minutes in debug (over the 10-minute foreground limit: run it in the background). Core and app Clippy pass. `tools/test-changed.sh` runs only the affected tests. Run the test steps with `AMIPRO_STYLES` unset (the style-sheet tests count sheets); set it for corpus and layout runs only.
 - `tools/verify.sh [--quick] [--release] [--corpus]`: fmt, Clippy, tests (logs in `target/verify/`). `tools/corpus.sh`: corpus audit. `tools/bench-ab.sh BASE_REV [ROUNDS]`: release A/B.
 - The ignored twin, benchmark, census, and comparison commands are in `docs/TEST_COMMANDS.md`.
 - Benchmark caution: the host runs other workloads (governor `powersave`); compare with interleaved A/B runs, not old numbers.

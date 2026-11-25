@@ -380,7 +380,7 @@ The user: colour selection "more like modern color selectors. Easier to choose w
   **Exit:** Stable release with transparent parity status.
 
 - 2026-11-25, UI work and reviews (`UI_SPEC.md` §46–§50): save type, drag selection across pages, View › Vertical Ruler, Format Painter, the UI and modal dialog reviews, Preferences, opening zoom; scenarios and three fixes (Go To's box selected on opening, the input method during drag auto-scroll, the scroll offset at fractional zoom). AUTOMATED PASS (core Clippy excepted), PHYSICAL PENDING.
-  - Next: the user's physical check (ranked in `docs/SESSION_HANDOFF.md`). No blocker for development; core Clippy fails on `ami-formats/src/info.rs` (two lines this work did not touch).
+  - Next: the user's physical check (ranked in `docs/SESSION_HANDOFF.md`). No blocker for development; core and app Clippy pass.
 
 ## Execution and reporting
 

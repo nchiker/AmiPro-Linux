@@ -288,8 +288,8 @@ fn read_description(values: &[String], info: &mut DocumentInfo) {
     };
     let number = |index: usize| values.get(index).map(|value| number(value));
     info.description = text(0);
-    for field in 0..4 {
-        info.fields[field] = text(1 + field);
+    for (field, value) in info.fields.iter_mut().enumerate().take(4) {
+        *value = text(1 + field);
     }
     info.saved = number(5);
     // The reader counts the open (`1058:2732`).
@@ -305,8 +305,8 @@ fn read_description(values: &[String], info: &mut DocumentInfo) {
     };
     info.keywords = text(14);
     info.annotation_lock = text(15);
-    for field in 4..8 {
-        info.fields[field] = text(12 + field);
+    for (field, value) in info.fields.iter_mut().enumerate().take(8).skip(4) {
+        *value = text(12 + field);
     }
     info.flags = number(20).unwrap_or(0);
 }

@@ -5978,6 +5978,46 @@ four distinct icons that exist.
 the password asked for when opening is "Protected Document". The password
 warning is the program's own wording.
 
+*Modal dialogs* (the modal dialog review, 2026-11-25;
+`docs/research/MODAL_DIALOG_REVIEW_2026-11.md`). Dialogs stay for one-shot
+questions and actions; inspectors stay in the rail. Every dialog is
+libcosmic's `widget::dialog` (title, body, controls, buttons; 570 px wide
+unless two lists need more, as Customize Toolbar's 720 px), its form built
+from `dialog_frame`:
+- **Title**: the command's name without its ellipsis, in Title Case (Font,
+  Go To, Outline Numbering). A dialog a bare-noun Insert command opens takes
+  the verb (Insert Table, Insert Bullet, Insert Page Number, Create Frame).
+  A question is the title, ending with "?" (Save changes to NAME?, Replace
+  existing file?); a problem says what failed (Could not open NAME).
+- **Buttons**: the action on the right, Cancel immediately to its left, an
+  alternative (Draw on Page, Browse…, Modify…, Remove Password, Discard) on
+  the far left as a standard button, or red when it destroys. Verbs say what
+  happens (Insert, Create, Apply, Go, Set Password, Save Anyway); OK only
+  where the dialog sets options (Font, Special Effects, Fast Format,
+  Use Another Style Sheet); Close in a dialog that applies each change at
+  once (Preferences, Style Management, Customize Toolbar). Title Case
+  labels. A destructive action (Delete, Discard, Revert, Replace, Save Anyway,
+  Export Anyway) is red. A question that only asks whether to destroy has
+  the red button on the right; one with a safe answer (Save changes to
+  NAME?) has that answer as the accent button on the right and the red one
+  on the far left.
+- **Keys** (`AmiProApp::dialog_keys`, one table for all): Esc does what
+  Cancel does (Close where there is no Cancel), whoever has the keyboard.
+  Enter that no widget takes does what the accent button does while it is
+  enabled; a dialog whose main action is destructive, and Special Character
+  (a palette), have no Enter. Enter in a text box submits the same action.
+- **First focus**: a dialog that asks for a value first opens with the
+  keyboard in that box (Go To, Create Style, Rename Style, Save as a Style
+  Sheet, Create Frame's Width, Insert Table's Columns, the Power Field
+  question, the password). Tab follows the drawing order.
+- **Form**: labels beside short boxes and lists, in one 170 px column
+  (`dialog_frame::row`); a label above a full-width text box. A control with
+  no label of its own under a labelled one sits in the field column
+  (`indented`). Sections have headings (`heading`); a part shown on demand
+  is a folding section (Insert Table's Layout), not a button. Lengths show
+  "in" after the box (`length`), font sizes "pt". Hints, and why a value is
+  refused, are captions under the field (`hint`).
+
 *Preferences* (§39 extended). Three pages, each in titled sections:
 General: New documents (style sheet, Save new documents as on its own row
 under its label, which the buttons used to overlap), Saving (.bak copy,

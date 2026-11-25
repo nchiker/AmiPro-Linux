@@ -3531,3 +3531,23 @@ icons), registered in `chrome::app_icon_svg` and `action_icon_name`, so the
 toolbar and Customize Toolbar show them. The Standard toolbar's items and
 order are unchanged. Checked light and dark in the headless window harness;
 `UI_SPEC.md` §50.
+
+## 2026-11-25 — Modal dialogs: one format, Enter, and first focus
+
+The user's decision: the remaining modal dialogs stay modal; their format is
+made consistent. Review and ranks: `docs/research/MODAL_DIALOG_REVIEW_2026-11.md`;
+conventions: `UI_SPEC.md` §50, "Modal dialogs". Decisions:
+
+- **One key table** (`AmiProApp::dialog_keys`, replacing `dialog_cancel`):
+  each dialog's Esc message, Enter message, and first field. A plain Enter
+  that no widget takes sends `Message::DialogEnter` (the subscription's
+  `window_event_message`), which does what the accent button does while it is
+  enabled; destructive dialogs and Special Character have none.
+- **First focus**: the named field is focused when the dialog opens (the
+  password box also after a wrong password, as before).
+- **Button order**: action right, Cancel beside it, alternative far left;
+  destructive actions red and never the Enter default. Closing a changed
+  document asks "Save changes to NAME?" (Save right, Discard left).
+- **Form parts** (`dialog_frame.rs`): one 170 px label column, headings,
+  hints, "in" after lengths, standard third buttons; Insert Table's Layout…
+  button became a folding section.

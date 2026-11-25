@@ -3518,3 +3518,16 @@ FLB0, FLB1, FLB2). Decisions:
   caps setting only), and Bold is never disabled for a face without a bold
   (cosmic-text synthesises one), so neither is this box; the document is the
   sample.
+
+## 2026-11-25 — Promote and Demote get their own toolbar icons
+
+The user's decision, after the UI review (finding 20 of
+`docs/research/UI_REVIEW_2026-11.md`): Promote and Demote no longer use the
+theme's indent icons, which Decrease and Increase Indent also use. Original
+symbolic icons, `app/cosmic/icons/outline-promote-symbolic.svg` and
+`outline-demote-symbolic.svg` (an elbow arrow out of a level line, up-left or
+down-right; same 16 px grid, stroke, and recolouring as the app's other
+icons), registered in `chrome::app_icon_svg` and `action_icon_name`, so the
+toolbar and Customize Toolbar show them. The Standard toolbar's items and
+order are unchanged. Checked light and dark in the headless window harness;
+`UI_SPEC.md` §50.

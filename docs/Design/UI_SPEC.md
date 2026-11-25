@@ -1874,7 +1874,8 @@ exists.
   also clear the numbers of styles without a level, Number List's
   included, OL2; the app leaves those styles alone.)
 - **O4, the toolbar:** Promote and Demote on the Standard toolbar beside
-  Bullets and Numbering (the theme's indent-less and indent-more icons).
+  Bullets and Numbering (the app's own outline icons since 2026-11-25,
+  §50; before, the theme's indent-less and indent-more icons).
   The bar then needs about 1,000 px; in narrower windows its last group
   (Draw Frame) moves to More.
 - **The counting rules** follow `1200:1842`: After higher level, After
@@ -1915,8 +1916,8 @@ app's files, and a nested list made in the app, as its own).
   before. Ami Pro's sheets and every compared page are drawn as before.
 - **Format › Bullets and Numbering ▸ Promote (Alt+Left) and Demote
   (Alt+Right)**, also on the Standard toolbar after Bullets and Numbering
-  (the theme's `format-indent-less-symbolic` and
-  `format-indent-more-symbolic`) and in the text right-click menu's
+  (the app's `outline-promote-symbolic` and `outline-demote-symbolic`
+  since 2026-11-25, §50) and in the text right-click menu's
   Bullets and Numbering ▸: one `ChangeLevel` command over the caret's or
   the selected paragraphs, one undo step; the status bar names the style
   and level given, or says the paragraph is already at the top or lowest
@@ -5960,6 +5961,18 @@ Fill; Align ▸ Center.
   Table › Table Style ▸; Glossary's buttons are Open Data File… and New Data
   File… as Merge's; Print's options say Document Properties, not Doc Info.
 - Lengths show "in" (no full stop), as the status bar and the rulers do.
+
+*Toolbar icons* (the user's decision, 2026-11-25). Promote and Demote have
+the app's own icons, `outline-promote-symbolic` and `outline-demote-symbolic`
+(`app/cosmic/icons`, original artwork in the style of the other app icons:
+16 px, 1.5 px strokes and 2 px bars, black recoloured as the theme's symbolic
+icons are): an elbow arrow leaving a level line upwards and to the left
+(Promote) or downwards and to the right (Demote), so they read as outline
+levels and no longer share Increase and Decrease Indent's
+`format-indent-more/less-symbolic`. The Standard toolbar keeps its items and
+their order; Customize Toolbar shows the same icons (both come from
+`action_icon_name`); menus show no icons. A test keeps the four commands on
+four distinct icons that exist.
 
 *Dialogs.* Labels have no trailing colon. The New… dialog is titled New;
 the password asked for when opening is "Protected Document". The password

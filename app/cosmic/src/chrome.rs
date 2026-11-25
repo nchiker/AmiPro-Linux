@@ -343,6 +343,10 @@ pub const APP_ICON_BULLETS: &str = "amipro-list-bullets-symbolic";
 pub const APP_ICON_NUMBERS: &str = "amipro-list-numbers-symbolic";
 pub const APP_ICON_INSERT_BULLET: &str = "amipro-insert-bullet-symbolic";
 pub const APP_ICON_PAINTER: &str = "amipro-format-painter-symbolic";
+/// Outline › Promote and Demote: an elbow arrow out of or under a level
+/// line, kept apart from the theme's indent icons (`UI_SPEC.md` §50).
+pub const APP_ICON_PROMOTE: &str = "amipro-outline-promote-symbolic";
+pub const APP_ICON_DEMOTE: &str = "amipro-outline-demote-symbolic";
 
 /// The SVG of one of the app's own icons, by name.
 /// The draw bar's icons (`UI_SPEC.md` §33), the app's own.
@@ -397,6 +401,8 @@ pub fn app_icon_svg(name: &str) -> Option<&'static [u8]> {
         APP_ICON_NUMBERS => Some(include_bytes!("../icons/list-numbers-symbolic.svg")),
         APP_ICON_INSERT_BULLET => Some(include_bytes!("../icons/insert-bullet-symbolic.svg")),
         APP_ICON_PAINTER => Some(include_bytes!("../icons/format-painter-symbolic.svg")),
+        APP_ICON_PROMOTE => Some(include_bytes!("../icons/outline-promote-symbolic.svg")),
+        APP_ICON_DEMOTE => Some(include_bytes!("../icons/outline-demote-symbolic.svg")),
         _ => None,
     }
 }
@@ -440,8 +446,8 @@ pub const fn action_icon_name(command: CommandId) -> Option<&'static str> {
         CommandId::Bullets => Some(APP_ICON_BULLETS),
         CommandId::Numbering => Some(APP_ICON_NUMBERS),
         CommandId::InsertBullet => Some(APP_ICON_INSERT_BULLET),
-        CommandId::Promote => Some("format-indent-less-symbolic"),
-        CommandId::Demote => Some("format-indent-more-symbolic"),
+        CommandId::Promote => Some(APP_ICON_PROMOTE),
+        CommandId::Demote => Some(APP_ICON_DEMOTE),
         CommandId::IncreaseIndent => Some("format-indent-more-symbolic"),
         CommandId::DecreaseIndent => Some("format-indent-less-symbolic"),
         CommandId::FrameProperties => Some("document-properties-symbolic"),
@@ -927,6 +933,60 @@ mod tests {
             assert!(command_tooltip(*command).starts_with(command::metadata(*command).label));
         }
         assert_eq!(command_tooltip(CommandId::Save), "Save (Ctrl+S)");
+    }
+
+    /// Promote and Demote (outline levels) and Increase and Decrease Indent
+    /// (margins) are four different actions with four different icons, each
+    /// one the app draws or one the COSMIC theme has (`UI_SPEC.md` §50).
+    #[test]
+    fn outline_and_indent_commands_have_four_distinct_icons_that_exist() {
+        let commands = [
+            CommandId::Promote,
+            CommandId::Demote,
+            CommandId::IncreaseIndent,
+            CommandId::DecreaseIndent,
+        ];
+        let names: Vec<&str> = commands
+            .iter()
+            .map(|command| action_icon_name(*command).expect("an icon"))
+            .collect();
+        let distinct: std::collections::HashSet<&str> = names.iter().copied().collect();
+        assert_eq!(distinct.len(), 4, "{names:?}");
+        for name in &names {
+            let exists = app_icon_svg(name).is_some_and(|svg| {
+                std::str::from_utf8(svg).is_ok_and(|text| text.contains("<svg"))
+            }) || theme_icon_exists(name);
+            assert!(exists, "{name} is neither the app's nor the theme's");
+        }
+        // The outline pair is the app's own; the indent pair is the theme's.
+        assert!(app_icon_svg(names[0]).is_some() && app_icon_svg(names[1]).is_some());
+    }
+
+    /// Whether a symbolic icon is in the COSMIC theme or its fallbacks on
+    /// this machine (Pop, hicolor), or, where no theme is installed (a bare
+    /// build host), whether it is a standard freedesktop name the app uses.
+    fn theme_icon_exists(name: &str) -> bool {
+        let roots = [
+            "/usr/share/icons/Pop",
+            "/usr/share/icons/hicolor",
+            "/usr/share/icons/Cosmic",
+        ];
+        let installed: Vec<_> = roots
+            .iter()
+            .map(std::path::Path::new)
+            .filter(|root| root.is_dir())
+            .collect();
+        if installed.is_empty() {
+            return matches!(
+                name,
+                "format-indent-more-symbolic" | "format-indent-less-symbolic"
+            );
+        }
+        installed.iter().any(|root| {
+            ["scalable/actions", "symbolic/actions"]
+                .iter()
+                .any(|folder| root.join(folder).join(format!("{name}.svg")).is_file())
+        })
     }
 
     #[test]

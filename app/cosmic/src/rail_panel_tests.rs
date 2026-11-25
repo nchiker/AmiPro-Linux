@@ -483,7 +483,10 @@ fn preferences_folders_screenshots() {
     ];
     send(&mut app, Message::Command(CommandId::Preferences));
     for (page, name) in [(Page::Folders, "folders"), (Page::View, "view")] {
-        send(&mut app, Message::Preferences(PreferencesAction::Page(page)));
+        send(
+            &mut app,
+            Message::Preferences(PreferencesAction::Page(page)),
+        );
         for dark in [false, true] {
             let suffix = if dark { "dark" } else { "light" };
             write_window_ppm(

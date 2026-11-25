@@ -3245,9 +3245,7 @@ impl<'a, Message> PageSurface<'a, Message> {
         };
         let main = self.document.main_flow_id();
         let mut wanted: Option<LineFilter> = match only {
-            Some(flow) if flow != main => {
-                Some(Box::new(move |line: &LineBox| line.flow == flow))
-            }
+            Some(flow) if flow != main => Some(Box::new(move |line: &LineBox| line.flow == flow)),
             _ => None,
         };
         for frame in page.frames.iter().rev() {

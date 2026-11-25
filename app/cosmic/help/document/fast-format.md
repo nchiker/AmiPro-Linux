@@ -4,15 +4,16 @@ title: Fast Format and Format Painter
 area: document
 keywords: format painter, paintbrush, copy formatting, ctrl+t, paint format, copy style, copy format, paste format
 see_also: clear-direct-formatting, select-style, text-formatting
-context: command:FastFormat, command:FormatPainter, command:FormatPainterKeepOn, command:CopyFormat, command:PasteFormat
+context: command:FastFormat, command:FormatPainter, command:CopyFormat, command:PasteFormat
 ---
-Fast Format copies the formatting of one place and paints it onto text you select afterwards. There are three ways in, under Format › Format Painter and on the keyboard.
+Fast Format copies the formatting of one place and paints it onto text you select afterwards. Both ways in are under Format › Fast Format ▸.
 
 ## The ways to paint
 
-- **Format Painter** (the paintbrush button in the action bar, or Format › Format Painter ▸ Format Painter): the next selection you make with the mouse takes the format, and then the painter turns itself off. Press the button twice quickly, as a double-click, to keep it on.
-- **Keep On** (Ctrl+Shift+T, or Format › Format Painter ▸ Format Painter (Keep On)): every selection you make takes the format until you press Esc or choose it again.
-- **Fast Format** (Ctrl+T, Ami Pro's own): the same as Keep On.
+- **Fast Format** (Ctrl+T, Ami Pro's own; Ctrl+Shift+T also works): every selection you make with the mouse takes the format until you press Esc or choose it again.
+- **Format Painter** (the paintbrush button, which Customize Toolbar offers, or Format › Fast Format ▸ Format Painter): the next selection you make with the mouse takes the format, and then the painter turns itself off. Press the button twice quickly, as a double-click, to keep it on.
+
+The menu ticks the one that is armed.
 
 While the painter is armed, the status bar names what it holds, for example "Format painter: Heading 1, Arial 12 bold - drag over text to apply, Esc to cancel", the pointer shows a plus, and a brush appears beside the message.
 

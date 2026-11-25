@@ -8,7 +8,7 @@ context: command:ShowTabsReturns, command:ColumnGuides, command:MarginsInColour,
 ---
 **View › Show** switches on aids that help while you edit. None of them print.
 
-- **Tabs & Returns** draws a mark for each tab, space, and paragraph end. It also has a toolbar button.
+- **Tabs and Returns** draws a mark for each tab, space, and paragraph end. It also has a toolbar button.
 - **Column Guides** draws a line between columns.
 - **Margins in Colour** tints the area outside the margins.
 - **Pictures**: when off, pictures are drawn as empty boxes, which scrolls faster in picture-heavy documents.

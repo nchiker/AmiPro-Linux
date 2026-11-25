@@ -10,4 +10,4 @@ context: command:Ruler
 
 The ruler's state is a setting of the window, saved with your preferences; Preferences › View has the same switch.
 
-Edit › Go To Ruler lets you operate it from the keyboard. For the effect of each marker, see [Pages, frames, and layouts](pages-frames-layouts) and [Text formatting](text-formatting).
+Edit › Go To ▸ Go To Ruler lets you operate it from the keyboard. For the effect of each marker, see [Pages, frames, and layouts](pages-frames-layouts) and [Text formatting](text-formatting).

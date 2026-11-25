@@ -279,11 +279,6 @@ impl crate::AmiProApp {
         self.arm_painter(Then::KeepOn);
     }
 
-    /// Ctrl+Shift+T: the painter on and staying on, or off.
-    pub(crate) fn format_painter_keep_on(&mut self) {
-        self.arm_painter(Then::KeepOn);
-    }
-
     /// Format Painter (the toolbar's button and the menu's item): one
     /// selection takes the format and the mode ends. Pressed again within
     /// [`DOUBLE_PRESS`] (a double-click) it stays on; pressed later while it

@@ -57,9 +57,12 @@ submenu may be a single specifically named disabled item rather than a generic
 | Document Properties… | Alt+Enter | Hidden | A document is open: Document Properties in the rail (Ami Pro's Doc Info), each change one undo step | Yes, page surface (2026-10-20) | §28 (FL3) |
 | Quit | Ctrl+Q | Menu only | Application active; resolves every dirty tab safely | UI-1 I | UI-1 |
 
-File grouping: New/Open; Close; Save/Save As/Revert; Export/Print (Page Setup… sits before Print
-and opens the same panel as Format › Page Layout…; decisions L2, 2026-10-13, and 2026-11-07);
-Properties; Quit. Recent Documents may be added between Open and Close only
+File grouping (UI review 2026-11, `docs/research/UI_REVIEW_2026-11.md`):
+New Document/New…/Open…/Recover Documents…; Close; Save/Save As/Revert/Password;
+Import Folder…/Export ▸ (Export Folder… inside); Page Setup…/Print…/Print Current
+Page…/Print Options…/Print Envelope… (Page Setup… opens the same panel as
+Format › Page Layout…; decisions L2, 2026-10-13, and 2026-11-07); Merge…/Master
+Document…/Document Properties…; recent files; Quit. Recent Documents may be added between Open and Close only
 after privacy, missing-path, and duplicate-session behavior is defined.
 
 ## Edit
@@ -78,7 +81,7 @@ after privacy, missing-path, and duplicate-session behavior is defined.
 | Find Next | F3 | Menu only; the bar's ▼ and Enter | The next match after the caret in the streams searched, round to the first; opens the bar when it is closed | Yes, page surface (2026-10-20) | §27 |
 | Find Previous | Shift+F3 | Menu only; the bar's ▲ and Shift+Enter | The match before the caret, round to the last | Yes, page surface (2026-10-20) | §27 |
 | Replace… | Ctrl+H | Menu only | The find bar with its Replace row: Replace (the selected match, one undo step, then the next) and Replace All (one undo step, the count in the status bar) | Yes, page surface (2026-10-20) | §27, F3, F4 |
-| Go To… | Ctrl+G | Status bar page number | A document is open (page surface) | Yes, page surface (2026-10-12) | Dialog: page number, first or last page, next frame |
+| Go To… (Edit › Go To ▸, since the UI review 2026-11 with the six moves below) | Ctrl+G | Status bar page number | A document is open (page surface) | Yes, page surface (2026-10-12) | Dialog: page number, first or last page, next frame |
 | Previous Page | — | Status bar ▲ | The caret's page has a page before it | Yes, page surface (2026-10-12) | Caret to the top of that page's text |
 | Next Page | — | Status bar ▼ | The caret's page has a page after it | Yes, page surface (2026-10-12) | As Previous Page |
 | Go To Header | — | Menu only | A document is open; the caret to the start of the page's fixed header, or a status-bar reason (Begin on second page) | Yes, page surface (2026-10-13) | `UI_SPEC.md` §18 |
@@ -87,7 +90,10 @@ after privacy, missing-path, and duplicate-session behavior is defined.
 | Previous Field | — | Edit › Power Fields ▸ | The same backwards | Yes, page surface (2026-10-20) | §28 |
 | Go To Ruler | — | Menu only | The ruler takes the keyboard (Ami Pro's Edit › Go To › Ruler): arrows, Ctrl+arrows, Space, Del, 0–3, `[` `]`, Esc | Yes, page surface (2026-10-17) | §19 |
 
-Edit grouping: Undo/Redo; clipboard/delete; selection; find/replace/go-to. Cut,
+Edit grouping: Undo/Redo; clipboard/delete; selection; find/replace and
+Go To ▸ (Go To…; Previous Page, Next Page, Select Next Frame; Go To Header,
+Go To Footer, Go To Ruler: seven rows folded into one, UI review 2026-11);
+Bookmarks…/Notes…/Links…/Power Fields ▸/Mark Text ▸. Cut,
 Copy, Paste, and Select All are mandatory menu entries even though native editor
 bindings already work. This directly closes the memorized-shortcut defect.
 
@@ -110,7 +116,9 @@ bindings already work. This directly closes the memorized-shortcut defect.
 | Two Pages | — | View-mode group | Shaped pagination exists and viewport permits | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P3 |
 | Full Screen | F11 | Menu only | Always; native full-screen behavior | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 
-View grouping: panels/chrome; zoom; page view; full screen. No zoom percentage
+View grouping: panels/chrome; Show ▸; zoom (Custom Zoom names its
+percentage, "Custom Zoom (91%)"); page view (Continuous Pages, Facing Pages,
+Draft Mode, Outline Mode, Outline ▸); full screen. No zoom percentage
 appears in the action bar; the status bar owns view and zoom.
 
 ## Insert
@@ -124,7 +132,7 @@ appears in the action bar; the status bar owns view and zoom.
 | Table… | Ctrl+F12 | Hidden | The caret in the main text outside a table, or one empty text frame selected: Insert Table's dialog, a table at the caret or in the frame, one undo step | Yes, page surface (2026-10-24) | §32 (TD1, TD2) |
 | Table menu: Insert Row Above/Below, Insert Column Left/Right, Delete Row/Column/Table, Select ▸ Column/Row/Entire Table, Connect Cells (Disconnect Cells in a joined cell), Headings ✓, Leaders ▸ ✓, Protect Cells ✓, Distribute Rows/Columns Evenly, Table Style ▸, Edit Formula… (focuses the rail's Formula box), Quick Add ▸ Row/Column, Recalculate Table (since 2026-11-06, TD.7: one cell, Honor protection, Row needs a cell to the left and Column one above, Recalculate a formula in the table; no shortcuts, Ami Pro has none), Sort Ascending, Sort Descending (since 2026-11-04, MR1: the rows below the headings by the caret's column), Convert Text to Table, Convert Table to Text, Table Properties… | — | Hidden; the row, column, and cell items in the right-click menu in a table | The caret or a cell selection in a table (each with Ami Pro's own rule: Select Column needs two rows, Headings a page table, Distribute Rows no Automatic); Convert Text to Table: paragraphs of the main text selected | Yes, page surface (2026-10-24) | §32 (TD1–TD10) |
 | Drawing… | — | Hidden | Where Insert › Image… can put a picture (a new frame at the caret, an empty frame, an empty cell), or a drawing selected (which opens): a new drawing and Draw mode | Yes, page surface (2026-10-25) | §33 (DW1–DW3) |
-| Draw menu: Line and Fill…, Extract/Apply Line & Fill, Rotate Left/Right 90°, Rotate by Step, Flip ▸ Horizontal/Vertical, Group, Ungroup, Bring to Front, Send to Back, Bring Forward, Send Backward, Align ▸ (six), Distribute ▸ Across/Down, Duplicate, Snap To ✓, Show Grid ✓, Select All Objects ✓, Import Drawing…, Save Drawing As…, Done Drawing | — | The draw bar (in the toolbar's place in Draw mode); the selection's items in the right-click menu in Draw mode | Draw mode open; each with Ami Pro's rule (Extract one object, Group two, Align two, Distribute three, Flip a flippable object) | Yes, page surface (2026-10-25) | §33 (DW2–DW6) |
+| Draw menu: Line and Fill…, Extract/Apply Line and Fill, Rotate Left/Right 90°, Rotate by Step, Flip ▸ Horizontal/Vertical, Group, Ungroup, Bring to Front, Send to Back, Bring Forward, Send Backward, Align ▸ (six), Distribute ▸ Across/Down, Duplicate, Snap to Grid ✓, Show Grid ✓, Select All Objects ✓, Import Drawing…, Save Drawing As…, Done Drawing | — | The draw bar (in the toolbar's place in Draw mode); the selection's items in the right-click menu in Draw mode | Draw mode open; each with Ami Pro's rule (Extract one object, Group two, Align two, Distribute three, Flip a flippable object) | Yes, page surface (2026-10-25) | §33 (DW2–DW6) |
 | Image… | Ctrl+Shift+I | Hidden | A caret in the main text, an empty table cell, or one empty text frame or picture frame selected; the portal's chooser (BMP, WMF, PNG, JPEG, GIF, TIFF, PCX, SVG) with Link to file; the picture into the empty frame or cell, a new Flow with text frame at the caret the picture's size, or replacing the selected picture; one undo step (VM PI1–PI9) | Yes, page surface (2026-10-18) | §25 (P1–P3) |
 | File… (Insert) | — | Hidden | A document is open: the portal's chooser for the formats read, Import Options, the file at the caret (or the selection's start) in any flow, one undo step | Yes, page surface (2026-10-24) | §31 (IM1, IM3) |
 | Drawing… | — | Hidden | Drawing/object model exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P5 |
@@ -194,7 +202,12 @@ very tall") the page surface's Format menu folds Alignment ▸ (the four
 alignments), Bullets and Numbering ▸ (Bullets, Numbering, Promote, Demote,
 Bullet and Number Style…; also in the text right-click menu), and Frame ▸
 (Frame Properties, Bring to Front, Send to Back, Group, Ungroup), as Ami
-Pro's Text menu nests Alignment ▸ and Caps ▸. The modern **Format** menu consolidates the original application's
+Pro's Text menu nests Alignment ▸ and Caps ▸. Since the UI review 2026-11
+Format › Fast Format ▸ holds Fast Format (Ctrl+T, also Ctrl+Shift+T; stays
+on; checked while it does), Format Painter (one use; checked while armed),
+Copy Format (Ctrl+Alt+C), and Paste Format (Ctrl+Alt+V): the former Format
+Painter (Keep On) was Fast Format's mode under a second name. Frame ▸ has
+the frame right-click menu's dividers. The modern **Format** menu consolidates the original application's
 evidenced Text and Style paths; this is an intentional modernization pending
 the focused VM comparison.
 
@@ -209,8 +222,8 @@ the focused VM comparison.
 | Readability Statistics… | — | Menu only | Ami Pro's figures for the document, or the selection | Yes, page surface (2026-10-26) | §35 (SP8) |
 | Language… | — | Menu only | The Proofing panel at its options: the document's language (one undo step), Use for new documents | Yes, page surface (2026-10-26) | §35 (SP6) |
 | Sort… (Tools, after Language…; since 2026-11-06, TD.8) | — | Menu only | The Sort panel in the rail: three levels (field, Alphanumeric or Numeric, Word 1st, 2nd, All), Ascending or Descending, delimiter (text only), paragraphs or rows in a record, for the selected paragraphs, all text, or the table's (selected) rows; refusals and questions in the panel; one undo step; settings kept per tab. Table › Sort Ascending and Descending stay | A document on the page surface | Yes, page surface (2026-11-06) | §41 (TN3) |
-| TOC, Index… | — | Menu only | A document is open: the Contents & Index panel (levels, Generate Contents and Update, Generate Index); each change one undo step | Yes, page surface (2026-11-03) | §36 (TX1–TX6) |
-| Mark Text ▸ Index Entry… | — | Menu only | The Contents & Index panel's Entries page: the selection as the Primary, or the mark at the caret; Mark, Mark All, Remove, Next and Previous (same) | Yes, page surface (2026-11-03) | §36 (TX1, TX4) |
+| TOC, Index… | — | Menu only | A document is open: the TOC and Index panel (titled "Contents & Index" before the UI review 2026-11; levels, Generate Contents and Update, Generate Index); each change one undo step | Yes, page surface (2026-11-03) | §36 (TX1–TX6) |
+| Mark Text ▸ Index Entry… | — | Menu only | The TOC and Index panel's Entries page: the selection as the Primary, or the mark at the caret; Mark, Mark All, Remove, Next and Previous (same) | Yes, page surface (2026-11-03) | §36 (TX1, TX4) |
 | Mark Text ▸ TOC Entry… | — | Menu only | The Entries page's TOC entry: the caret style's level, the selection's text; one undo step | Yes, page surface (2026-11-03) | §36 |
 | Mark Text ▸ Glossary… | — | Menu only | The Glossary panel: the selection added to the data file as a named record (Ami Pro's rules) | Yes, page surface (2026-11-03) | §36 (TX7, TX8) |
 | Glossary Record… (Insert) | Ctrl+K | Menu only | The letters and digits at the caret replaced by the record they name, inline, one undo step; else the Glossary panel's list | Yes, page surface (2026-11-03) | §36 (TX7) |
@@ -221,7 +234,11 @@ the focused VM comparison.
 | Customize Toolbar… | — | Menu only | Always; edits the one toolbar (add, remove, move, separators, Reset to Standard), shows the bar, saves each change (`UI_SPEC.md` §12) | I | UI pass, 2026-10-12 |
 | Preferences… | Ctrl+, | Menu only | Always; application settings dialog exists | Yes, implemented (registry; run A / earlier sections of `UI_SPEC.md`; "No" here was stale before 2026-11-07) | P2 |
 
-Tools grouping: language tools; document calculation; application preferences.
+Tools grouping (UI review 2026-11): proofing (Spell Check…, Check Spelling
+as You Type, Thesaurus…, Grammar Check…, Readability Statistics…, Word Count,
+Language…); Sort…; objects (Charting…, Chart from Table, Equations…, Paste
+LaTeX Equation, Image Processing…); Footnote Options…, TOC, Index…;
+Customize Toolbar…, Preferences….
 Macro commands are deliberately absent from the main approval-candidate
 inventory until the product-priority-P2 macro-compatibility scope is separately
 approved.
@@ -230,8 +247,8 @@ approved.
 
 | Command | Shortcut | Action bar | Enabled when / behavior | Current | Milestone |
 |---|---|---|---|---|---|
-| Next Document | Ctrl+Tab | Tabs | More than one tab | UI-1 I | UI-1 label/enabling |
-| Previous Document | Ctrl+Shift+Tab | Tabs | More than one tab | UI-1 I | UI-1 label/enabling |
+| Next Document | Ctrl+PageDown (Ctrl+Tab is taken by COSMIC) | Tabs | More than one tab | UI-1 I | UI-1 label/enabling |
+| Previous Document | Ctrl+PageUp shown; Ctrl+Shift+Tab still works (`SHORTCUT_ALIASES`, UI review 2026-11) | Tabs | More than one tab | UI-1 I | UI-1 label/enabling |
 | *Open document list* | mnemonic index only | Tabs/overflow | Dynamic checked list; selecting activates tab; show when at least one tab exists | UI-1 I | UI-1 |
 
 The original release document evidences Tile Windows and Cascade Windows, but

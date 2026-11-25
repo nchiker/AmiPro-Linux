@@ -20,6 +20,6 @@ Remove Ruler takes the paragraph's own ruler away and returns it to the tabs of 
 
 ## The ruler with the keyboard
 
-Edit › Go To Ruler puts the keyboard on the ruler at the caret paragraph's indent: Left and Right move it a sixteenth of an inch, Ctrl with them half an inch; Space adds a tab; Delete removes the tab there; 0, 1, 2, and 3 set All, First, Rest, and the right indent. Esc or a click in the text comes back. See [Go To](go-to).
+Edit › Go To ▸ Go To Ruler puts the keyboard on the ruler at the caret paragraph's indent: Left and Right move it a sixteenth of an inch, Ctrl with them half an inch; Space adds a tab; Delete removes the tab there; 0, 1, 2, and 3 set All, First, Rest, and the right indent. Esc or a click in the text comes back. See [Go To](go-to).
 
 Showing and hiding the ruler is in [The ruler](ruler-view). Tab kinds and leaders are in [Tab stops](tabs).

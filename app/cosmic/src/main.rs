@@ -10573,17 +10573,13 @@ fn menu_check(app: &AmiProApp, command: CommandId) -> Option<bool> {
         #[cfg(feature = "page-surface")]
         CommandId::FieldShading => Some(app.preferences.field_shading),
         #[cfg(feature = "page-surface")]
-        CommandId::FastFormat => Some(app.fast_format.is_some()),
+        CommandId::FastFormat => Some(app.fast_format.as_ref().is_some_and(|format| format.sticky)),
         #[cfg(feature = "page-surface")]
         CommandId::FormatPainter => Some(
             app.fast_format
                 .as_ref()
                 .is_some_and(|format| !format.sticky),
         ),
-        #[cfg(feature = "page-surface")]
-        CommandId::FormatPainterKeepOn => {
-            Some(app.fast_format.as_ref().is_some_and(|format| format.sticky))
-        }
         #[cfg(feature = "page-surface")]
         CommandId::FullPage => Some(app.zoom == Zoom::FullPage),
         #[cfg(feature = "page-surface")]
@@ -10662,6 +10658,25 @@ fn menu_check(app: &AmiProApp, command: CommandId) -> Option<bool> {
     }
 }
 
+/// A command's label in a menu: the registry's, or one that says what the
+/// command does now (Disconnect Cells; View › Custom Zoom names its
+/// percentage, as Enlarged (200%) does — UI review 2026-11).
+fn menu_label(app: &AmiProApp, command: CommandId) -> String {
+    let metadata = command::metadata(command);
+    #[cfg(feature = "page-surface")]
+    if command == CommandId::CustomZoom {
+        return format!("{} ({}%)", metadata.label, app.preferences.custom_zoom);
+    }
+    #[cfg(feature = "page-surface")]
+    let label = app.table_menu_label(command).unwrap_or(metadata.label);
+    #[cfg(not(feature = "page-surface"))]
+    let label = {
+        let _ = app;
+        metadata.label
+    };
+    label.to_owned()
+}
+
 /// One menu entry before it becomes a libcosmic item.
 #[derive(Clone, Debug, PartialEq)]
 enum MenuEntry {
@@ -10689,13 +10704,9 @@ fn menu_entries(app: &AmiProApp, layout: &[MenuSlot]) -> Vec<MenuEntry> {
     for slot in layout {
         match slot {
             MenuSlot::Command(command) => {
-                let metadata = command::metadata(*command);
-                #[cfg(feature = "page-surface")]
-                let label = app.table_menu_label(*command).unwrap_or(metadata.label);
-                #[cfg(not(feature = "page-surface"))]
-                let label = metadata.label;
+                let label = menu_label(app, *command);
                 entries.push(MenuEntry::Item {
-                    label: label.to_owned(),
+                    label,
                     command: MenuCommand::Command(*command),
                     enabled: app.command_enabled(*command),
                     checked: menu_check(app, *command),
@@ -11777,8 +11788,6 @@ impl AmiProApp {
             CommandId::FastFormat => self.toggle_fast_format(),
             #[cfg(feature = "page-surface")]
             CommandId::FormatPainter => self.format_painter(std::time::Instant::now()),
-            #[cfg(feature = "page-surface")]
-            CommandId::FormatPainterKeepOn => self.format_painter_keep_on(),
             #[cfg(feature = "page-surface")]
             CommandId::CopyFormat => self.copy_format(),
             #[cfg(feature = "page-surface")]

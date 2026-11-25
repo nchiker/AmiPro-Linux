@@ -144,6 +144,8 @@ pub fn toolbar_from_keys(keys: &[String]) -> Vec<ToolbarItem> {
         let item = match key.as_str() {
             "Style" => Some(ToolbarItem::StyleField),
             "Separator" => Some(ToolbarItem::Separator),
+            // Became Fast Format, the same mode (UI review 2026-11).
+            "FormatPainterKeepOn" => Some(ToolbarItem::Command(CommandId::FastFormat)),
             name => COMMANDS
                 .iter()
                 .find(|command| format!("{:?}", command.id) == name)

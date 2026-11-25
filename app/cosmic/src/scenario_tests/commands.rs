@@ -741,7 +741,7 @@ fn format_painter_one_shot_takes_one_mouse_selection_then_ends_as_one_undo_step(
         );
     }
     assert_eq!(check(&s, CommandId::FormatPainter), Some(true));
-    assert_eq!(check(&s, CommandId::FormatPainterKeepOn), Some(false));
+    assert_eq!(check(&s, CommandId::FastFormat), Some(false));
     // The next selection takes it (one undo step, checked by `edit`), and
     // the mode is over.
     s.select_main((1, 0), (1, 5));
@@ -797,19 +797,27 @@ fn format_painter_double_press_and_ctrl_shift_t_keep_it_on_until_esc_or_toggle()
     });
     assert!(s.app().fast_format.is_none());
 
-    // Ctrl+Shift+T keeps it on from the start, and again turns it off; the
-    // menu shows which is which.
-    s.command_act(CommandId::FormatPainterKeepOn);
+    // Ctrl+Shift+T (Fast Format's second shortcut since the UI review)
+    // keeps it on from the start, and again turns it off; the menu shows
+    // which is which.
+    let ctrl_shift_t = crate::command::command_for_shortcut(
+        cosmic::iced::keyboard::Modifiers::CTRL | cosmic::iced::keyboard::Modifiers::SHIFT,
+        &cosmic::iced::keyboard::Key::Character("t".into()),
+        None,
+    )
+    .expect("Ctrl+Shift+T is a command");
+    assert_eq!(ctrl_shift_t, CommandId::FastFormat);
+    s.command_act(ctrl_shift_t);
     assert!(s.app().fast_format.as_ref().unwrap().sticky);
     assert_eq!(
-        crate::menu_check(s.app(), CommandId::FormatPainterKeepOn),
+        crate::menu_check(s.app(), CommandId::FastFormat),
         Some(true)
     );
     assert_eq!(
         crate::menu_check(s.app(), CommandId::FormatPainter),
         Some(false)
     );
-    s.command_act(CommandId::FormatPainterKeepOn);
+    s.command_act(ctrl_shift_t);
     assert!(s.app().fast_format.is_none());
     // Ctrl+T stays Ami Pro's: on, staying on.
     s.command_act(CommandId::FastFormat);

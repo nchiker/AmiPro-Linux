@@ -19,7 +19,7 @@ With two or more objects selected, **Draw › Align** lines them up by their lef
 ## Grid
 
 - **Draw › Show Grid** draws a grid of dots or dotted lines behind the drawing.
-- **Draw › Snap To** makes drawing, moving and sizing jump to the grid.
+- **Draw › Snap to Grid** makes drawing, moving and sizing jump to the grid.
 - Spacing and style are in the Grid section of [Drawing Properties](drawing-properties).
 
 Smart guides appear while you drag, showing when an object's edges or centre line up with another object's.

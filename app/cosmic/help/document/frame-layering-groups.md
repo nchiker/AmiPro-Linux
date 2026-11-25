@@ -18,6 +18,6 @@ Select several frames with Shift+click (they must be Where placed and on the sam
 
 ## Keyboard
 
-Tab and Shift+Tab (or Edit › Select Next Frame) step through the page's frames in stacking order.
+Tab and Shift+Tab (or Edit › Go To ▸ Select Next Frame) step through the page's frames in stacking order.
 
 Drawings have their own grouping inside Draw mode: see [Group and stacking order](draw-group-order).

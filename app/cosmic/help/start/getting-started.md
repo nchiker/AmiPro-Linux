@@ -10,7 +10,7 @@ AmiPro-Linux is a page-based word processor for the COSMIC desktop. It opens Ami
 ## The window
 
 - The **menu bar** and the **action bar** (the toolbar) are at the top. Tools › Customize Toolbar changes the buttons.
-- Each open document has a **tab**. Window › Next Document (Ctrl+PageDown) and Previous Document (Ctrl+Shift+Tab) move between them.
+- Each open document has a **tab**. Window › Next Document (Ctrl+PageDown) and Previous Document (Ctrl+PageUp) move between them.
 - The **ruler** shows the margins, columns, indents, and tabs of the paragraph the caret is in.
 - The **page workspace** shows the pages as they will print. Text, frames, tables, and pictures are all edited right on the page.
 - The **rail** on the right shows one panel at a time. By default it lists the styles; most commands that need many settings open their panel there instead of a dialog box. Press Esc to close a panel.

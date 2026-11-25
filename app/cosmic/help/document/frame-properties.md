@@ -12,7 +12,7 @@ Select a frame and the rail shows **Frame Properties**; Format › Frame › Fra
 
 Click a frame to select it. Eight square handles appear. Drag from inside to move; a dashed outline follows and the text reflows on release. Drag a handle to resize; Shift on a corner keeps the proportions. Esc cancels a drag.
 
-With the frame selected, the arrow keys move it by a point (Shift: a tenth of an inch) and Alt+arrows move its right or bottom edge. Tab and Shift+Tab, or Edit › Select Next Frame, select another frame on the page. Enter edits the text inside. Esc returns to the main text. Shift+click adds more frames to the selection.
+With the frame selected, the arrow keys move it by a point (Shift: a tenth of an inch) and Alt+arrows move its right or bottom edge. Tab and Shift+Tab, or Edit › Go To ▸ Select Next Frame, select another frame on the page. Enter edits the text inside. Esc returns to the main text. Shift+click adds more frames to the selection.
 
 ## The sections
 

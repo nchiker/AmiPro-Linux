@@ -16,7 +16,7 @@ Help › Keyboard Shortcuts lists every shortcut, taken from the same table that
 - **Text:** Ctrl+B, Ctrl+I, and Ctrl+U for bold, italic, and underline; Ctrl+L, Ctrl+E, Ctrl+R, and Ctrl+J align left, centre, right, and justify; Ctrl+Y selects a style; Ctrl+M clears direct formatting.
 - **Insert:** Ctrl+Enter page break, Ctrl+Shift+Enter column break, Ctrl+F12 table, Ctrl+Shift+I image.
 - **Tools:** F7 spell check, Shift+F7 thesaurus, F9 update fields.
-- **Windows:** Ctrl+PageDown next document, Ctrl+Shift+Tab previous document. Ctrl+Tab is taken by the desktop before the program sees it.
+- **Windows:** Ctrl+PageDown next document, Ctrl+PageUp (or Ctrl+Shift+Tab) previous document. Ctrl+Tab is taken by the desktop before the program sees it.
 - **Help:** F1.
 
 The shortcuts follow modern desktop habits rather than Ami Pro's old ones where they differ; the list in the menu is authoritative.

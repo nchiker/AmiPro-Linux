@@ -400,7 +400,6 @@ pub enum CommandId {
     /// picked-up format; a double press keeps it on.
     FormatPainter,
     /// Ctrl+Shift+T: the painter, staying on until ended.
-    FormatPainterKeepOn,
     /// Ctrl+Alt+C: keeps the selection's format for Paste Format.
     CopyFormat,
     /// Ctrl+Alt+V: the kept format onto the selection.
@@ -1376,8 +1375,8 @@ pub const COMMANDS: &[CommandMetadata] = &[
         EnableRule::DrawingTarget,
     ),
     draw_command(CommandId::DrawProperties, "Line and Fill…"),
-    draw_command(CommandId::DrawExtract, "Extract Line & Fill"),
-    draw_command(CommandId::DrawApply, "Apply Line & Fill"),
+    draw_command(CommandId::DrawExtract, "Extract Line and Fill"),
+    draw_command(CommandId::DrawApply, "Apply Line and Fill"),
     draw_command(CommandId::DrawRotateLeft, "Rotate Left 90°"),
     draw_command(CommandId::DrawRotateRight, "Rotate Right 90°"),
     draw_command(CommandId::DrawRotate, "Rotate by Step"),
@@ -1390,7 +1389,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
     draw_command(CommandId::DrawForward, "Bring Forward"),
     draw_command(CommandId::DrawBackward, "Send Backward"),
     draw_command(CommandId::DrawAlignLeft, "Left"),
-    draw_command(CommandId::DrawAlignCentre, "Centre"),
+    draw_command(CommandId::DrawAlignCentre, "Center"),
     draw_command(CommandId::DrawAlignRight, "Right"),
     draw_command(CommandId::DrawAlignTop, "Top"),
     draw_command(CommandId::DrawAlignMiddle, "Middle"),
@@ -1398,7 +1397,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
     draw_command(CommandId::DrawDistributeAcross, "Across"),
     draw_command(CommandId::DrawDistributeDown, "Down"),
     draw_command(CommandId::DrawDuplicate, "Duplicate"),
-    draw_command(CommandId::DrawSnap, "Snap To"),
+    draw_command(CommandId::DrawSnap, "Snap to Grid"),
     draw_command(CommandId::DrawGrid, "Show Grid"),
     draw_command(CommandId::DrawSelectAll, "Select All Objects"),
     draw_command(CommandId::ImportDrawing, "Import Drawing…"),
@@ -1607,7 +1606,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
         None,
         EnableRule::HasDocument,
     ),
-    page_surface_view(CommandId::ShowTabsReturns, "Tabs & Returns", None),
+    page_surface_view(CommandId::ShowTabsReturns, "Tabs and Returns", None),
     page_surface_view(CommandId::ColumnGuides, "Column Guides", None),
     page_surface_view(CommandId::MarginsInColour, "Margins in Colour", None),
     page_surface_view(CommandId::ShowPictures, "Pictures", None),
@@ -1820,12 +1819,6 @@ pub const COMMANDS: &[CommandMetadata] = &[
         CommandId::FormatPainter,
         "Format Painter",
         None,
-        EnableRule::HasDocument,
-    ),
-    page_surface_format(
-        CommandId::FormatPainterKeepOn,
-        "Format Painter (Keep On)",
-        character(CTRL_SHIFT, "t"),
         EnableRule::HasDocument,
     ),
     page_surface_format(
@@ -2138,7 +2131,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
         PreviousDocument,
         "Previous Document",
         Window,
-        named(CTRL_SHIFT, keyboard::key::Named::Tab),
+        named(CTRL, keyboard::key::Named::PageUp),
         MultipleTabs,
         Window,
         TabStrip,
@@ -2225,21 +2218,25 @@ impl MenuSlot {
 use CommandId as C;
 use MenuSlot::{Command as Item, Divider, Documents, Folder, Recent};
 
+/// The File menu (UI review 2026-11, `docs/research/UI_REVIEW_2026-11.md`):
+/// starting documents; closing; saving; converting (Import Folder… beside
+/// Export ▸, which holds Export Folder…); printing; the whole document.
 const FILE_MENU: &[MenuSlot] = &[
     Item(C::NewDocument),
     Item(C::NewFromStyleSheet),
     Item(C::Open),
-    Item(C::ImportFolder),
+    Item(C::RecoverDocuments),
     Divider,
     Item(C::CloseDocument),
     Divider,
     Item(C::Save),
     Item(C::SaveAs),
     Item(C::RevertToSaved),
-    Item(C::RecoverDocuments),
     Item(C::Password),
     Divider,
+    Item(C::ImportFolder),
     Folder("Export", EXPORT_MENU),
+    Divider,
     Item(C::PageSetup),
     Item(C::Print),
     Item(C::PrintCurrentPage),
@@ -2281,19 +2278,26 @@ const EDIT_MENU: &[MenuSlot] = &[
     Item(C::FindNext),
     Item(C::FindPrevious),
     Item(C::Replace),
-    Item(C::GoToPage),
-    Item(C::GoToHeader),
-    Item(C::GoToFooter),
-    Item(C::GoToRuler),
-    Item(C::PreviousPage),
-    Item(C::NextPage),
-    Item(C::NextFrame),
+    Folder("Go To", GO_TO_MENU),
     Divider,
     Item(C::Bookmarks),
     Item(C::Notes),
     Item(C::Links),
     Folder("Power Fields", FIELDS_MENU),
     Folder("Mark Text", MARK_TEXT_MENU),
+];
+/// Edit › Go To ▸ (UI review 2026-11): Ami Pro's Edit › Go To… with the
+/// moves that were seven rows of the Edit menu; Ctrl+G is unchanged.
+const GO_TO_MENU: &[MenuSlot] = &[
+    Item(C::GoToPage),
+    Divider,
+    Item(C::PreviousPage),
+    Item(C::NextPage),
+    Item(C::NextFrame),
+    Divider,
+    Item(C::GoToHeader),
+    Item(C::GoToFooter),
+    Item(C::GoToRuler),
 ];
 /// Edit › Mark Text ▸, as Ami Pro's (`UI_SPEC.md` §36).
 const MARK_TEXT_MENU: &[MenuSlot] = &[
@@ -2335,9 +2339,9 @@ const VIEW_MENU: &[MenuSlot] = &[
     Divider,
     Item(C::ContinuousPages),
     Item(C::TwoPages),
+    Item(C::DraftMode),
     Item(C::OutlineMode),
     Folder("Outline", OUTLINE_MENU),
-    Item(C::DraftMode),
     Divider,
     Item(C::FullScreen),
 ];
@@ -2410,8 +2414,7 @@ const FORMAT_MENU: &[MenuSlot] = &[
     Item(C::SpecialEffects),
     Item(C::Font),
     Item(C::ClearDirectFormatting),
-    Item(C::FastFormat),
-    Folder("Format Painter", PAINTER_MENU),
+    Folder("Fast Format", PAINTER_MENU),
     Divider,
     Item(C::ParagraphProperties),
     Folder("Alignment", ALIGNMENT_MENU),
@@ -2432,10 +2435,13 @@ const PAGE_LAYOUT_MENU: &[MenuSlot] = &[
     Item(C::RemovePageLayout),
     Item(C::RevertPageLayout),
 ];
-/// Format › Format Painter ▸ (`UI_SPEC.md` §49).
+/// Format › Fast Format ▸ (`UI_SPEC.md` §49): Ami Pro's Fast Format
+/// (stays on; Ctrl+T, also Ctrl+Shift+T) and the one-use Format Painter,
+/// one picked-up format (UI review 2026-11: the separate "Format Painter
+/// (Keep On)" did what Fast Format does).
 const PAINTER_MENU: &[MenuSlot] = &[
+    Item(C::FastFormat),
     Item(C::FormatPainter),
-    Item(C::FormatPainterKeepOn),
     Divider,
     Item(C::CopyFormat),
     Item(C::PasteFormat),
@@ -2607,8 +2613,10 @@ const LISTS_MENU: &[MenuSlot] = &[
 const FRAME_MENU: &[MenuSlot] = &[
     Item(C::FrameProperties),
     Item(C::GraphicsScaling),
+    Divider,
     Item(C::BringToFront),
     Item(C::SendToBack),
+    Divider,
     Item(C::GroupFrames),
     Item(C::UngroupFrames),
 ];
@@ -2676,21 +2684,25 @@ const CAPS_MENU: &[MenuSlot] = &[
     Item(C::InitialCaps),
     Item(C::SmallCaps),
 ];
+/// The Tools menu (UI review 2026-11): proofing; sorting; objects;
+/// document-wide notes and contents; the program's settings.
 const TOOLS_MENU: &[MenuSlot] = &[
     Item(C::Spelling),
     Item(C::SpellAsYouType),
     Item(C::Thesaurus),
     Item(C::GrammarCheck),
     Item(C::ReadabilityStatistics),
+    Item(C::WordCount),
     Item(C::Language),
+    Divider,
     Item(C::Sort),
-    Item(C::ImageProcessing),
+    Divider,
     Item(C::Charting),
     Item(C::ChartFromTable),
     Item(C::Equations),
     Item(C::PasteLatexEquation),
+    Item(C::ImageProcessing),
     Divider,
-    Item(C::WordCount),
     Item(C::FootnoteOptions),
     Item(C::ContentsIndex),
     Divider,
@@ -2735,17 +2747,57 @@ pub fn metadata(id: CommandId) -> &'static CommandMetadata {
         .expect("every CommandId must have registry metadata")
 }
 
+/// Second shortcuts that still work but are not shown in menus (the
+/// Keyboard Shortcuts list names them): kept when a command's shown
+/// shortcut changed or two commands became one (UI review 2026-11).
+pub const SHORTCUT_ALIASES: &[(CommandId, Shortcut)] = &[
+    // Ctrl+PageUp is shown, the pair of Next Document's Ctrl+PageDown; the
+    // physically accepted Ctrl+Shift+Tab keeps working (UI-1).
+    (
+        CommandId::PreviousDocument,
+        Shortcut {
+            modifiers: CTRL_SHIFT,
+            key: ShortcutKey::Named(keyboard::key::Named::Tab),
+        },
+    ),
+    // Format Painter (Keep On)'s shortcut: the same mode as Fast Format.
+    (
+        CommandId::FastFormat,
+        Shortcut {
+            modifiers: CTRL_SHIFT,
+            key: ShortcutKey::Character("t"),
+        },
+    ),
+];
+
+/// The aliases of `id`, in [`SHORTCUT_ALIASES`] order.
+pub fn shortcut_aliases(id: CommandId) -> impl Iterator<Item = Shortcut> {
+    SHORTCUT_ALIASES
+        .iter()
+        .filter(move |(command, _)| *command == id)
+        .map(|(_, shortcut)| *shortcut)
+}
+
 pub fn command_for_shortcut(
     modifiers: keyboard::Modifiers,
     key: &Key,
     physical_key: Option<&keyboard::key::Physical>,
 ) -> Option<CommandId> {
-    COMMANDS.iter().find_map(|command| {
-        command
-            .shortcut
-            .is_some_and(|shortcut| shortcut.key_bind().matches(modifiers, key, physical_key))
-            .then_some(command.id)
-    })
+    COMMANDS
+        .iter()
+        .find_map(|command| {
+            command
+                .shortcut
+                .is_some_and(|shortcut| shortcut.key_bind().matches(modifiers, key, physical_key))
+                .then_some(command.id)
+        })
+        .or_else(|| {
+            SHORTCUT_ALIASES.iter().find_map(|(command, shortcut)| {
+                (metadata(*command).shortcut.is_some()
+                    && shortcut.key_bind().matches(modifiers, key, physical_key))
+                .then_some(*command)
+            })
+        })
 }
 
 #[cfg(test)]
@@ -2799,13 +2851,13 @@ mod tests {
                 C::NewDocument,
                 C::NewFromStyleSheet,
                 C::Open,
-                C::ImportFolder,
+                C::RecoverDocuments,
                 C::CloseDocument,
                 C::Save,
                 C::SaveAs,
                 C::RevertToSaved,
-                C::RecoverDocuments,
                 C::Password,
+                C::ImportFolder,
                 C::ExportPdf,
                 C::ExportDocx,
                 C::ExportOdt,
@@ -2841,12 +2893,12 @@ mod tests {
                 C::FindPrevious,
                 C::Replace,
                 C::GoToPage,
-                C::GoToHeader,
-                C::GoToFooter,
-                C::GoToRuler,
                 C::PreviousPage,
                 C::NextPage,
                 C::NextFrame,
+                C::GoToHeader,
+                C::GoToFooter,
+                C::GoToRuler,
                 C::Bookmarks,
                 C::Notes,
                 C::Links,
@@ -2889,6 +2941,7 @@ mod tests {
                 C::FitPageWidth,
                 C::ContinuousPages,
                 C::TwoPages,
+                C::DraftMode,
                 C::OutlineMode,
                 C::OutlineExpand,
                 C::OutlineContract,
@@ -2904,7 +2957,6 @@ mod tests {
                 C::ShowAllLevels,
                 C::UseOutlineStyles,
                 C::OutlineNavigator,
-                C::DraftMode,
                 C::FullScreen,
             ]
         );
@@ -2955,7 +3007,6 @@ mod tests {
                 C::ClearDirectFormatting,
                 C::FastFormat,
                 C::FormatPainter,
-                C::FormatPainterKeepOn,
                 C::CopyFormat,
                 C::PasteFormat,
                 C::ParagraphProperties,
@@ -2995,14 +3046,14 @@ mod tests {
                 C::Thesaurus,
                 C::GrammarCheck,
                 C::ReadabilityStatistics,
+                C::WordCount,
                 C::Language,
                 C::Sort,
-                C::ImageProcessing,
                 C::Charting,
                 C::ChartFromTable,
                 C::Equations,
                 C::PasteLatexEquation,
-                C::WordCount,
+                C::ImageProcessing,
                 C::FootnoteOptions,
                 C::ContentsIndex,
                 C::CustomizeToolbar,
@@ -3069,11 +3120,46 @@ mod tests {
         );
         assert_eq!(
             command_for_shortcut(
+                keyboard::Modifiers::CTRL,
+                &Key::Named(keyboard::key::Named::PageUp),
+                None,
+            ),
+            Some(CommandId::PreviousDocument),
+            "Ctrl+PageUp is shown, the pair of Ctrl+PageDown"
+        );
+        assert_eq!(
+            command_for_shortcut(
                 keyboard::Modifiers::CTRL | keyboard::Modifiers::SHIFT,
                 &Key::Named(keyboard::key::Named::Tab),
                 None,
             ),
-            Some(CommandId::PreviousDocument)
+            Some(CommandId::PreviousDocument),
+            "the accepted Ctrl+Shift+Tab still works"
+        );
+    }
+
+    /// An alias never takes a shown shortcut, and two aliases never share
+    /// a key; Ctrl+Shift+T is Fast Format's (Format Painter (Keep On) was
+    /// the same mode).
+    #[test]
+    fn shortcut_aliases_are_unique_and_never_shadow_a_shown_shortcut() {
+        let mut bindings = HashMap::new();
+        for command in COMMANDS {
+            if let Some(shortcut) = command.shortcut {
+                bindings.insert(shortcut.key_bind(), command.id);
+            }
+        }
+        for (command, alias) in SHORTCUT_ALIASES {
+            assert_eq!(bindings.insert(alias.key_bind(), *command), None);
+        }
+        #[cfg(feature = "page-surface")]
+        assert_eq!(
+            command_for_shortcut(
+                keyboard::Modifiers::CTRL | keyboard::Modifiers::SHIFT,
+                &Key::Character("t".into()),
+                None,
+            ),
+            Some(CommandId::FastFormat)
         );
     }
 

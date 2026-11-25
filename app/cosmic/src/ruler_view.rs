@@ -813,7 +813,7 @@ pub fn kind_name(kind: TabKind) -> &'static str {
     match kind {
         TabKind::Left => "Left",
         TabKind::Right => "Right",
-        TabKind::Centre => "Centre",
+        TabKind::Centre => "Center",
         TabKind::Decimal => "Decimal",
     }
 }

@@ -42,11 +42,16 @@ impl HelpDrawer {
     }
 }
 
-/// A shortcut as the menus show it (`Ctrl+Shift+N`).
+/// A shortcut as the menus show it (`Ctrl+Shift+N`), then any second
+/// shortcut that also works (`Ctrl+PageUp or Ctrl+Shift+Tab`).
 pub fn shortcut_label(id: CommandId) -> Option<String> {
-    command::metadata(id)
-        .shortcut
-        .map(|shortcut| shortcut.key_bind().to_string().replace(" + ", "+"))
+    let shown = |shortcut: command::Shortcut| shortcut.key_bind().to_string().replace(" + ", "+");
+    let mut label = shown(command::metadata(id).shortcut?);
+    for alias in command::shortcut_aliases(id) {
+        label.push_str(" or ");
+        label.push_str(&shown(alias));
+    }
+    Some(label)
 }
 
 /// Every implemented command with a shortcut, by menu in menu order:

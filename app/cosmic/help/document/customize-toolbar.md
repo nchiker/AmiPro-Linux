@@ -6,7 +6,7 @@ keywords: buttons, icons, toolbar, smarticons, add button, reset, order
 see_also: toolbar-view, preferences
 context: command:CustomizeToolbar
 ---
-**Tools › Customize Toolbar…** (or the button on Preferences › Toolbar) opens a dialog with two lists. **Available** holds the style field and every command that has an icon, except those already on the bar. **Toolbar** holds the bar's items in order.
+**Tools › Customize Toolbar…** (or the button beside the Toolbar switch on Preferences › View) opens a dialog with two lists. **Available** holds the style field and every command that has an icon, except those already on the bar. **Toolbar** holds the bar's items in order.
 
 - **Add** puts the chosen item after the selected one on the bar (or at the end).
 - **Remove**, **Move Up**, and **Move Down** act on the selected bar item.

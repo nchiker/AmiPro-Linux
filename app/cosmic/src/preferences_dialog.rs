@@ -2,6 +2,11 @@
 //! pages, in place of Ami Pro's User Setup and its Options and Paths
 //! dialogs. Every value applies as it is set and is kept in the COSMIC
 //! configuration (never the user's in tests).
+//!
+//! UI review 2026-11: each page is in titled sections; General holds what
+//! new documents, saving, and editing do; View holds the window's parts
+//! (the toolbar's own page went: its switch was the View page's), the
+//! Custom Zoom, and the marks on the page in View › Show's order.
 
 use std::path::PathBuf;
 
@@ -26,49 +31,66 @@ pub enum Page {
     General,
     Folders,
     View,
-    Toolbar,
 }
 
 impl Page {
-    pub const ALL: [(Self, &'static str); 4] = [
+    pub const ALL: [(Self, &'static str); 3] = [
         (Self::General, "General"),
         (Self::Folders, "Folders"),
         (Self::View, "View"),
-        (Self::Toolbar, "Toolbar"),
     ];
 }
 
-/// The View page's settings: the View menu's own toggles, in one place.
+/// The View page's settings: the View menu's own toggles, in one place:
+/// the window's parts, then View › Show's marks in its order.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ViewSetting {
     Toolbar,
     Ruler,
     VerticalRuler,
-    FieldShading,
-    Notes,
-    Bookmarks,
+    StatusBar,
     TabsReturns,
     ColumnGuides,
     MarginsInColour,
     Pictures,
     TableAddresses,
+    FieldShading,
+    Notes,
+    Bookmarks,
 }
 
 impl ViewSetting {
-    pub const ALL: [(Self, &'static str); 11] = [
+    pub const ALL: [(Self, &'static str); 12] = [
         (Self::Toolbar, "Toolbar"),
         (Self::Ruler, "Ruler"),
         (Self::VerticalRuler, "Vertical ruler"),
-        (Self::FieldShading, "Field shading"),
-        (Self::Notes, "Notes"),
-        (Self::Bookmarks, "Bookmarks"),
-        (Self::TabsReturns, "Tabs & Returns"),
+        (Self::StatusBar, "Status bar"),
+        (Self::TabsReturns, "Tabs and returns"),
         (Self::ColumnGuides, "Column guides"),
         (Self::MarginsInColour, "Margins in colour"),
         (Self::Pictures, "Pictures"),
         (Self::TableAddresses, "Table row/column headings"),
+        (Self::FieldShading, "Field shading"),
+        (Self::Notes, "Notes"),
+        (Self::Bookmarks, "Bookmarks"),
     ];
+
+    /// A part of the window (the rest are marks on the page).
+    pub const fn is_window(self) -> bool {
+        matches!(
+            self,
+            Self::Toolbar | Self::Ruler | Self::VerticalRuler | Self::StatusBar
+        )
+    }
+
+    /// Whether the text editor (no page surface) has this setting.
+    pub const fn in_text_editor(self) -> bool {
+        matches!(self, Self::Toolbar)
+    }
 }
+
+/// The height of every page's area; a longer page scrolls.
+const PAGE_HEIGHT: f32 = 430.0;
 
 /// The minutes between recovery copies that Preferences offers (P6.3), and
 /// the default.
@@ -115,7 +137,7 @@ pub enum PreferencesAction {
     /// Folders › Documents › Clear: the desktop's own default again.
     ClearDocuments,
     View(ViewSetting, bool),
-    /// Toolbar › Customize Toolbar…: the toolbar editor, in place of this
+    /// View › Customize Toolbar…: the toolbar editor, in place of this
     /// dialog.
     CustomizeToolbar,
     Close,
@@ -135,7 +157,8 @@ pub struct Shown<'a> {
     pub documents_folder: Option<&'a std::path::Path>,
     /// Folders from `AMIPRO_STYLES`, listed but not removable here.
     pub environment_folders: Vec<PathBuf>,
-    pub view: [bool; 11],
+    /// In [`ViewSetting::ALL`]'s order.
+    pub view: [bool; 12],
     /// The text editor has only the toolbar of the View page.
     pub page_surface: bool,
 }
@@ -197,10 +220,17 @@ fn toggle_row<'a>(
     .into()
 }
 
+/// A titled group of a page's settings.
+fn section<'a>(title: &'static str, rows: Vec<Element<'a, Message>>) -> Element<'a, Message> {
+    let mut children: Vec<Element<'a, Message>> = vec![widget::text::heading(title).into()];
+    children.extend(rows);
+    widget::column::with_children(children).spacing(10).into()
+}
+
 /// The minutes between recovery copies: one button for each interval.
 fn recovery_interval_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
     let mut buttons: Vec<Element<'a, Message>> = vec![
-        widget::text::body("Write a recovery copy every")
+        widget::text::body("Write a copy every")
             .width(Length::Fill)
             .into(),
     ];
@@ -231,13 +261,11 @@ fn recovery_interval_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
         .into()
 }
 
-/// Save new documents as: one button for each format Save As writes.
+/// Save new documents as: one button for each format Save As writes, on
+/// a row of their own under the label (beside it, the label was squeezed
+/// under the buttons).
 fn save_format_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
-    let mut buttons: Vec<Element<'a, Message>> = vec![
-        widget::text::body("Save new documents as")
-            .width(Length::Fill)
-            .into(),
-    ];
+    let mut buttons: Vec<Element<'a, Message>> = Vec::new();
     for format in SaveFormat::ALL {
         let label = match format {
             SaveFormat::Sam => "Ami Pro (.SAM)",
@@ -255,61 +283,79 @@ fn save_format_row<'a>(shown: &Shown<'_>) -> Element<'a, Message> {
                 .into(),
         );
     }
-    widget::row::with_children(buttons)
-        .spacing(4)
-        .align_y(cosmic::iced::Alignment::Center)
-        .into()
+    widget::column::with_children(vec![
+        widget::text::body("Save new documents as").into(),
+        widget::row::with_children(buttons)
+            .spacing(4)
+            .align_y(cosmic::iced::Alignment::Center)
+            .into(),
+    ])
+    .spacing(6)
+    .into()
 }
 
 fn general<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
-    vec![
-        number_field(
-            "Undo levels",
-            &state.undo_levels,
-            &UNDO_LEVELS,
-            PreferencesAction::UndoLevels,
-        ),
-        number_field(
-            "Custom zoom (%)",
-            &state.custom_zoom,
-            &CUSTOM_ZOOM,
-            PreferencesAction::CustomZoom,
-        ),
-        number_field(
-            "Recent files in the File menu",
-            &state.recent_files,
-            &RECENT_FILES,
-            PreferencesAction::RecentFiles,
-        ),
-        widget::row::with_children(vec![
-            widget::text::body("Style sheet File › New… selects first")
-                .width(Length::Fill)
-                .into(),
-            widget::text_input("_DEFAULT.STY", shown.default_sheet.to_owned())
-                .on_input(|name| send(PreferencesAction::DefaultSheet(name)))
-                .width(160)
-                .into(),
-        ])
-        .spacing(8)
-        .align_y(cosmic::iced::Alignment::Center)
-        .into(),
-        save_format_row(shown),
+    let mut saving = vec![
         toggle_row(
             "Keep the original as NAME.SAM.bak when saving over an Ami Pro document",
             shown.keep_backup,
             |on| send(PreferencesAction::KeepBackup(on)),
         ),
         toggle_row(
-            "Check for updates when the program starts (once a day at most)",
-            shown.check_updates,
-            |on| send(PreferencesAction::CheckUpdates(on)),
-        ),
-        toggle_row(
             "Keep recovery copies while editing",
             shown.keep_recovery,
             |on| send(PreferencesAction::KeepRecovery(on)),
         ),
-        recovery_interval_row(shown),
+    ];
+    // The interval only matters with recovery copies on.
+    if shown.keep_recovery {
+        saving.push(recovery_interval_row(shown));
+    }
+    vec![
+        section(
+            "New documents",
+            vec![
+                widget::row::with_children(vec![
+                    widget::text::body("Style sheet File › New… selects first")
+                        .width(Length::Fill)
+                        .into(),
+                    widget::text_input("_DEFAULT.STY", shown.default_sheet.to_owned())
+                        .on_input(|name| send(PreferencesAction::DefaultSheet(name)))
+                        .width(160)
+                        .into(),
+                ])
+                .spacing(8)
+                .align_y(cosmic::iced::Alignment::Center)
+                .into(),
+                save_format_row(shown),
+            ],
+        ),
+        section("Saving", saving),
+        section(
+            "Editing",
+            vec![
+                number_field(
+                    "Undo levels",
+                    &state.undo_levels,
+                    &UNDO_LEVELS,
+                    PreferencesAction::UndoLevels,
+                ),
+                number_field(
+                    "Recent files in the File menu",
+                    &state.recent_files,
+                    &RECENT_FILES,
+                    PreferencesAction::RecentFiles,
+                ),
+            ],
+        ),
+        section(
+            "Updates",
+            vec![toggle_row(
+                "Check for updates when the program starts (once a day at most)",
+                shown.check_updates,
+                |on| send(PreferencesAction::CheckUpdates(on)),
+            )],
+        ),
     ]
 }
 
@@ -390,37 +436,59 @@ fn folders<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
     children
 }
 
-fn view_page<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
-    let shown_settings = if shown.page_surface { 11 } else { 1 };
-    ViewSetting::ALL
-        .iter()
-        .zip(shown.view)
-        .take(shown_settings)
-        .map(|((setting, label), on)| {
-            let setting = *setting;
-            widget::row::with_children(vec![
-                widget::text::body(*label).width(Length::Fill).into(),
-                widget::toggler(on)
-                    .on_toggle(move |on| send(PreferencesAction::View(setting, on)))
+fn view_page<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
+    let row = |setting: ViewSetting, label: &'static str, on: bool| -> Element<'a, Message> {
+        let mut children: Vec<Element<'a, Message>> =
+            vec![widget::text::body(label).width(Length::Fill).into()];
+        // The toolbar's buttons are edited beside its switch.
+        if setting == ViewSetting::Toolbar {
+            children.push(
+                widget::button::standard("Customize Toolbar…")
+                    .on_press(send(PreferencesAction::CustomizeToolbar))
                     .into(),
-            ])
+            );
+        }
+        children.push(
+            widget::toggler(on)
+                .on_toggle(move |on| send(PreferencesAction::View(setting, on)))
+                .into(),
+        );
+        widget::row::with_children(children)
             .spacing(8)
             .align_y(cosmic::iced::Alignment::Center)
             .into()
-        })
-        .collect()
-}
-
-fn toolbar_page<'a>(shown: &Shown<'_>) -> Vec<Element<'a, Message>> {
-    vec![
-        toggle_row("Show the toolbar", shown.view[0], |on| {
-            send(PreferencesAction::View(ViewSetting::Toolbar, on))
-        }),
-        widget::text::caption("Add, remove, and order the toolbar's buttons.").into(),
-        widget::button::standard("Customize Toolbar…")
-            .on_press(send(PreferencesAction::CustomizeToolbar))
-            .into(),
-    ]
+    };
+    let rows: Vec<(ViewSetting, &'static str, bool)> = ViewSetting::ALL
+        .iter()
+        .zip(shown.view)
+        .map(|((setting, label), on)| (*setting, *label, on))
+        .filter(|(setting, _, _)| shown.page_surface || setting.in_text_editor())
+        .collect();
+    let window: Vec<Element<'a, Message>> = rows
+        .iter()
+        .filter(|(setting, _, _)| setting.is_window())
+        .map(|(setting, label, on)| row(*setting, label, *on))
+        .collect();
+    let mut page = vec![section("Window", window)];
+    if shown.page_surface {
+        page.push(section(
+            "Zoom",
+            vec![number_field(
+                "Custom zoom (%)",
+                &state.custom_zoom,
+                &CUSTOM_ZOOM,
+                PreferencesAction::CustomZoom,
+            )],
+        ));
+        page.push(section(
+            "Show on the page",
+            rows.iter()
+                .filter(|(setting, _, _)| !setting.is_window())
+                .map(|(setting, label, on)| row(*setting, label, *on))
+                .collect(),
+        ));
+    }
+    page
 }
 
 pub fn dialog<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Element<'a, Message> {
@@ -443,8 +511,7 @@ pub fn dialog<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Element<'a,
     let page = match state.page {
         Page::General => general(state, shown),
         Page::Folders => folders(shown),
-        Page::View => view_page(shown),
-        Page::Toolbar => toolbar_page(shown),
+        Page::View => view_page(state, shown),
     };
     widget::dialog()
         .title("Preferences")
@@ -452,10 +519,17 @@ pub fn dialog<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Element<'a,
             widget::column::with_children(vec![
                 tabs.into(),
                 widget::divider::horizontal::default().into(),
-                widget::column::with_children(page)
-                    .spacing(12)
-                    .width(Length::Fill)
-                    .into(),
+                // One height for every page, scrolled when a page is
+                // longer: the tabs no longer jump, and the dialog fits the
+                // 640-pixel minimum window (UI review 2026-11).
+                widget::scrollable(
+                    widget::column::with_children(page)
+                        .spacing(20)
+                        .padding([0, 16, 0, 0])
+                        .width(Length::Fill),
+                )
+                .height(Length::Fixed(PAGE_HEIGHT))
+                .into(),
             ])
             .spacing(12)
             .width(Length::Fixed(480.0)),

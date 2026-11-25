@@ -4888,14 +4888,15 @@ impl cosmic::Application for AmiProApp {
                     self.preferences.toolbar_visible,
                     self.preferences.ruler_visible,
                     self.preferences.vertical_ruler_visible,
-                    self.preferences.field_shading,
-                    self.preferences.show_notes,
-                    self.preferences.show_bookmarks,
+                    self.preferences.status_bar_visible,
                     self.preferences.tabs_returns,
                     self.preferences.column_guides,
                     self.preferences.margins_in_colour,
                     self.preferences.show_pictures,
                     self.preferences.table_addresses,
+                    self.preferences.field_shading,
+                    self.preferences.show_notes,
+                    self.preferences.show_bookmarks,
                 ],
                 #[cfg(feature = "page-surface")]
                 page_surface: self.page_surface,
@@ -14914,6 +14915,9 @@ impl AmiProApp {
                         (self.preferences.toolbar_visible, CommandId::ShowToolbar)
                     }
                     ViewSetting::Ruler => (self.preferences.ruler_visible, CommandId::Ruler),
+                    ViewSetting::StatusBar => {
+                        (self.preferences.status_bar_visible, CommandId::StatusBar)
+                    }
                     ViewSetting::VerticalRuler => (
                         self.preferences.vertical_ruler_visible,
                         CommandId::VerticalRuler,

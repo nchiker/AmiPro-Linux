@@ -396,6 +396,15 @@ pub enum CommandId {
     NoHyphenation,
     /// Format › Fast Format (CM4).
     FastFormat,
+    /// Format › Format Painter ▸ (`UI_SPEC.md` §49): one selection takes the
+    /// picked-up format; a double press keeps it on.
+    FormatPainter,
+    /// Ctrl+Shift+T: the painter, staying on until ended.
+    FormatPainterKeepOn,
+    /// Ctrl+Alt+C: keeps the selection's format for Paste Format.
+    CopyFormat,
+    /// Ctrl+Alt+V: the kept format onto the selection.
+    PasteFormat,
     ParagraphProperties,
     AlignLeft,
     Center,
@@ -1144,6 +1153,7 @@ pub const COMMANDS: &[CommandMetadata] = &[
         Implemented
     ),
     page_surface_view(CommandId::Ruler, "Ruler", None),
+    page_surface_view(CommandId::VerticalRuler, "Vertical Ruler", None),
     page_surface_view(CommandId::StatusBar, "Status Bar", None),
     page_surface_view(CommandId::ZoomIn, "Zoom In", character(CTRL, "+")),
     page_surface_view(CommandId::ZoomOut, "Zoom Out", character(CTRL, "-")),
@@ -1153,7 +1163,6 @@ pub const COMMANDS: &[CommandMetadata] = &[
     page_surface_view(CommandId::Enlarged, "Enlarged (200%)", None),
     page_surface_view(CommandId::CustomZoom, "Custom Zoom", None),
     page_surface_view(
-    page_surface_view(CommandId::VerticalRuler, "Vertical Ruler", None),
         CommandId::DraftMode,
         "Draft Mode",
         character(CTRL_SHIFT, "d"),
@@ -1808,6 +1817,30 @@ pub const COMMANDS: &[CommandMetadata] = &[
         EnableRule::HasDocument,
     ),
     page_surface_format(
+        CommandId::FormatPainter,
+        "Format Painter",
+        None,
+        EnableRule::HasDocument,
+    ),
+    page_surface_format(
+        CommandId::FormatPainterKeepOn,
+        "Format Painter (Keep On)",
+        character(CTRL_SHIFT, "t"),
+        EnableRule::HasDocument,
+    ),
+    page_surface_format(
+        CommandId::CopyFormat,
+        "Copy Format",
+        character(ALT_CTRL, "c"),
+        EnableRule::HasDocument,
+    ),
+    page_surface_format(
+        CommandId::PasteFormat,
+        "Paste Format",
+        character(ALT_CTRL, "v"),
+        EnableRule::HasDocument,
+    ),
+    page_surface_format(
         CommandId::ParagraphProperties,
         "Paragraph…",
         None,
@@ -2287,6 +2320,7 @@ const VIEW_MENU: &[MenuSlot] = &[
     Item(C::ShowToolbar),
     Item(C::StylesPanel),
     Item(C::Ruler),
+    Item(C::VerticalRuler),
     Item(C::StatusBar),
     Divider,
     Folder("Show", SHOW_MENU),
@@ -2320,7 +2354,6 @@ const OUTLINE_MENU: &[MenuSlot] = &[
     Item(C::ShowLevel4),
     Item(C::ShowLevel5),
     Item(C::ShowLevel6),
-    Item(C::VerticalRuler),
     Item(C::ShowLevel7),
     Item(C::ShowLevel8),
     Item(C::ShowLevel9),
@@ -2378,6 +2411,7 @@ const FORMAT_MENU: &[MenuSlot] = &[
     Item(C::Font),
     Item(C::ClearDirectFormatting),
     Item(C::FastFormat),
+    Folder("Format Painter", PAINTER_MENU),
     Divider,
     Item(C::ParagraphProperties),
     Folder("Alignment", ALIGNMENT_MENU),
@@ -2397,6 +2431,14 @@ const PAGE_LAYOUT_MENU: &[MenuSlot] = &[
     Item(C::InsertPageLayout),
     Item(C::RemovePageLayout),
     Item(C::RevertPageLayout),
+];
+/// Format › Format Painter ▸ (`UI_SPEC.md` §49).
+const PAINTER_MENU: &[MenuSlot] = &[
+    Item(C::FormatPainter),
+    Item(C::FormatPainterKeepOn),
+    Divider,
+    Item(C::CopyFormat),
+    Item(C::PasteFormat),
 ];
 /// Format › Ruler ▸: Ami Pro's Page › Ruler ▸.
 const RULER_MENU: &[MenuSlot] = &[Item(C::InsertRuler), Item(C::RemoveRuler)];
@@ -2827,6 +2869,7 @@ mod tests {
                 C::ShowToolbar,
                 C::StylesPanel,
                 C::Ruler,
+                C::VerticalRuler,
                 C::StatusBar,
                 C::ShowTabsReturns,
                 C::ColumnGuides,
@@ -2869,7 +2912,6 @@ mod tests {
             command_order(MenuRoot::Insert),
             [
                 C::PageBreak,
-                C::VerticalRuler,
                 C::ColumnBreak,
                 C::Frame,
                 C::DrawFrame,
@@ -2912,6 +2954,10 @@ mod tests {
                 C::Font,
                 C::ClearDirectFormatting,
                 C::FastFormat,
+                C::FormatPainter,
+                C::FormatPainterKeepOn,
+                C::CopyFormat,
+                C::PasteFormat,
                 C::ParagraphProperties,
                 C::AlignLeft,
                 C::Center,

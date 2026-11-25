@@ -5915,6 +5915,11 @@ where
                 return mouse::Interaction::Move;
             }
         }
+        // Format Painter armed: the copy cursor (a pointer with a plus),
+        // the nearest the theme has to a brush.
+        if self.fast_format {
+            return mouse::Interaction::Copy;
+        }
         mouse::Interaction::Text
     }
 }

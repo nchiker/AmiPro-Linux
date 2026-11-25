@@ -69,6 +69,11 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 - Input methods: preedit text is drawn at the caret and tested automatically,
   but not yet checked with a real input method.
 - Ctrl+Tab is taken by the desktop; Next Document is Ctrl+PageDown.
+- Format Painter shows the toolkit's copy cursor (a pointer with a plus) and a
+  brush beside the status message, not a brush pointer: the toolkit has no
+  custom cursors. Copy Format and Paste Format are Ctrl+Alt+C and Ctrl+Alt+V,
+  because Ctrl+Shift+C and Ctrl+Shift+V mean Word Count and Paste as Plain
+  Text.
 
 ## Formats
 

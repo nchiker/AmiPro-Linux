@@ -321,7 +321,10 @@ fn fast_format_picks_up_bold_or_a_style_and_each_mouse_selection_takes_it() {
     s.command_act(CommandId::FastFormat);
     assert_eq!(
         s.app().fast_format_ask,
-        Some(crate::fast_format::FastFormatAsk { style: true })
+        Some(crate::fast_format::FastFormatAsk {
+            style: true,
+            then: crate::fast_format::Then::KeepOn
+        })
     );
     s.act("Only paragraph style, OK", |rt| {
         rt.send(Message::FastFormat(F::Choose(true)));
@@ -527,7 +530,7 @@ fn fast_format_is_picked_up_from_the_menu_and_taken_by_real_mouse_drags() {
     s.command_act(CommandId::FastFormat);
     assert_eq!(check(&s), Some(true));
     assert!(
-        s.app().status.contains("Fast Format on"),
+        s.app().status.contains("Format painter stays on"),
         "{}",
         s.app().status
     );
@@ -683,4 +686,228 @@ fn the_face_and_point_size_lists_follow_the_selection_and_format_a_caret_or_a_se
 
 fn character_sizes() -> &'static [&'static str] {
     &crate::character_dialogs::SIZES
+}
+
+/// A document of three paragraphs with a bold word in the first.
+fn painter_scenario(name: &'static str) -> Scenario {
+    let mut s = Scenario::new_document(name);
+    s.clean_folder();
+    s.type_text("Bold words here.");
+    s.enter();
+    s.type_text("Plain words here.");
+    s.enter();
+    s.type_text("More plain words.");
+    s.select_main((0, 0), (0, 4));
+    s.command(CommandId::Bold);
+    s
+}
+
+fn painted_bold(s: &Scenario, paragraph: usize, byte: usize) -> Option<bool> {
+    s.document().main_flow().paragraphs[paragraph]
+        .format_at(byte)
+        .bold
+}
+
+/// A release over a selection; the status bar as the release left it (Undo
+/// and Redo in the step's check change it).
+fn release_mouse(s: &mut Scenario, what: &str) -> String {
+    let mut status = String::new();
+    s.edit(what, |rt| {
+        rt.send(Message::Page(PageAction::PointerReleased));
+        status = rt.app.status.clone();
+    });
+    status
+}
+
+#[test]
+fn format_painter_one_shot_takes_one_mouse_selection_then_ends_as_one_undo_step() {
+    let mut s = painter_scenario("painter-one-shot");
+    let check = |s: &Scenario, id| crate::menu_check(s.app(), id);
+    assert_eq!(check(&s, CommandId::FormatPainter), Some(false));
+    s.select_main((0, 1), (0, 3));
+    s.command_act(CommandId::FormatPainter);
+    {
+        let app = s.app();
+        let format = app.fast_format.as_ref().expect("armed");
+        assert!(!format.sticky, "one selection only");
+        assert!(
+            app.status.starts_with("Format painter: ")
+                && app.status.contains("bold")
+                && app
+                    .status
+                    .ends_with("drag over text to apply, Esc to cancel"),
+            "{}",
+            app.status
+        );
+    }
+    assert_eq!(check(&s, CommandId::FormatPainter), Some(true));
+    assert_eq!(check(&s, CommandId::FormatPainterKeepOn), Some(false));
+    // The next selection takes it (one undo step, checked by `edit`), and
+    // the mode is over.
+    s.select_main((1, 0), (1, 5));
+    let status = release_mouse(&mut s, "release over Plain");
+    assert_eq!(painted_bold(&s, 1, 2), Some(true));
+    assert_eq!(painted_bold(&s, 1, 8), None);
+    assert!(s.app().fast_format.is_none());
+    assert!(status.starts_with("Format painted"), "{status}");
+    s.select_main((2, 0), (2, 4));
+    s.no_change("a release once the one-shot is spent", |rt| {
+        rt.send(Message::Page(PageAction::PointerReleased));
+    });
+    assert_eq!(painted_bold(&s, 2, 1), None);
+    s.save_sam("PAINTER1.SAM");
+}
+
+#[test]
+fn format_painter_double_press_and_ctrl_shift_t_keep_it_on_until_esc_or_toggle() {
+    let mut s = painter_scenario("painter-keep-on");
+    // A second press within the double-click time keeps it on.
+    s.select_main((0, 1), (0, 3));
+    let first = std::time::Instant::now();
+    s.act("press the painter", move |rt| {
+        rt.app.format_painter(first);
+    });
+    assert!(!s.app().fast_format.as_ref().unwrap().sticky);
+    s.act("press it again at once", move |rt| {
+        rt.app
+            .format_painter(first + std::time::Duration::from_millis(200));
+    });
+    assert!(s.app().fast_format.as_ref().unwrap().sticky);
+    assert!(s.app().status.starts_with("Format painter stays on: "));
+    s.select_main((1, 0), (1, 5));
+    release_mouse(&mut s, "first selection");
+    s.select_main((2, 0), (2, 4));
+    release_mouse(&mut s, "second selection");
+    assert_eq!(painted_bold(&s, 1, 2), Some(true));
+    assert_eq!(painted_bold(&s, 2, 2), Some(true));
+    assert!(s.app().fast_format.is_some(), "still on");
+    s.act("Esc", |rt| {
+        rt.send(Message::Page(PageAction::Escape));
+    });
+    assert!(s.app().fast_format.is_none());
+    assert_eq!(s.app().status, "Format painter off");
+
+    // A slower second press turns an armed one-shot off.
+    s.select_main((0, 1), (0, 3));
+    let first = std::time::Instant::now();
+    s.act("arm", move |rt| rt.app.format_painter(first));
+    s.act("press again later", move |rt| {
+        rt.app
+            .format_painter(first + std::time::Duration::from_secs(3));
+    });
+    assert!(s.app().fast_format.is_none());
+
+    // Ctrl+Shift+T keeps it on from the start, and again turns it off; the
+    // menu shows which is which.
+    s.command_act(CommandId::FormatPainterKeepOn);
+    assert!(s.app().fast_format.as_ref().unwrap().sticky);
+    assert_eq!(
+        crate::menu_check(s.app(), CommandId::FormatPainterKeepOn),
+        Some(true)
+    );
+    assert_eq!(
+        crate::menu_check(s.app(), CommandId::FormatPainter),
+        Some(false)
+    );
+    s.command_act(CommandId::FormatPainterKeepOn);
+    assert!(s.app().fast_format.is_none());
+    // Ctrl+T stays Ami Pro's: on, staying on.
+    s.command_act(CommandId::FastFormat);
+    assert!(s.app().fast_format.as_ref().unwrap().sticky);
+    s.command_act(CommandId::FastFormat);
+    assert!(s.app().fast_format.is_none());
+}
+
+#[test]
+fn copy_format_and_paste_format_work_apart_from_the_mouse_and_undo_as_one_step() {
+    let mut s = painter_scenario("painter-copy-paste");
+    s.select_main((1, 0), (1, 5));
+    s.no_change("Paste Format with nothing copied", |rt| {
+        rt.send(Message::Command(CommandId::PasteFormat));
+    });
+    assert!(s.app().status.starts_with("No format copied"));
+    s.select_main((0, 1), (0, 3));
+    s.command_act(CommandId::CopyFormat);
+    assert!(
+        s.app().fast_format.is_none(),
+        "copying does not arm the mouse"
+    );
+    assert!(s.app().status.starts_with("Format copied: "));
+    s.select_main((1, 0), (1, 5));
+    let mut status = String::new();
+    s.edit("Paste Format", |rt| {
+        rt.send(Message::Command(CommandId::PasteFormat));
+        status = rt.app.status.clone();
+    });
+    assert_eq!(painted_bold(&s, 1, 2), Some(true));
+    assert_eq!(painted_bold(&s, 1, 8), None);
+    assert!(status.starts_with("Format pasted: "), "{status}");
+    // It can be pasted again, elsewhere.
+    s.select_main((2, 0), (2, 4));
+    s.command(CommandId::PasteFormat);
+    assert_eq!(painted_bold(&s, 2, 2), Some(true));
+    // Picking up with the painter keeps the format for Paste Format too.
+    s.select_main((0, 1), (0, 3));
+    s.command_act(CommandId::FormatPainter);
+    s.act("Esc", |rt| {
+        rt.send(Message::Page(PageAction::Escape));
+    });
+    assert!(
+        s.app().sessions[s.app().active_session]
+            .copied_format
+            .is_some()
+    );
+    s.save_sam("PAINTER3.SAM");
+}
+
+#[test]
+fn format_painter_asks_style_or_text_for_a_caret_and_says_what_was_chosen() {
+    use crate::fast_format::{FastAction as F, FastFormatAsk, Then};
+    let mut s = painter_scenario("painter-ask");
+    s.select_main((0, 2), (0, 2));
+    s.command_act(CommandId::FormatPainter);
+    assert_eq!(
+        s.app().fast_format_ask,
+        Some(FastFormatAsk {
+            style: true,
+            then: Then::OneShot
+        })
+    );
+    s.act("text only, OK", |rt| {
+        rt.send(Message::FastFormat(F::Choose(false)));
+        rt.send(Message::FastFormat(F::Ok));
+    });
+    let format = s.app().fast_format.clone().expect("armed");
+    assert!(!format.sticky && format.paragraph.is_none());
+    assert!(
+        s.app().status.starts_with("Format painter (text only): "),
+        "{}",
+        s.app().status
+    );
+    // A caret takes no text format, so the one-shot waits for a selection.
+    s.select_main((1, 3), (1, 3));
+    s.no_change("a click with a text-only format", |rt| {
+        rt.send(Message::Page(PageAction::PointerReleased));
+    });
+    assert!(s.app().fast_format.is_some());
+    s.select_main((1, 0), (1, 5));
+    release_mouse(&mut s, "release over Plain");
+    assert_eq!(painted_bold(&s, 1, 2), Some(true));
+    assert!(s.app().fast_format.is_none());
+    // The next question starts at the last answer.
+    s.select_main((0, 2), (0, 2));
+    s.command_act(CommandId::CopyFormat);
+    assert_eq!(
+        s.app().fast_format_ask,
+        Some(FastFormatAsk {
+            style: false,
+            then: Then::Copy
+        })
+    );
+    s.act("style only, OK", |rt| {
+        rt.send(Message::FastFormat(F::Choose(true)));
+        rt.send(Message::FastFormat(F::Ok));
+    });
+    assert!(s.app().status.starts_with("Format copied: "));
+    s.save_sam("PAINTER4.SAM");
 }

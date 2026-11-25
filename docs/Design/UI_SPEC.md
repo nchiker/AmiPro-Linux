@@ -5862,3 +5862,33 @@ Hidden in Outline mode, which has no pages.
 
 *Not done:* a unit button, dragging the header's or footer's own inner
 margins, the vertical ruler for a frame's interior.
+
+## 49. Format Painter, Copy Format, Paste Format
+
+Fast Format (§39, CM4; Ctrl+T) stays Ami Pro's mode: on, taking every
+mouse selection, until Ctrl+T or Esc. The same picked-up format
+(`fast_format.rs`, `FastFormat`) now has more ways in, under Format › Format
+Painter ▸ and on the toolbar (Customize Toolbar offers the button):
+
+- **Format Painter** (toolbar button, no shortcut): one-shot. The next mouse
+  selection that has something to apply takes the format as one undo step and
+  the mode ends; a click that applies nothing (a text-only format on a caret)
+  does not use it up. Pressed again within 500 ms (a double-click on the
+  button) it stays on; pressed later while armed it ends.
+- **Format Painter (Keep On)**, Ctrl+Shift+T: on until Esc or the command
+  again (as Ctrl+T).
+- **Copy Format**, Ctrl+Alt+C, and **Paste Format**, Ctrl+Alt+V: the format
+  kept apart from the mouse (`copied_format`). Every picking up keeps its
+  format for Paste Format too. Paste Format is one undo step; with nothing
+  copied the status bar says so. Ctrl+Shift+C (Word Count) and Ctrl+Shift+V
+  (Paste as Plain Text) were already taken, so the Alt pair is used.
+
+*What is armed.* The status bar reads "Format painter: Heading 1, Arial 12
+bold - drag over text to apply, Esc to cancel" ("stays on", and "Esc or Ctrl+T
+to end", when it keeps on), with "(style only)" or "(text only)" after the
+name when the question was answered; the question (style or text, for a
+caret or a whole paragraph, as Ami Pro) starts at the last answer. While
+armed the pointer over the pages is the toolkit's copy cursor (a pointer with
+a plus; no custom brush cursor is available) and a brush icon stands before
+the message. The menu items are checked while armed: Format Painter for the
+one-shot, Keep On for the staying mode, Fast Format for either.

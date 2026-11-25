@@ -340,6 +340,7 @@ pub fn action_bar_layout(items: &[ToolbarItem], width: f32) -> ActionBarLayout {
 pub const APP_ICON_BULLETS: &str = "amipro-list-bullets-symbolic";
 pub const APP_ICON_NUMBERS: &str = "amipro-list-numbers-symbolic";
 pub const APP_ICON_INSERT_BULLET: &str = "amipro-insert-bullet-symbolic";
+pub const APP_ICON_PAINTER: &str = "amipro-format-painter-symbolic";
 
 /// The SVG of one of the app's own icons, by name.
 /// The draw bar's icons (`UI_SPEC.md` §33), the app's own.
@@ -393,6 +394,7 @@ pub fn app_icon_svg(name: &str) -> Option<&'static [u8]> {
         APP_ICON_BULLETS => Some(include_bytes!("../icons/list-bullets-symbolic.svg")),
         APP_ICON_NUMBERS => Some(include_bytes!("../icons/list-numbers-symbolic.svg")),
         APP_ICON_INSERT_BULLET => Some(include_bytes!("../icons/insert-bullet-symbolic.svg")),
+        APP_ICON_PAINTER => Some(include_bytes!("../icons/format-painter-symbolic.svg")),
         _ => None,
     }
 }
@@ -449,6 +451,7 @@ pub const fn action_icon_name(command: CommandId) -> Option<&'static str> {
         CommandId::About => Some("help-about-symbolic"),
         CommandId::NewFromStyleSheet => Some("folder-templates-symbolic"),
         CommandId::FastFormat => Some("color-select-symbolic"),
+        CommandId::FormatPainter => Some(APP_ICON_PAINTER),
         CommandId::ShowTabsReturns => Some("format-text-direction-ltr-symbolic"),
         _ => None,
     }

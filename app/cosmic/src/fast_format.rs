@@ -5,6 +5,14 @@
 //! undo step; choosing it again, or Esc, turns it off. With nothing or a
 //! whole paragraph selected it asks, as Ami Pro does, whether to take the
 //! text's font and attributes or the paragraph's style (the default).
+//!
+//! The modern Format Painter (`UI_SPEC.md` §49) rides on the same mode: the
+//! toolbar's and menu's Format Painter arms it for one selection only (a
+//! second press within [`DOUBLE_PRESS`], or Ctrl+Shift+T, keeps it on), and
+//! Copy Format and Paste Format (Ctrl+Alt+C, Ctrl+Alt+V) keep the format
+//! apart from the mode. Ctrl+T is still Ami Pro's: on until it or Esc ends it.
+
+use std::time::{Duration, Instant};
 
 use amipro_document::{CharacterFormat, ParagraphFormat, StyleId};
 use amipro_editing::{Command, IndentChange, TextPosition};
@@ -22,12 +30,103 @@ pub struct FastFormat {
     pub paragraph: Option<(StyleId, ParagraphFormat)>,
     /// The picked-up style's name, for the status bar.
     pub style_name: Option<String>,
+    /// Stays on after a selection takes it (Ami Pro's Fast Format, Keep On),
+    /// not just for the next selection.
+    pub sticky: bool,
+    /// What the question chose, for the status bar: the style only (`true`)
+    /// or the text's font and attributes only (`false`); `None` when both
+    /// were taken without asking.
+    pub only_style: Option<bool>,
+}
+
+/// Two presses of Format Painter this close together are a double-click.
+pub const DOUBLE_PRESS: Duration = Duration::from_millis(500);
+
+impl FastFormat {
+    /// The picked-up format in words: the style, then the text's face, size,
+    /// and attributes ("Heading 1, Arial 12 bold").
+    pub fn summary(&self) -> String {
+        let mut parts = Vec::new();
+        if let Some(style) = &self.style_name {
+            parts.push(style.clone());
+        }
+        if let Some(text) = &self.text {
+            let mut words = Vec::new();
+            if let Some(face) = &text.font_family {
+                words.push(face.clone());
+            }
+            if let Some(size) = text.font_size_points {
+                words.push(format!("{size}"));
+            }
+            for (on, name) in [
+                (text.bold, "bold"),
+                (text.italic, "italic"),
+                (text.underline, "underline"),
+                (text.word_underline, "word underline"),
+                (text.double_underline, "double underline"),
+                (text.strikethrough, "strikethrough"),
+                (text.superscript, "superscript"),
+                (text.subscript, "subscript"),
+            ] {
+                if on == Some(true) {
+                    words.push(name.to_owned());
+                }
+            }
+            if text.caps.is_some() {
+                words.push("caps".into());
+            }
+            if text.colour.is_some() {
+                words.push("colour".into());
+            }
+            if !words.is_empty() {
+                parts.push(words.join(" "));
+            }
+        }
+        if parts.is_empty() {
+            "no format".into()
+        } else {
+            parts.join(", ")
+        }
+    }
+
+    /// What the status bar says while this is armed.
+    pub fn armed_status(&self) -> String {
+        let choice = match self.only_style {
+            Some(true) => " (style only)",
+            Some(false) => " (text only)",
+            None => "",
+        };
+        let end = if self.sticky {
+            "Esc or Ctrl+T to end"
+        } else {
+            "Esc to cancel"
+        };
+        let stays = if self.sticky { " stays on" } else { "" };
+        format!(
+            "Format painter{choice}{stays}: {} - drag over text to apply, {end}",
+            self.summary()
+        )
+    }
 }
 
 /// Ami Pro's "What formats do you want to extract?" while it asks.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FastFormatAsk {
     pub style: bool,
+    /// What the answer then does.
+    pub then: Then,
+}
+
+/// What follows the question.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum Then {
+    /// Arm the mode, staying on (Ctrl+T, Ctrl+Shift+T).
+    #[default]
+    KeepOn,
+    /// Arm it for one selection (Format Painter).
+    OneShot,
+    /// Only keep the format for Paste Format (Copy Format).
+    Copy,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -63,6 +162,8 @@ pub fn pick_up(
         text,
         paragraph,
         style_name,
+        sticky: true,
+        only_style: None,
     })
 }
 
@@ -172,11 +273,47 @@ pub fn ask_dialog(ask: FastFormatAsk) -> Element<'static, Message> {
 }
 
 impl crate::AmiProApp {
-    /// Format › Fast Format: on (picking up, or asking first), or off.
+    /// Format › Fast Format (Ctrl+T): on, staying on (picking up, or asking
+    /// first), or off.
     pub(crate) fn toggle_fast_format(&mut self) {
+        self.arm_painter(Then::KeepOn);
+    }
+
+    /// Ctrl+Shift+T: the painter on and staying on, or off.
+    pub(crate) fn format_painter_keep_on(&mut self) {
+        self.arm_painter(Then::KeepOn);
+    }
+
+    /// Format Painter (the toolbar's button and the menu's item): one
+    /// selection takes the format and the mode ends. Pressed again within
+    /// [`DOUBLE_PRESS`] (a double-click) it stays on; pressed later while it
+    /// is armed it ends.
+    pub(crate) fn format_painter(&mut self, now: Instant) {
+        let session = &mut self.sessions[self.active_session];
+        let double = session
+            .painter_pressed
+            .is_some_and(|before| now.saturating_duration_since(before) <= DOUBLE_PRESS);
+        if session.fast_format.is_some() {
+            if double {
+                if let Some(format) = session.fast_format.as_mut() {
+                    format.sticky = true;
+                    session.status = format.armed_status();
+                }
+                session.painter_pressed = None;
+            } else {
+                session.fast_format = None;
+                session.status = "Format painter off".into();
+            }
+            return;
+        }
+        session.painter_pressed = Some(now);
+        self.arm_painter(Then::OneShot);
+    }
+
+    fn arm_painter(&mut self, then: Then) {
         let session = &mut self.sessions[self.active_session];
         if session.fast_format.take().is_some() {
-            session.status = "Fast Format off".into();
+            session.status = "Format painter off".into();
             return;
         }
         if session.frame_selection.is_some() {
@@ -184,25 +321,80 @@ impl crate::AmiProApp {
         }
         let (start, end) = session.page_selection.ordered();
         if asks(&session.document, start, end) {
-            self.fast_format_ask = Some(FastFormatAsk { style: true });
+            self.fast_format_ask = Some(FastFormatAsk {
+                style: session.painter_choice,
+                then,
+            });
         } else {
-            self.start_fast_format(true, true);
+            self.start_fast_format(true, true, None, then);
         }
     }
 
-    fn start_fast_format(&mut self, text: bool, paragraph: bool) {
+    /// Copy Format (Ctrl+Alt+C): keeps the selection's format for Paste
+    /// Format without arming the mouse.
+    pub(crate) fn copy_format(&mut self) {
+        let session = &mut self.sessions[self.active_session];
+        if session.frame_selection.is_some() {
+            return;
+        }
+        let (start, end) = session.page_selection.ordered();
+        if asks(&session.document, start, end) {
+            self.fast_format_ask = Some(FastFormatAsk {
+                style: session.painter_choice,
+                then: Then::Copy,
+            });
+        } else {
+            self.start_fast_format(true, true, None, Then::Copy);
+        }
+    }
+
+    /// Paste Format (Ctrl+Alt+V): the copied format onto the selection (or
+    /// the caret's paragraph, for a style), as one undo step.
+    pub(crate) fn paste_format(&mut self) {
+        let session = &mut self.sessions[self.active_session];
+        let Some(format) = session.copied_format.clone() else {
+            session.status = "No format copied: use Copy Format (Ctrl+Alt+C) first".into();
+            return;
+        };
+        if session.frame_selection.is_some() {
+            return;
+        }
+        if session.paint_format(&format) {
+            session.status = format!("Format pasted: {}", format.summary());
+        } else {
+            session.status = "Format paste: nothing to change here".into();
+        }
+    }
+
+    fn start_fast_format(
+        &mut self,
+        text: bool,
+        paragraph: bool,
+        only_style: Option<bool>,
+        then: Then,
+    ) {
         let session = &mut self.sessions[self.active_session];
         let (start, _) = session.page_selection.ordered();
-        session.fast_format = pick_up(&session.document, start, text, paragraph);
-        session.status = match session.fast_format.as_ref() {
-            Some(format) => match &format.style_name {
-                Some(style) => format!(
-                    "Fast Format on ({style}): select text to format it; Ctrl+T or Esc ends"
-                ),
-                None => "Fast Format on: select text to format it; Ctrl+T or Esc ends".into(),
-            },
-            None => "Fast Format found nothing to pick up".into(),
+        let picked = pick_up(&session.document, start, text, paragraph).map(|mut format| {
+            format.only_style = only_style;
+            format
+        });
+        let Some(mut format) = picked else {
+            session.status = "Format painter found nothing to pick up".into();
+            return;
         };
+        session.copied_format = Some(format.clone());
+        match then {
+            Then::Copy => {
+                session.status =
+                    format!("Format copied: {}; Ctrl+Alt+V pastes it", format.summary());
+            }
+            Then::KeepOn | Then::OneShot => {
+                format.sticky = then == Then::KeepOn;
+                session.status = format.armed_status();
+                session.fast_format = Some(format);
+            }
+        }
     }
 
     pub(crate) fn update_fast_format(&mut self, action: FastAction) {
@@ -213,15 +405,17 @@ impl crate::AmiProApp {
             FastAction::Choose(style) => ask.style = style,
             FastAction::Cancel => self.fast_format_ask = None,
             FastAction::Ok => {
-                let style = ask.style;
+                let (style, then) = (ask.style, ask.then);
                 self.fast_format_ask = None;
-                self.start_fast_format(!style, style);
+                // The answer is the next question's first choice.
+                self.sessions[self.active_session].painter_choice = style;
+                self.start_fast_format(!style, style, Some(style), then);
             }
         }
     }
 
     /// A selection made with the mouse while the mode is on takes the
-    /// picked-up format, as one undo step.
+    /// picked-up format, as one undo step; a one-shot mode then ends.
     pub(crate) fn fast_format_selection(&mut self) {
         let session = &mut self.sessions[self.active_session];
         let Some(format) = session.fast_format.clone() else {
@@ -230,17 +424,35 @@ impl crate::AmiProApp {
         if session.frame_selection.is_some() {
             return;
         }
-        let selection = session.page_selection;
-        let (start, end) = selection.ordered();
-        let Some(command) = apply(&format, start, end) else {
-            return;
-        };
-        if session.execute_page_command(&command) {
-            session.page_selection =
-                crate::page_editing::valid_selection(&session.document, selection);
-            session.sync_editor_to_page();
-            session.status = "Fast Format applied; Ctrl+T or Esc ends".into();
+        if session.paint_format(&format) {
+            if format.sticky {
+                session.status = format!(
+                    "Format painted ({}); still on, Esc or Ctrl+T ends",
+                    format.summary()
+                );
+            } else {
+                session.fast_format = None;
+                session.status = format!("Format painted ({})", format.summary());
+            }
         }
+    }
+}
+
+impl crate::DocumentSession {
+    /// Gives the selection `format` as one undo step; whether anything
+    /// changed. The selection stays as it was.
+    pub(crate) fn paint_format(&mut self, format: &FastFormat) -> bool {
+        let selection = self.page_selection;
+        let (start, end) = selection.ordered();
+        let Some(command) = apply(format, start, end) else {
+            return false;
+        };
+        if !self.execute_page_command(&command) {
+            return false;
+        }
+        self.page_selection = crate::page_editing::valid_selection(&self.document, selection);
+        self.sync_editor_to_page();
+        true
     }
 }
 

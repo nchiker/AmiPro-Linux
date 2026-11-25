@@ -534,6 +534,17 @@ struct DocumentSession {
     /// Format › Fast Format's picked-up format while the mode is on (CM4).
     #[cfg(feature = "page-surface")]
     fast_format: Option<fast_format::FastFormat>,
+    /// The format Copy Format kept, and every picking up keeps, for Paste
+    /// Format (`UI_SPEC.md` §49).
+    #[cfg(feature = "page-surface")]
+    copied_format: Option<fast_format::FastFormat>,
+    /// The last answer to the style-or-text question: the next one starts
+    /// there.
+    #[cfg(feature = "page-surface")]
+    painter_choice: bool,
+    /// When Format Painter was last pressed, to tell a double press.
+    #[cfg(feature = "page-surface")]
+    painter_pressed: Option<std::time::Instant>,
     /// A field's prompt waiting for an answer (Query$, Decide).
     #[cfg(feature = "page-surface")]
     field_prompt: Option<field_commands::FieldPrompt>,
@@ -682,6 +693,10 @@ struct DocumentSession {
     /// for the guide line down the page (`UI_SPEC.md` §19).
     #[cfg(feature = "page-surface")]
     ruler_guide: Option<(usize, f32)>,
+    /// While a margin marker of the vertical ruler moves: the guide across
+    /// that page (page index, twips from its top; `UI_SPEC.md` §48).
+    #[cfg(feature = "page-surface")]
+    vertical_guide: Option<(usize, f32)>,
     /// Whether the status message is the ruler's hover text.
     #[cfg(feature = "page-surface")]
     ruler_status: bool,
@@ -693,10 +708,6 @@ struct DocumentSession {
     ruler_tab: (amipro_document::TabKind, amipro_document::TabLeader),
     /// While the ruler has the keyboard (Edit › Go To Ruler): its line's
     /// position, page twips.
-    /// While a margin marker of the vertical ruler moves: the guide across
-    /// that page (page index, twips from its top; `UI_SPEC.md` §48).
-    #[cfg(feature = "page-surface")]
-    vertical_guide: Option<(usize, f32)>,
     #[cfg(feature = "page-surface")]
     ruler_cursor: Option<f32>,
     /// Insert › Floating Header/Footer… and Page Number…, while open.
@@ -939,6 +950,12 @@ impl DocumentSession {
             #[cfg(feature = "page-surface")]
             fast_format: None,
             #[cfg(feature = "page-surface")]
+            copied_format: None,
+            #[cfg(feature = "page-surface")]
+            painter_choice: true,
+            #[cfg(feature = "page-surface")]
+            painter_pressed: None,
+            #[cfg(feature = "page-surface")]
             field_prompt: None,
             #[cfg(feature = "page-surface")]
             print_options: print::PrintOptions::default(),
@@ -1027,6 +1044,8 @@ impl DocumentSession {
             #[cfg(feature = "page-surface")]
             ruler_guide: None,
             #[cfg(feature = "page-surface")]
+            vertical_guide: None,
+            #[cfg(feature = "page-surface")]
             ruler_status: false,
             #[cfg(feature = "page-surface")]
             ruler_context: None,
@@ -1044,8 +1063,6 @@ impl DocumentSession {
             floating_dialog: None,
             #[cfg(feature = "page-surface")]
             page_number_dialog: None,
-            vertical_guide: None,
-            #[cfg(feature = "page-surface")]
             #[cfg(feature = "page-surface")]
             create_frame_dialog: None,
             #[cfg(feature = "page-surface")]
@@ -2486,6 +2503,9 @@ struct Preferences {
     toolbar_visible: bool,
     /// View › Ruler (`UI_SPEC.md` §19).
     ruler_visible: bool,
+    /// View › Vertical Ruler (`UI_SPEC.md` §48): off by default, as in Ami
+    /// Pro's View Preferences.
+    vertical_ruler_visible: bool,
     /// View › Status Bar: shown by default; hidden, it still appears while
     /// the message is a failure, so an error is never concealed.
     status_bar_visible: bool,
@@ -2503,9 +2523,6 @@ struct Preferences {
     /// (decision B4).
     last_bullet: Option<char>,
     /// The size Insert › Table… made last, which it offers next (Ami Pro
-    /// View › Vertical Ruler (`UI_SPEC.md` §48): off by default, as in Ami
-    /// Pro's View Preferences.
-    vertical_ruler_visible: bool,
     /// offers 5 × 5).
     insert_table: Option<(usize, usize)>,
     /// Recent colours, newest first (`UI_SPEC.md` §23, C4), as
@@ -2621,6 +2638,7 @@ impl Default for Preferences {
             toolbar: chrome::standard_toolbar(),
             toolbar_visible: true,
             ruler_visible: true,
+            vertical_ruler_visible: false,
             status_bar_visible: true,
             style_folders: Vec::new(),
             last_frame: None,
@@ -2638,7 +2656,6 @@ impl Default for Preferences {
                 .map(|name| references_initials(&name))
                 .filter(|initials| !initials.is_empty())
                 .unwrap_or_else(|| "AP".into()),
-            vertical_ruler_visible: false,
             index_ranges: false,
             glossary_file: String::new(),
             complete_glossary: false,
@@ -2714,6 +2731,9 @@ impl Settings {
             ruler_visible: config
                 .get("ruler_visible")
                 .unwrap_or(defaults.ruler_visible),
+            vertical_ruler_visible: config
+                .get("vertical_ruler_visible")
+                .unwrap_or(defaults.vertical_ruler_visible),
             status_bar_visible: config
                 .get("status_bar_visible")
                 .unwrap_or(defaults.status_bar_visible),
@@ -2731,9 +2751,6 @@ impl Settings {
                 .get::<Vec<i64>>("frame_defaults")
                 .ok()
                 .and_then(|numbers| {
-            vertical_ruler_visible: config
-                .get("vertical_ruler_visible")
-                .unwrap_or(defaults.vertical_ruler_visible),
                     amipro_editing::frame_creation::FrameDefaults::from_numbers(&numbers)
                 })
                 .unwrap_or(defaults.frame_defaults),
@@ -2971,6 +2988,7 @@ impl Settings {
         transaction.set("toolbar", keys)?;
         transaction.set("toolbar_visible", preferences.toolbar_visible)?;
         transaction.set("ruler_visible", preferences.ruler_visible)?;
+        transaction.set("vertical_ruler_visible", preferences.vertical_ruler_visible)?;
         transaction.set("status_bar_visible", preferences.status_bar_visible)?;
         let folders: Vec<String> = preferences
             .style_folders
@@ -2988,7 +3006,6 @@ impl Settings {
         transaction.set(
             "frame_defaults",
             preferences.frame_defaults.to_numbers().to_vec(),
-        transaction.set("vertical_ruler_visible", preferences.vertical_ruler_visible)?;
         )?;
         if let Some(code) = preferences.last_bullet {
             transaction.set("last_bullet", code as u32)?;
@@ -3727,6 +3744,8 @@ enum Message {
     #[cfg(feature = "page-surface")]
     Ruler(ruler_view::RulerEvent),
     #[cfg(feature = "page-surface")]
+    VerticalRuler(ruler_vertical::VerticalEvent),
+    #[cfg(feature = "page-surface")]
     RulerMenu(ruler_view::RulerMenu),
 }
 
@@ -3744,8 +3763,6 @@ enum MenuCommand {
     #[cfg(feature = "page-surface")]
     Ruler(ruler_view::RulerMenu),
     /// The find bar's options and recent searches.
-    VerticalRuler(ruler_vertical::VerticalEvent),
-    #[cfg(feature = "page-surface")]
     #[cfg(feature = "page-surface")]
     Find(find_bar::FindMenu),
     /// The right-click menu's spelling and thesaurus entries
@@ -4177,6 +4194,16 @@ impl cosmic::Application for AmiProApp {
                 .into(),
             );
             status_children.push(widget::divider::vertical::default().height(16).into());
+        }
+        // Format Painter armed: the brush beside the message (`UI_SPEC.md`
+        // §49).
+        #[cfg(feature = "page-surface")]
+        if self.sessions[self.active_session].fast_format.is_some() {
+            status_children.push(
+                widget::icon::from_name("color-select-symbolic")
+                    .size(14)
+                    .into(),
+            );
         }
         status_children.extend::<Vec<Element<'_, Message>>>(vec![
             widget::text::caption(status_model.message.unwrap_or_default())
@@ -4856,6 +4883,7 @@ impl cosmic::Application for AmiProApp {
                 view: [
                     self.preferences.toolbar_visible,
                     self.preferences.ruler_visible,
+                    self.preferences.vertical_ruler_visible,
                     self.preferences.field_shading,
                     self.preferences.show_notes,
                     self.preferences.show_bookmarks,
@@ -4883,7 +4911,6 @@ impl cosmic::Application for AmiProApp {
                     .primary_action(
                         widget::button::suggested("OK").on_press(Message::OpenProblemClose),
                     )
-                    self.preferences.vertical_ruler_visible,
                     .into(),
             );
         }
@@ -6479,6 +6506,8 @@ impl AmiProApp {
             #[cfg(feature = "page-surface")]
             Message::Ruler(event) => self.ruler_event(event),
             #[cfg(feature = "page-surface")]
+            Message::VerticalRuler(event) => self.vertical_ruler_event(event),
+            #[cfg(feature = "page-surface")]
             Message::RulerMenu(action) => self.ruler_menu_action(action),
         }
         self.update_title()
@@ -6506,8 +6535,6 @@ impl AmiProApp {
                 return Task::none();
             }
             GoToAction::NextFrame => {
-            Message::VerticalRuler(event) => self.vertical_ruler_event(event),
-            #[cfg(feature = "page-surface")]
                 session.go_to = None;
                 self.select_next_frame();
                 return Task::none();
@@ -6675,7 +6702,7 @@ impl AmiProApp {
             }
             PageAction::Escape if session.fast_format.is_some() => {
                 session.fast_format = None;
-                session.status = "Fast Format off".into();
+                session.status = "Format painter off".into();
                 return Task::none();
             }
             PageAction::Escape => {
@@ -7406,33 +7433,6 @@ impl AmiProApp {
         }
     }
 
-    /// An item of the ruler's right-click menus, for what the right button
-    /// pressed (`UI_SPEC.md` §19).
-    #[cfg(feature = "page-surface")]
-    fn ruler_menu_action(&mut self, action: ruler_view::RulerMenu) {
-        use ruler_view::RulerMenu;
-        let session = &mut self.sessions[self.active_session];
-        let marker = session.ruler_context.and_then(|(marker, _)| marker);
-        let Some(model) = ruler::Ruler::at(
-            &session.document,
-            session.pages.layout(),
-            session.page_selection,
-        ) else {
-            return;
-        };
-        let pressed = match marker {
-            Some(ruler::Marker::Tab(index)) => model.tabs.get(index).map(|stop| (index, *stop)),
-            _ => None,
-        };
-        let command = match action {
-            RulerMenu::TabKind(kind) => {
-                pressed.and_then(|(index, stop)| model.set_tab(index, kind, stop.leader))
-            }
-            RulerMenu::TabLeader(leader) => {
-                pressed.and_then(|(index, stop)| model.set_tab(index, stop.kind, leader))
-            }
-            RulerMenu::RemoveTab => pressed.and_then(|(index, _)| model.remove_tab(index)),
-            RulerMenu::ClearTabs => Some(model.clear_tabs()),
     /// What the vertical ruler reports (`UI_SPEC.md` §48): the margin's
     /// value in the status bar and a guide across the page while a marker
     /// moves, and each release as one `ModifyLayout` and one undo step.
@@ -7491,6 +7491,33 @@ impl AmiProApp {
         }
     }
 
+    /// An item of the ruler's right-click menus, for what the right button
+    /// pressed (`UI_SPEC.md` §19).
+    #[cfg(feature = "page-surface")]
+    fn ruler_menu_action(&mut self, action: ruler_view::RulerMenu) {
+        use ruler_view::RulerMenu;
+        let session = &mut self.sessions[self.active_session];
+        let marker = session.ruler_context.and_then(|(marker, _)| marker);
+        let Some(model) = ruler::Ruler::at(
+            &session.document,
+            session.pages.layout(),
+            session.page_selection,
+        ) else {
+            return;
+        };
+        let pressed = match marker {
+            Some(ruler::Marker::Tab(index)) => model.tabs.get(index).map(|stop| (index, *stop)),
+            _ => None,
+        };
+        let command = match action {
+            RulerMenu::TabKind(kind) => {
+                pressed.and_then(|(index, stop)| model.set_tab(index, kind, stop.leader))
+            }
+            RulerMenu::TabLeader(leader) => {
+                pressed.and_then(|(index, stop)| model.set_tab(index, stop.kind, leader))
+            }
+            RulerMenu::RemoveTab => pressed.and_then(|(index, _)| model.remove_tab(index)),
+            RulerMenu::ClearTabs => Some(model.clear_tabs()),
             RulerMenu::RemoveRuler => Some(model.remove_ruler()),
             RulerMenu::NewTabKind(kind) => {
                 session.ruler_tab.0 = kind;
@@ -9132,6 +9159,18 @@ impl AmiProApp {
         // Outline mode shows no pages, so there are no margins to measure.
         let show_ruler = ruler_shown(self.preferences.ruler_visible, session);
         let ruler_height = if show_ruler { ruler_view::HEIGHT } else { 1.0 };
+        // The vertical ruler beside the pages (`UI_SPEC.md` §48); hidden, a
+        // one-pixel slot keeps the row's children.
+        let show_vertical = ruler_shown(self.preferences.vertical_ruler_visible, session);
+        let vertical_width = if show_vertical {
+            ruler_vertical::WIDTH
+        } else {
+            1.0
+        };
+        let vertical_model =
+            show_vertical.then(|| ruler_vertical::VerticalRuler::at(document, layout, selection));
+        let vertical_guide = session.vertical_guide;
+        let scroll_y = session.scroll_offset.y;
         let guide = session.ruler_guide;
         let drawing_frame = session.drawing_frame;
         let tab = session.ruler_tab;
@@ -9159,21 +9198,17 @@ impl AmiProApp {
                 cosmic::iced::Size::new(
                     (available.width - vertical_width - PAGE_SCROLLBAR).max(1.0),
                     (available.height - ruler_height).max(1.0),
-        // The vertical ruler beside the pages (`UI_SPEC.md` §48); hidden, a
-        // one-pixel slot keeps the row's children.
-        let show_vertical = ruler_shown(self.preferences.vertical_ruler_visible, session);
-        let vertical_width = if show_vertical {
-            ruler_vertical::WIDTH
-        } else {
-            1.0
-        };
-        let vertical_model =
-            show_vertical.then(|| ruler_vertical::VerticalRuler::at(document, layout, selection));
-        let vertical_guide = session.vertical_guide;
-        let scroll_y = session.scroll_offset.y;
                 ),
                 facing,
             );
+            let vertical = vertical_model.clone().map(|model| {
+                ruler_vertical::vertical_ruler_view(
+                    view.clone(),
+                    scroll_y,
+                    model,
+                    Message::VerticalRuler,
+                )
+            });
             let ruler = ruler_view::ruler_view(
                 view.clone(),
                 ruler_page,
@@ -9201,14 +9236,6 @@ impl AmiProApp {
             .modal(cosmic::Application::dialog(self).is_some())
             .arrows_elsewhere(
                 self.rail_open() && session.outline_navigator.as_ref().is_some_and(|n| n.keys),
-            let vertical = vertical_model.clone().map(|model| {
-                ruler_vertical::vertical_ruler_view(
-                    view.clone(),
-                    scroll_y,
-                    model,
-                    Message::VerticalRuler,
-                )
-            });
             )
             .outline(
                 session
@@ -9219,6 +9246,7 @@ impl AmiProApp {
             .draw_mode(draw_view, Message::Draw)
             .frames(frames, Message::Frame)
             .guide(guide)
+            .guide_across(vertical_guide)
             .drawing_frame(drawing_frame)
             .fast_format(session.fast_format.is_some())
             .view_marks(page_surface::ViewMarks {
@@ -9246,7 +9274,6 @@ impl AmiProApp {
                     .print_panel
                     .as_ref()
                     .map(|_| session.print_options.mode(true)),
-            .guide_across(vertical_guide)
             )
             .picture_mode(
                 session.picture_mode.is_some()
@@ -10506,6 +10533,7 @@ fn menu_check(app: &AmiProApp, command: CommandId) -> Option<bool> {
         CommandId::StylesPanel => Some(app.rail_open()),
         CommandId::ShowToolbar => Some(app.preferences.toolbar_visible),
         CommandId::Ruler => Some(app.preferences.ruler_visible),
+        CommandId::VerticalRuler => Some(app.preferences.vertical_ruler_visible),
         CommandId::StatusBar => Some(app.preferences.status_bar_visible),
         CommandId::Bold => Some(app.character_state(CharacterAttribute::Bold) == ToggleState::On),
         CommandId::Italic => {
@@ -10533,7 +10561,6 @@ fn menu_check(app: &AmiProApp, command: CommandId) -> Option<bool> {
         CommandId::Center => alignment(Alignment::Centre),
         CommandId::AlignRight => alignment(Alignment::Right),
         CommandId::Justify => alignment(Alignment::Justify),
-        CommandId::VerticalRuler => Some(app.preferences.vertical_ruler_visible),
         CommandId::Bullets => {
             Some(app.selected_list() == Some(amipro_editing::lists::ListKind::Bullets))
         }
@@ -10547,6 +10574,16 @@ fn menu_check(app: &AmiProApp, command: CommandId) -> Option<bool> {
         CommandId::FieldShading => Some(app.preferences.field_shading),
         #[cfg(feature = "page-surface")]
         CommandId::FastFormat => Some(app.fast_format.is_some()),
+        #[cfg(feature = "page-surface")]
+        CommandId::FormatPainter => Some(
+            app.fast_format
+                .as_ref()
+                .is_some_and(|format| !format.sticky),
+        ),
+        #[cfg(feature = "page-surface")]
+        CommandId::FormatPainterKeepOn => {
+            Some(app.fast_format.as_ref().is_some_and(|format| format.sticky))
+        }
         #[cfg(feature = "page-surface")]
         CommandId::FullPage => Some(app.zoom == Zoom::FullPage),
         #[cfg(feature = "page-surface")]
@@ -10768,7 +10805,7 @@ impl ActionBarState {
             CommandId::Numbering => {
                 toggle(self.list == Some(amipro_editing::lists::ListKind::Numbering))
             }
-            CommandId::FastFormat => toggle(self.fast_format),
+            CommandId::FastFormat | CommandId::FormatPainter => toggle(self.fast_format),
             CommandId::ShowTabsReturns => toggle(self.tabs_returns),
             _ => ToggleState::Off,
         }
@@ -11657,6 +11694,10 @@ impl AmiProApp {
                 self.preferences.ruler_visible = !self.preferences.ruler_visible;
             }
             #[cfg(feature = "page-surface")]
+            CommandId::VerticalRuler => {
+                self.preferences.vertical_ruler_visible = !self.preferences.vertical_ruler_visible;
+            }
+            #[cfg(feature = "page-surface")]
             CommandId::StatusBar => {
                 self.preferences.status_bar_visible = !self.preferences.status_bar_visible;
             }
@@ -11694,10 +11735,6 @@ impl AmiProApp {
                     recent_files: self.preferences.recent_count.to_string(),
                     custom_zoom: self.preferences.custom_zoom.to_string(),
                 });
-            CommandId::VerticalRuler => {
-                self.preferences.vertical_ruler_visible = !self.preferences.vertical_ruler_visible;
-            }
-            #[cfg(feature = "page-surface")]
             }
             CommandId::CustomizeToolbar => {
                 // The bar shows while it is edited: changes show there.
@@ -11738,6 +11775,14 @@ impl AmiProApp {
             CommandId::PageLayout | CommandId::PageSetup => self.open_page_layout_properties(),
             #[cfg(feature = "page-surface")]
             CommandId::FastFormat => self.toggle_fast_format(),
+            #[cfg(feature = "page-surface")]
+            CommandId::FormatPainter => self.format_painter(std::time::Instant::now()),
+            #[cfg(feature = "page-surface")]
+            CommandId::FormatPainterKeepOn => self.format_painter_keep_on(),
+            #[cfg(feature = "page-surface")]
+            CommandId::CopyFormat => self.copy_format(),
+            #[cfg(feature = "page-surface")]
+            CommandId::PasteFormat => self.paste_format(),
             #[cfg(feature = "page-surface")]
             CommandId::InsertRuler => self.paragraph_ruler(true),
             #[cfg(feature = "page-surface")]
@@ -14848,6 +14893,10 @@ impl AmiProApp {
                         (self.preferences.toolbar_visible, CommandId::ShowToolbar)
                     }
                     ViewSetting::Ruler => (self.preferences.ruler_visible, CommandId::Ruler),
+                    ViewSetting::VerticalRuler => (
+                        self.preferences.vertical_ruler_visible,
+                        CommandId::VerticalRuler,
+                    ),
                     ViewSetting::FieldShading => {
                         (self.preferences.field_shading, CommandId::FieldShading)
                     }
@@ -14893,10 +14942,6 @@ impl AmiProApp {
         };
         match action {
             A::Select(index) if index < state.sheets.len() => {
-                    ViewSetting::VerticalRuler => (
-                        self.preferences.vertical_ruler_visible,
-                        CommandId::VerticalRuler,
-                    ),
                 state.selected = Some(index);
                 state.with_contents = state.sheets[index].has_contents;
                 Self::preview_sheet(state);
@@ -17630,6 +17675,11 @@ mod tests {
             send_message(&mut app, Message::Command(CommandId::Ruler));
             let (_, preferences, _) = Settings::load(config());
             assert!(!preferences.ruler_visible);
+            // So is View › Vertical Ruler (off by default, `UI_SPEC.md` §48).
+            assert!(!preferences.vertical_ruler_visible);
+            send_message(&mut app, Message::Command(CommandId::VerticalRuler));
+            let (_, preferences, _) = Settings::load(config());
+            assert!(preferences.vertical_ruler_visible);
             // So is View › Status Bar (shown by default).
             assert!(preferences.status_bar_visible);
             send_message(&mut app, Message::Command(CommandId::StatusBar));
@@ -17675,11 +17725,6 @@ mod tests {
         assert!(preferences.table_addresses, "kept for the next start");
         // The View preferences switch the same setting.
         send_message(&mut app, Message::Command(CommandId::Preferences));
-            // So is View › Vertical Ruler (off by default, `UI_SPEC.md` §48).
-            assert!(!preferences.vertical_ruler_visible);
-            send_message(&mut app, Message::Command(CommandId::VerticalRuler));
-            let (_, preferences, _) = Settings::load(config());
-            assert!(preferences.vertical_ruler_visible);
         send_message(
             &mut app,
             Message::Preferences(A::View(ViewSetting::TableAddresses, false)),

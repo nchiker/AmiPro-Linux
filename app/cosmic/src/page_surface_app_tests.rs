@@ -17108,7 +17108,10 @@ fn escape_dialogs() -> Vec<(&'static str, OpenDialog)> {
         ("revert to saved", |app| app.revert_pending = true),
         ("password", |app| command(app, CommandId::Password)),
         ("fast format ask", |app| {
-            app.fast_format_ask = Some(crate::fast_format::FastFormatAsk { style: true });
+            app.fast_format_ask = Some(crate::fast_format::FastFormatAsk {
+                style: true,
+                then: crate::fast_format::Then::KeepOn,
+            });
         }),
         ("new document", |app| {
             command(app, CommandId::NewFromStyleSheet)

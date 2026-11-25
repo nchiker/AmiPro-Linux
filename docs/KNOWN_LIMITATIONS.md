@@ -102,11 +102,7 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 ## Not yet checked on a real machine
 
-Built and tested automatically, but waiting for a physical check: the
-2026-11-25 work (selection across pages and past the window's edge, the
-vertical ruler, Format Painter and its shortcuts, the regrouped menus,
-Preferences, Save new documents as, the opening zoom, dialog keys, the
-Promote and Demote icons), table data
+Built and tested automatically, but waiting for a physical check: table data
 (formulas, Quick Add, Sort), objects (OLE, Paste Special, charts, equations),
 Markdown, the Documents folder, the update check against a later release,
 crash recovery after a killed process, First line bold, and the status bar's

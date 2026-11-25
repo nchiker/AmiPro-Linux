@@ -43,11 +43,10 @@ from outside) is in `docs/HANDOFF_ARCHIVE.md`.
   message tests. (The cross-page drag defect had been found on a private
   Xwayland before `1d66957`.)
 
-## Physical checks: PENDING (ranked)
+## Physical checks: PASS (user, 2026-11-25)
 
-The installed package (version 0.1.2) predates all of this: build and install
-with `tools/package-deb.sh`, or run `cargo run --offline --release
---manifest-path app/cosmic/Cargo.toml`.
+On the release build run with `cargo run --release`, the user reported "all
+passed" for this ranked list:
 
 1. Drag across pages: select from page 1 into page 2 over the footer and
    header; hold below and above the window (speed, stopping on release);
@@ -72,6 +71,4 @@ visible IME preedit with a real input method.
 
 ## Open
 
-- Not pushed (this session was told not to): `origin/master` is at `4b944fa`.
-  Push at the end of the session and confirm `origin/master` equals `HEAD`.
-- Nothing is released or tagged for this work.
+- Release 0.1.3 carries this work.

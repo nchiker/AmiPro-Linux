@@ -379,8 +379,8 @@ The user: colour selection "more like modern color selectors. Easier to choose w
 - [ ] Publish accurate coverage and known limitations (`docs/KNOWN_LIMITATIONS.md` and `docs/COMPATIBILITY.md` written 2026-11-07); defer macros until separately scheduled.
   **Exit:** Stable release with transparent parity status.
 
-- 2026-11-25, UI work and reviews (`UI_SPEC.md` §46–§50): save type, drag selection across pages, View › Vertical Ruler, Format Painter, the UI and modal dialog reviews, Preferences, opening zoom; scenarios and three fixes (Go To's box selected on opening, the input method during drag auto-scroll, the scroll offset at fractional zoom). AUTOMATED PASS (core Clippy excepted), PHYSICAL PENDING.
-  - Next: the user's physical check (ranked in `docs/SESSION_HANDOFF.md`). No blocker for development; core and app Clippy pass.
+- 2026-11-25, UI work and reviews (`UI_SPEC.md` §46–§50): save type, drag selection across pages, View › Vertical Ruler, Format Painter, the UI and modal dialog reviews, Preferences, opening zoom; scenarios and three fixes (Go To's box selected on opening, the input method during drag auto-scroll, the scroll offset at fractional zoom). AUTOMATED PASS; PHYSICAL PASS (user, 2026-11-25). Released as 0.1.3.
+  - The ranked checklist is in `docs/SESSION_HANDOFF.md`. No blocker for development; core and app Clippy pass.
 
 ## Execution and reporting
 

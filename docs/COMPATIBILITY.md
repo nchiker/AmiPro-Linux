@@ -102,7 +102,7 @@ Partial; Decided against; Deferred; Not planned.
 | Revision marking, Revision Insertion, Doc Compare | Not planned | `docs/KNOWN_LIMITATIONS.md` | Revision data in a file is kept untouched |
 | Window › Tile and Cascade | Decided against | Tabs replace them | |
 | Window › New View | Not built yet | CK11 | |
-| View › Vertical Ruler | Built; physical check pending | CK11, `UI_SPEC.md` §48 | Top and bottom margins; inches only |
+| View › Vertical Ruler | Built; physically checked 2026-11-25 | CK11, `UI_SPEC.md` §48 | Top and bottom margins; inches only |
 | File Management, Notes/FX, mail, DDE | Not planned | | |
 | Help (F1, Contents, Search) | Built, awaiting physical check | `UI_SPEC.md` §45; scenario `help` | Own text in a starter set of topics; commands without a topic are listed in the tests. Keyboard Shortcuts, Compatibility and Fidelity, Check for Updates, and About exist |
 

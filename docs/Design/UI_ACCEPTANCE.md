@@ -1531,7 +1531,9 @@ Automated (registry order and aliases, the panel header clicked on 25 panels, th
 
 AUTOMATED PASS, code at `c70c6fd` (scenarios `selecting`, `format_painter`,
 `vertical_ruler`, `preferences`, `dialogs`; COSMIC 784 default, 137 text
-editor, 791 all features). PHYSICAL PENDING for all of it. The ranked
+editor, 791 all features). PHYSICAL PASS for the ranked
+checklist (user, 2026-11-25, "all passed", on a release build; the single
+boxes above were not reported one by one). The ranked
 checklist is in `docs/SESSION_HANDOFF.md`: drag across pages; menus;
 Preferences pages; Format Painter and Ctrl+Alt+C/V; vertical ruler; Save As
 per preference; dialogs' Enter and Esc; Promote and Demote icons; zoom. The

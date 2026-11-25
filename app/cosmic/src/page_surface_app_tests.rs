@@ -17784,7 +17784,9 @@ fn enter_never_confirms_a_destructive_dialog() {
     for (name, open) in escape_dialogs() {
         let mut app = escape_app();
         open(&mut app);
-        let keys = app.dialog_keys().unwrap_or_else(|| panic!("{name} has keys"));
+        let keys = app
+            .dialog_keys()
+            .unwrap_or_else(|| panic!("{name} has keys"));
         if !NO_ENTER.contains(&name) {
             continue;
         }
@@ -17807,7 +17809,9 @@ fn every_other_dialog_names_its_enter_and_esc_and_enter_differs_from_esc_in_a_qu
     for (name, open) in escape_dialogs() {
         let mut app = escape_app();
         open(&mut app);
-        let keys = app.dialog_keys().unwrap_or_else(|| panic!("{name} has keys"));
+        let keys = app
+            .dialog_keys()
+            .unwrap_or_else(|| panic!("{name} has keys"));
         if NO_ENTER.contains(&name) {
             continue;
         }
@@ -17847,14 +17851,21 @@ fn enter_acts_as_the_accent_button_and_waits_while_it_is_disabled() {
         Message::SpecialEffects(EffectsAction::Toggle(0, true)),
     );
     send(&mut app, Message::DialogEnter);
-    assert!(app.special_effects.is_none(), "Enter is OK in Special Effects");
+    assert!(
+        app.special_effects.is_none(),
+        "Enter is OK in Special Effects"
+    );
     // Insert Bullet: Insert puts the bullet in.
     let mut app = escape_app();
     let before = escape_snapshot(&app);
     send(&mut app, Message::Command(CommandId::InsertBullet));
     send(&mut app, Message::DialogEnter);
     assert!(app.bullet_dialog.is_none());
-    assert_ne!(before.0, escape_snapshot(&app).0, "Enter inserted the bullet");
+    assert_ne!(
+        before.0,
+        escape_snapshot(&app).0,
+        "Enter inserted the bullet"
+    );
     // Go To: Go.
     let mut app = escape_app();
     send(&mut app, Message::Command(CommandId::GoToPage));
@@ -17972,7 +17983,10 @@ fn a_dialog_with_a_value_to_type_opens_with_the_keyboard_in_it() {
         let events: Vec<_> = text
             .chars()
             .map(|character| {
-                key_press(Key::Character(character.to_string().into()), Modifiers::empty())
+                key_press(
+                    Key::Character(character.to_string().into()),
+                    Modifiers::empty(),
+                )
             })
             .collect();
         runtime.events(&events);

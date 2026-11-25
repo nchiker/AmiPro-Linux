@@ -809,6 +809,11 @@ struct DocumentSession {
     inspector_error: Option<(frame_inspector::Field, String)>,
     #[cfg(feature = "page-surface")]
     zoom: Zoom,
+    /// Whether the tab has had its opening zoom (Preferences › View ›
+    /// Open documents at; [`AmiProApp::sync_opening_zoom`]). A new
+    /// session has not; the first update after it was made gives it.
+    #[cfg(feature = "page-surface")]
+    zoom_opened: bool,
     /// View › Facing Pages (CM8): pages in pairs; kept per tab.
     #[cfg(feature = "page-surface")]
     facing: bool,
@@ -1140,6 +1145,8 @@ impl DocumentSession {
             inspector_error: None,
             #[cfg(feature = "page-surface")]
             zoom: Zoom::default(),
+            #[cfg(feature = "page-surface")]
+            zoom_opened: false,
             #[cfg(feature = "page-surface")]
             facing: false,
             #[cfg(feature = "page-surface")]
@@ -2647,6 +2654,9 @@ struct Preferences {
     recent_characters: Vec<char>,
     /// View › Custom Zoom's percentage (Ami Pro's `viewlevel`, default 91).
     custom_zoom: u16,
+    /// The zoom every document opens at (Ami Pro's `initview`, whose
+    /// factory value is Custom at `viewlevel`).
+    open_zoom: preferences_dialog::OpenZoom,
     /// View › Show ▸'s marks (Ami Pro's View Preferences; CM10): Tabs &
     /// Returns and Column Guides off, Margins in Colour and Pictures on.
     tabs_returns: bool,
@@ -2729,6 +2739,7 @@ impl Default for Preferences {
             recent_sheets: Vec::new(),
             recent_characters: Vec::new(),
             custom_zoom: 91,
+            open_zoom: preferences_dialog::OpenZoom::Custom,
             tabs_returns: false,
             column_guides: false,
             margins_in_colour: true,
@@ -2972,6 +2983,11 @@ impl Settings {
                 .ok()
                 .filter(|percent| preferences_dialog::CUSTOM_ZOOM.contains(&usize::from(*percent)))
                 .unwrap_or(defaults.custom_zoom),
+            open_zoom: config
+                .get::<String>("open_zoom")
+                .ok()
+                .and_then(|key| preferences_dialog::OpenZoom::from_key(&key))
+                .unwrap_or(defaults.open_zoom),
             tabs_returns: config.get("tabs_returns").unwrap_or(defaults.tabs_returns),
             column_guides: config
                 .get("column_guides")
@@ -3097,6 +3113,7 @@ impl Settings {
         transaction.set("default_sheet", preferences.default_sheet.clone())?;
         transaction.set("recent_sheets", preferences.recent_sheets.clone())?;
         transaction.set("custom_zoom", preferences.custom_zoom)?;
+        transaction.set("open_zoom", preferences.open_zoom.key().to_owned())?;
         transaction.set("tabs_returns", preferences.tabs_returns)?;
         transaction.set("column_guides", preferences.column_guides)?;
         transaction.set("margins_in_colour", preferences.margins_in_colour)?;
@@ -3990,6 +4007,8 @@ impl cosmic::Application for AmiProApp {
             #[cfg(feature = "page-surface")]
             page_surface: true,
         };
+        #[cfg(feature = "page-surface")]
+        application.sync_opening_zoom();
         application.sync_tab_model();
         #[cfg(feature = "page-surface")]
         if let Some(root) = recovery::default_root() {
@@ -4904,6 +4923,8 @@ impl cosmic::Application for AmiProApp {
                     self.preferences.show_notes,
                     self.preferences.show_bookmarks,
                 ],
+                open_zoom: self.preferences.open_zoom,
+                custom_zoom: self.preferences.custom_zoom,
                 #[cfg(feature = "page-surface")]
                 page_surface: self.page_surface,
                 #[cfg(not(feature = "page-surface"))]
@@ -5054,7 +5075,13 @@ impl cosmic::Application for AmiProApp {
                     .and_then(|content| content.paragraphs.first().map(|first| first.text.clone())),
             )
         };
+        // A tab made outside an update (the tests' own) opens at the
+        // preference before this message can choose another zoom for it.
+        #[cfg(feature = "page-surface")]
+        self.sync_opening_zoom();
         let task = self.handle_message(message);
+        #[cfg(feature = "page-surface")]
+        self.sync_opening_zoom();
         #[cfg(feature = "page-surface")]
         {
             let active = self.active_session;
@@ -15085,6 +15112,7 @@ impl AmiProApp {
                 }
                 state.custom_zoom = text;
             }
+            A::OpenZoom(zoom) => self.preferences.open_zoom = zoom,
             A::RecentFiles(text) => {
                 if let Some(count) =
                     preferences_dialog::number_in(&text, &preferences_dialog::RECENT_FILES)
@@ -15274,6 +15302,32 @@ impl AmiProApp {
     }
 
     /// Every document keeps the undo levels Preferences sets.
+    /// The zoom a document opens at: Preferences › View › Open documents
+    /// at (`UI_SPEC.md` §39), Custom zoom's percentage by default.
+    #[cfg(feature = "page-surface")]
+    fn opening_zoom(&self) -> Zoom {
+        match self.preferences.open_zoom {
+            preferences_dialog::OpenZoom::Custom => Zoom::percent(self.preferences.custom_zoom),
+            preferences_dialog::OpenZoom::ActualSize => Zoom::Percent(100),
+            preferences_dialog::OpenZoom::PageWidth => Zoom::FitWidth,
+            preferences_dialog::OpenZoom::FullPage => Zoom::FullPage,
+        }
+    }
+
+    /// Gives every tab made since the last update (new, opened, imported,
+    /// recovered, merged, the first window's) its opening zoom, once: a
+    /// zoom chosen for a tab afterwards stays that tab's.
+    #[cfg(feature = "page-surface")]
+    fn sync_opening_zoom(&mut self) {
+        let zoom = self.opening_zoom();
+        for session in &mut self.sessions {
+            if !session.zoom_opened {
+                session.zoom_opened = true;
+                session.zoom = zoom;
+            }
+        }
+    }
+
     fn apply_undo_levels(&mut self) {
         let levels = self.preferences.undo_levels;
         for session in &mut self.sessions {
@@ -17976,6 +18030,100 @@ mod tests {
         assert!(!app.preferences.table_addresses);
         let (_, preferences, _) = Settings::load(config());
         assert!(!preferences.table_addresses);
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
+
+    /// Preferences › View › Open documents at (Ami Pro's `initview`): every
+    /// tab opens at the Custom zoom by default (the first window's, a new
+    /// document's, an opened one's), a zoom picked for one tab stays with
+    /// it, View › Custom Zoom applies the percentage, and the choice and
+    /// the percentage outlive the session (user, 2026-11-25: documents
+    /// did not open at the Custom zoom set in Preferences).
+    #[cfg(feature = "page-surface")]
+    #[test]
+    fn documents_open_at_the_preferences_zoom_and_keep_their_own() {
+        use preferences_dialog::{OpenZoom, PreferencesAction};
+        let directory =
+            std::env::temp_dir().join(format!("amipro-open-zoom-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        let config = || {
+            cosmic::cosmic_config::Config::with_custom_path(
+                APP_ID,
+                SETTINGS_VERSION,
+                directory.join("config"),
+            )
+            .unwrap()
+        };
+        let (settings, preferences, _) = Settings::load(config());
+        assert_eq!(
+            preferences.open_zoom,
+            OpenZoom::Custom,
+            "Ami Pro's factory view"
+        );
+        let mut app = test_app(
+            Document::from_plain_text("One.\nTwo."),
+            DocumentLocation::Untitled,
+        );
+        app.settings = Some(settings);
+        app.preferences = preferences;
+        // The first tab opens at the Custom zoom.
+        send_message(&mut app, Message::Repaint);
+        assert_eq!(app.zoom, Zoom::Percent(91));
+        // Set in Preferences: 120%.
+        send_message(&mut app, Message::Command(CommandId::Preferences));
+        send_message(
+            &mut app,
+            Message::Preferences(PreferencesAction::CustomZoom("120".into())),
+        );
+        send_message(&mut app, Message::Preferences(PreferencesAction::Close));
+        // The open tab keeps the zoom it opened at; a new document opens at
+        // 120%.
+        assert_eq!(app.zoom, Zoom::Percent(91));
+        send_message(&mut app, Message::Command(CommandId::NewDocument));
+        assert_eq!(app.sessions.len(), 2);
+        assert_eq!(app.active_session, 1);
+        assert_eq!(app.zoom, Zoom::Percent(120));
+        // A zoom picked for this tab stays with it.
+        send_message(&mut app, Message::Command(CommandId::Enlarged));
+        assert_eq!(app.zoom, Zoom::Percent(200));
+        // An opened document opens at the preference too.
+        let path = directory.join("opened.amipro");
+        Document::from_plain_text("Opened.")
+            .save_native(&path)
+            .unwrap();
+        send_message(&mut app, Message::OpenPaths(vec![path]));
+        assert_eq!(app.sessions.len(), 3);
+        assert_eq!(app.active_session, 2);
+        assert_eq!(app.zoom, Zoom::Percent(120));
+        // The other tabs kept theirs.
+        assert_eq!(app.sessions[0].zoom, Zoom::Percent(91));
+        assert_eq!(app.sessions[1].zoom, Zoom::Percent(200));
+        // View › Custom Zoom applies the percentage.
+        send_message(&mut app, Message::Command(CommandId::ActualSize));
+        send_message(&mut app, Message::Command(CommandId::CustomZoom));
+        assert_eq!(app.zoom, Zoom::Percent(120));
+        // Page width for new documents.
+        send_message(&mut app, Message::Command(CommandId::Preferences));
+        send_message(
+            &mut app,
+            Message::Preferences(PreferencesAction::OpenZoom(OpenZoom::PageWidth)),
+        );
+        send_message(&mut app, Message::Preferences(PreferencesAction::Close));
+        send_message(&mut app, Message::Command(CommandId::NewDocument));
+        assert_eq!(app.zoom, Zoom::FitWidth);
+        // Kept for the next start.
+        let (_, preferences, _) = Settings::load(config());
+        assert_eq!(preferences.open_zoom, OpenZoom::PageWidth);
+        assert_eq!(preferences.custom_zoom, 120);
+        let mut restarted = test_app(
+            Document::from_plain_text("Again."),
+            DocumentLocation::Untitled,
+        );
+        restarted.preferences = preferences;
+        restarted.preferences.open_zoom = OpenZoom::Custom;
+        send_message(&mut restarted, Message::Repaint);
+        assert_eq!(restarted.zoom, Zoom::Percent(120));
         std::fs::remove_dir_all(&directory).unwrap();
     }
 

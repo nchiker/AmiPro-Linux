@@ -66,6 +66,10 @@ pub(crate) fn page_app(document: Document) -> AmiProApp {
         page_keyboard: 0,
         page_surface: true,
     };
+    // The tests were written for Page width, the zoom tabs opened at before
+    // Preferences › View › Open documents at; the default (Custom, 91%) is
+    // covered by `documents_open_at_the_preferences_zoom_and_keep_their_own`.
+    app.preferences.open_zoom = crate::preferences_dialog::OpenZoom::PageWidth;
     app.sync_tab_model();
     send(
         &mut app,
@@ -17525,7 +17529,10 @@ fn a_drag_from_page_one_to_page_two_keeps_its_anchor_through_the_header_band() {
         at(1, 3_000.0, 2_400.0), // page 2's text
     ];
     let end = path[path.len() - 1];
-    assert!(end.y < bounds.y + bounds.height, "page 2's text in view: {end:?}");
+    assert!(
+        end.y < bounds.y + bounds.height,
+        "page 2's text in view: {end:?}"
+    );
     let moved = |to: cosmic::iced::Point| {
         (
             cosmic::iced::Event::Mouse(Mouse::CursorMoved { position: to }),

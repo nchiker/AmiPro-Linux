@@ -10,7 +10,7 @@ The View menu controls how the pages are shown, not how they print.
 
 ## Zoom
 
-Zoom In and Zoom Out (Ctrl++ and Ctrl+-), Actual Size (Ctrl+0), Full Page (Ctrl+D), Enlarged (200%), Custom Zoom (the menu shows its percentage, set in Preferences › View), and Fit Page Width.
+Zoom In and Zoom Out (Ctrl++ and Ctrl+-), Actual Size (Ctrl+0), Full Page (Ctrl+D), Enlarged (200%), Custom Zoom (the menu shows its percentage, set in Preferences › View), and Fit Page Width. Each document has its own zoom. A document starts at the zoom chosen under **Open documents at** in Preferences › View: the Custom zoom unless you change it.
 
 ## Page arrangement
 

@@ -6049,3 +6049,15 @@ searched, not removable") and no button. Use the Desktop's Default (was
 Clear, always shown) appears under the Documents row only while a folder is
 set; Add Folder… (was Add…) sits under the list on the right.
 
+*Preferences › View › Zoom: Open documents at* (user report 2026-11-25: the
+Custom zoom was not the zoom documents opened at). Ami Pro's `initview`
+opens every document in one view, Custom at `viewlevel` from the factory
+(`docs/research/COMMANDS_NOTES.md` §4). The row offers Custom (N%), 100%,
+Page width, and Full page as buttons under the label (as Save new documents
+as), Custom by default; Custom zoom (%) under it is the percentage, used by
+View › Custom Zoom as well. Every tab made (the first window's, New, Open,
+Import, recovery, merge) takes it once, after the update that made it
+(`AmiProApp::sync_opening_zoom`, `DocumentSession::zoom_opened`); a zoom then
+chosen for a tab stays with it, and tabs already open keep theirs when the
+preference changes. Kept in the configuration as `open_zoom`.
+

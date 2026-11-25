@@ -89,6 +89,51 @@ impl ViewSetting {
     }
 }
 
+/// The zoom every document opens at (Ami Pro's `initview`: Custom at the
+/// Custom zoom percentage from the factory, or Standard, Full Page; Page
+/// width is the app's own).
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum OpenZoom {
+    #[default]
+    Custom,
+    ActualSize,
+    PageWidth,
+    FullPage,
+}
+
+impl OpenZoom {
+    pub const ALL: [Self; 4] = [
+        Self::Custom,
+        Self::ActualSize,
+        Self::PageWidth,
+        Self::FullPage,
+    ];
+
+    /// The value kept in the configuration.
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Custom => "custom",
+            Self::ActualSize => "actual_size",
+            Self::PageWidth => "page_width",
+            Self::FullPage => "full_page",
+        }
+    }
+
+    pub fn from_key(key: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|zoom| zoom.key() == key)
+    }
+
+    /// The choice as the View page lists it; Custom names its percentage.
+    pub fn label(self, custom: u16) -> String {
+        match self {
+            Self::Custom => format!("Custom ({custom}%)"),
+            Self::ActualSize => "100%".to_owned(),
+            Self::PageWidth => "Page width".to_owned(),
+            Self::FullPage => "Full page".to_owned(),
+        }
+    }
+}
+
 /// The height of every page's area; a longer page scrolls.
 const PAGE_HEIGHT: f32 = 430.0;
 
@@ -113,6 +158,8 @@ pub enum PreferencesAction {
     UndoLevels(String),
     /// Typed Custom Zoom; a number in [`CUSTOM_ZOOM`] applies at once.
     CustomZoom(String),
+    /// The zoom documents open at.
+    OpenZoom(OpenZoom),
     /// Typed recent files; a number in [`RECENT_FILES`] applies at once.
     RecentFiles(String),
     /// The format Save As offers for a document with no file yet.
@@ -159,6 +206,10 @@ pub struct Shown<'a> {
     pub environment_folders: Vec<PathBuf>,
     /// In [`ViewSetting::ALL`]'s order.
     pub view: [bool; 12],
+    pub open_zoom: OpenZoom,
+    /// The Custom zoom percentage in effect (the field may hold a typed
+    /// number out of range).
+    pub custom_zoom: u16,
     /// The text editor has only the toolbar of the View page.
     pub page_surface: bool,
 }
@@ -545,14 +596,46 @@ fn view_page<'a>(state: &'a PreferencesState, shown: &Shown<'_>) -> Vec<Element<
         .collect();
     let mut page = vec![section("Window", window)];
     if shown.page_surface {
+        let mut choices: Vec<Element<'a, Message>> = Vec::new();
+        for zoom in OpenZoom::ALL {
+            let label = zoom.label(shown.custom_zoom);
+            let button = if zoom == shown.open_zoom {
+                widget::button::suggested(label)
+            } else {
+                widget::button::standard(label)
+            };
+            choices.push(
+                button
+                    .on_press(send(PreferencesAction::OpenZoom(zoom)))
+                    .into(),
+            );
+        }
         page.push(section(
             "Zoom",
-            vec![number_field(
-                "Custom zoom (%)",
-                &state.custom_zoom,
-                &CUSTOM_ZOOM,
-                PreferencesAction::CustomZoom,
-            )],
+            vec![
+                // As Save new documents as: the label over its choices.
+                widget::column::with_children(vec![
+                    widget::text::body("Open documents at").into(),
+                    widget::row::with_children(choices)
+                        .spacing(4)
+                        .align_y(cosmic::iced::Alignment::Center)
+                        .into(),
+                ])
+                .spacing(6)
+                .into(),
+                number_field(
+                    "Custom zoom (%)",
+                    &state.custom_zoom,
+                    &CUSTOM_ZOOM,
+                    PreferencesAction::CustomZoom,
+                ),
+                widget::text::caption(
+                    "New, opened, and imported documents start at this zoom; \
+                     View › Custom Zoom uses the percentage. A zoom you choose \
+                     for one document stays with it.",
+                )
+                .into(),
+            ],
         ));
         page.push(section(
             "Show on the page",

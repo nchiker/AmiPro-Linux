@@ -2555,6 +2555,45 @@ fn a_tab_opened_later_scrolls_with_the_page_arrows() {
     );
 }
 
+/// At a fractional zoom (91%, the default custom zoom) a page's top is not
+/// on a whole pixel; the iced scrollable rounds what it draws, and the
+/// offset the app records must be that one, not the 0.04 px beside it:
+/// after the page arrows, a wheel scroll by part of a pixel, and a tab
+/// switch.
+#[test]
+fn the_recorded_scroll_offset_is_the_drawn_one_at_91_percent() {
+    let mut app = page_app(long_document(150));
+    send(&mut app, Message::ZoomTo(91));
+    let mut runtime = Runtime::new(app);
+    runtime.redraw();
+    runtime.send(Message::Command(CommandId::NextPage));
+    let target = runtime.page_scroll(2);
+    assert_ne!(target, target.round(), "a fractional page top: {target}");
+    // The scrollable reports the offset on the redraw.
+    runtime.redraw();
+    let drawn = runtime.workspace_scroll();
+    assert_eq!(drawn, target.round());
+    assert_eq!(runtime.app.sessions[0].scroll_offset.y, drawn);
+    // The wheel by a fraction of a pixel, over the pages.
+    let (bounds, _) = runtime.workspace_view();
+    let over = bounds.center();
+    runtime.events(&[(
+        cosmic::iced::Event::Mouse(cosmic::iced::mouse::Event::WheelScrolled {
+            delta: cosmic::iced::mouse::ScrollDelta::Pixels { x: 0.0, y: -10.3 },
+        }),
+        over,
+    )]);
+    runtime.redraw();
+    let wheeled = runtime.workspace_scroll();
+    assert!(wheeled > drawn, "{wheeled}");
+    assert_eq!(runtime.app.sessions[0].scroll_offset.y, wheeled);
+    runtime.send(Message::Command(CommandId::NewDocument));
+    runtime.redraw();
+    runtime.send(Message::ActivateTab(0));
+    assert_eq!(runtime.workspace_scroll(), wheeled);
+    assert_eq!(runtime.app.sessions[0].scroll_offset.y, wheeled);
+}
+
 #[test]
 fn each_tab_shows_its_own_scroll_offset() {
     // The tabs share the workspace's scrollable; switching tabs restores

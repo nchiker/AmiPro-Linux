@@ -2489,10 +2489,28 @@ fn scroll_workspace(
     id: cosmic::iced::widget::Id,
     offset: cosmic::iced::widget::scrollable::AbsoluteOffset<Option<f32>>,
 ) -> Task<cosmic::Action<Message>> {
+    let offset = cosmic::iced::widget::scrollable::AbsoluteOffset {
+        x: offset.x.map(f32::round),
+        y: offset.y.map(f32::round),
+    };
     trace_scroll(|| format!("scroll_to {id:?} {offset:?}"));
     cosmic::iced::widget::scrollable::scroll_to::<Message>(id, offset)
         .chain(Task::done(Message::Repaint))
         .map(cosmic::Action::from)
+}
+
+/// A scroll offset as the pages are drawn: the pinned iced scrollable
+/// rounds its translation to whole pixels (drawing and hit testing use it),
+/// while the offset it reports keeps the fraction (at 91% a page's top is at
+/// 992.96 px and the pages sit at 993). What the app records, and places
+/// rulers and popovers by, is what is drawn.
+fn shown_offset(
+    offset: cosmic::iced::widget::scrollable::AbsoluteOffset,
+) -> cosmic::iced::widget::scrollable::AbsoluteOffset {
+    cosmic::iced::widget::scrollable::AbsoluteOffset {
+        x: offset.x.round(),
+        y: offset.y.round(),
+    }
 }
 
 /// Native tab entity data linking a tab to its `DocumentSession::id`.
@@ -6581,7 +6599,7 @@ impl AmiProApp {
             },
             Message::Scrolled(viewport) => {
                 trace_scroll(|| format!("scrolled {:?}", viewport.absolute_offset()));
-                self.scroll_offset = viewport.absolute_offset();
+                self.scroll_offset = shown_offset(viewport.absolute_offset());
             }
             #[cfg(feature = "rich-editor-prototype")]
             Message::Prototype(action) => self.update_prototype(action),

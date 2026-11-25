@@ -6018,7 +6018,8 @@ from `dialog_frame`:
 - **First focus**: a dialog that asks for a value first opens with the
   keyboard in that box (Go To, Create Style, Rename Style, Save as a Style
   Sheet, Create Frame's Width, Insert Table's Columns, the Power Field
-  question, the password). Tab follows the drawing order.
+  question, the password). What the box already holds (Go To's current
+  page) is selected, so typing replaces it. Tab follows the drawing order.
 - **Form**: labels beside short boxes and lists, in one 170 px column
   (`dialog_frame::row`); a label above a full-width text box. A control with
   no label of its own under a labelled one sits in the field column

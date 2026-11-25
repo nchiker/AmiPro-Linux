@@ -37,11 +37,13 @@ use super::*;
 mod commands;
 mod contents;
 mod crash_recovery;
+mod dialogs;
 mod documents;
 mod drawing;
 mod fields;
 mod files;
 mod find;
+mod format_painter;
 mod frames;
 mod help;
 mod launch;
@@ -54,13 +56,16 @@ mod outline_mode;
 mod output;
 mod page_layout;
 mod pictures;
+mod preferences;
 mod proofing;
 mod references;
+mod selecting;
 mod styles;
 mod table_data;
 mod tables;
 mod templates;
 mod update_check;
+mod vertical_ruler;
 mod views;
 
 /// One scenario's window, its scratch folder, and what it allows.
@@ -76,6 +81,75 @@ struct Scenario {
     pub allow_nested_fields: bool,
     /// A log of the steps, printed when a check fails.
     log: Vec<String>,
+}
+
+/// Where page twips (`x`, `y`) of the page at `page_index` are in the
+/// window, with the workspace scrolled where it is now.
+fn page_point(rt: &mut Runtime, page_index: usize, x: f32, y: f32) -> cosmic::iced::Point {
+    let (bounds, view) = rt.workspace_view();
+    let page = view.pages[page_index];
+    cosmic::iced::Point::new(
+        bounds.x + page.x - rt.app.scroll_offset.x + x * view.scale,
+        bounds.y + page.y - rt.app.scroll_offset.y + y * view.scale,
+    )
+}
+
+/// A key as the window takes it, its modifiers held for it and let go
+/// after: the widgets see each event first (their messages run), then the
+/// subscription's [`window_event_message`] sees what became of it
+/// (shortcuts and Enter no widget took, Esc whoever took it).
+fn window_key(
+    rt: &mut Runtime,
+    key: cosmic::iced::keyboard::Key,
+    modifiers: cosmic::iced::keyboard::Modifiers,
+) {
+    use cosmic::iced::keyboard::{Event as Keyboard, Modifiers};
+    let held = |modifiers| cosmic::iced::Event::Keyboard(Keyboard::ModifiersChanged(modifiers));
+    if !modifiers.is_empty() {
+        window_event(rt, held(modifiers));
+    }
+    window_event(rt, super::key_press(key, modifiers).0);
+    if !modifiers.is_empty() {
+        window_event(rt, held(Modifiers::empty()));
+    }
+}
+
+fn window_event(rt: &mut Runtime, event: cosmic::iced::Event) {
+    let mut ui = cosmic::iced::runtime::user_interface::UserInterface::build(
+        cosmic::ApplicationExt::view_main(&rt.app),
+        rt.window,
+        rt.cache.take().expect("the interface's cache"),
+        &mut rt.renderer,
+    );
+    let mut messages = Vec::new();
+    let (_, statuses) = ui.update(
+        std::slice::from_ref(&event),
+        cosmic::iced::mouse::Cursor::Available(cosmic::iced::Point::ORIGIN),
+        &mut rt.renderer,
+        &mut cosmic::iced::advanced::clipboard::Null,
+        &mut messages,
+    );
+    rt.cache = Some(ui.into_cache());
+    for message in messages {
+        if let cosmic::Action::App(message) = message {
+            rt.send(message);
+        }
+    }
+    if let Some(message) = window_event_message(event, statuses[0]) {
+        rt.send(message);
+    }
+}
+
+/// A scratch configuration under `folder`: never the user's.
+fn scratch_settings(folder: &Path) -> (crate::Settings, crate::Preferences) {
+    let config = cosmic::cosmic_config::Config::with_custom_path(
+        crate::APP_ID,
+        crate::SETTINGS_VERSION,
+        folder.join("config"),
+    )
+    .unwrap();
+    let (settings, preferences, _) = crate::Settings::load(config);
+    (settings, preferences)
 }
 
 /// Words in the status bar that read as something going wrong.

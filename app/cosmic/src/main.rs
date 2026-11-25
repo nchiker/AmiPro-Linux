@@ -2513,6 +2513,17 @@ fn shown_offset(
     }
 }
 
+/// The Save As chooser's file filter for `format`.
+fn save_filter(format: SaveFormat) -> FileFilter {
+    match format {
+        SaveFormat::Native => FileFilter::new("AmiPro-Linux documents (.amipro)").glob("*.amipro"),
+        SaveFormat::Sam => FileFilter::new("Ami Pro 3.1 documents (.SAM)")
+            .glob("*.sam")
+            .glob("*.SAM"),
+        SaveFormat::Markdown => FileFilter::new("Markdown (.md)").glob("*.md").glob("*.MD"),
+    }
+}
+
 /// Native tab entity data linking a tab to its `DocumentSession::id`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct TabSession(u64);
@@ -5115,7 +5126,9 @@ impl cosmic::Application for AmiProApp {
         }
         // A dialog's first text field takes the keyboard when the dialog
         // opens (`dialog_keys`), and the password box again after a wrong
-        // password (Ami Pro's edit has the focus).
+        // password (Ami Pro's edit has the focus). What the field holds is
+        // selected, so that typing replaces it (Go To opens with the
+        // current page: Ctrl+G, 3, Enter goes to page 3, not 13).
         let keys = self.dialog_keys();
         let opened = keys.as_ref().map(|keys| keys.name) != dialog_before;
         let wrong_password = self
@@ -5126,6 +5139,9 @@ impl cosmic::Application for AmiProApp {
             Some(field) if opened || wrong_password => Task::batch([
                 task,
                 widget::text_input::focus::<Message>(widget::Id::new(field))
+                    .chain(widget::text_input::select_all::<Message>(widget::Id::new(
+                        field,
+                    )))
                     .chain(Task::done(Message::Repaint))
                     .map(cosmic::Action::from),
             ]),
@@ -12931,11 +12947,20 @@ impl AmiProApp {
         })
     }
 
+    /// What the Save As chooser starts with: the file name offered, and the
+    /// Format choice (and so the filter, [`save_filter`]) it starts on
+    /// (Preferences › Save new documents as, `UI_SPEC.md` §46).
+    fn save_offer(&self) -> (String, SaveFormat) {
+        let preferred = self.preferences.save_format;
+        (
+            self.location.suggested_file_name(&self.document, preferred),
+            self.location.default_save_format(preferred),
+        )
+    }
+
     fn save_dialog_task(&self) -> Task<cosmic::Action<Message>> {
         let session_id = self.id;
-        let preferred = self.preferences.save_format;
-        let suggested_name = self.location.suggested_file_name(&self.document, preferred);
-        let first = self.location.default_save_format(preferred);
+        let (suggested_name, first) = self.save_offer();
         let starting_directory = match &self.location {
             DocumentLocation::LegacySource(path)
             | DocumentLocation::Sam(path)
@@ -12945,15 +12970,6 @@ impl AmiProApp {
         cosmic::task::future(async move {
             // Both formats (decision A): the typed extension decides, then
             // the Format choice, which portals that support choices report.
-            let filter_for = |format: SaveFormat| match format {
-                SaveFormat::Native => {
-                    FileFilter::new("AmiPro-Linux documents (.amipro)").glob("*.amipro")
-                }
-                SaveFormat::Sam => FileFilter::new("Ami Pro 3.1 documents (.SAM)")
-                    .glob("*.sam")
-                    .glob("*.SAM"),
-                SaveFormat::Markdown => FileFilter::new("Markdown (.md)").glob("*.md").glob("*.MD"),
-            };
             let mut format = file_chooser::Choice::new("format", "Format", first.key());
             for each in SaveFormat::ALL {
                 format = format.insert(each.key(), each.label());
@@ -12961,10 +12977,10 @@ impl AmiProApp {
             let mut dialog = file_chooser::save::Dialog::new()
                 .title("Save document as".to_owned())
                 .file_name(suggested_name)
-                .current_filter(filter_for(first))
+                .current_filter(save_filter(first))
                 .choice(format);
             for each in SaveFormat::ALL {
-                dialog = dialog.filter(filter_for(each));
+                dialog = dialog.filter(save_filter(each));
             }
             if let Some(directory) = starting_directory {
                 dialog = dialog.directory(directory);

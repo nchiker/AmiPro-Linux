@@ -215,16 +215,7 @@ fn plain(inlines: &[Inline]) -> String {
 pub fn panel<'a>(state: &'a HelpState) -> Element<'a, Message> {
     let library = Library::builtin();
     let nav = &state.nav;
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Help").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close the Help panel")
-            .on_press(send(PanelAction::Close))
-            .into(),
-    ])
-    .align_y(Alignment::Center);
+    let header = crate::chrome::panel_header("Help", None, send(PanelAction::Close));
     let mut back = widget::button::icon(widget::icon::from_name("go-previous-symbolic"))
         .extra_small()
         .name("Back");
@@ -263,7 +254,7 @@ pub fn panel<'a>(state: &'a HelpState) -> Element<'a, Message> {
         },
     };
     widget::column::with_children(vec![
-        widget::column::with_children(vec![header.into(), bar.into(), search.into()])
+        widget::column::with_children(vec![header, bar.into(), search.into()])
             .spacing(8)
             .padding([8, 8, 0, 8])
             .into(),

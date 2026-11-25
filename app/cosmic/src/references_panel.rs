@@ -168,18 +168,8 @@ pub struct Shown<'a> {
     pub footnotes: usize,
 }
 
-fn header(title: &'static str, close: &'static str) -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading(title).into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name(close)
-            .on_press(send(ReferenceAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+fn header(title: &'static str) -> Element<'static> {
+    crate::chrome::panel_header(title, None, send(ReferenceAction::Close))
 }
 
 fn row(children: Vec<Element<'_>>) -> Element<'_> {
@@ -322,7 +312,7 @@ fn notes_panel<'a>(state: &'a ReferencePanel, shown: Shown<'a>) -> Element<'a> {
                 .into(),
         );
     }
-    wrap(header("Notes", "Close Notes"), body)
+    wrap(header("Notes"), body)
 }
 
 /// The note colours offered: Ami Pro's User Setup palette.
@@ -442,7 +432,7 @@ fn bookmarks_panel<'a>(state: &'a ReferencePanel, shown: Shown<'a>) -> Element<'
             .on_press_maybe(chosen.then(|| send(ReferenceAction::CrossReference { page: false })))
             .into(),
     ]));
-    wrap(header("Bookmarks", "Close Bookmarks"), body)
+    wrap(header("Bookmarks"), body)
 }
 
 fn footnotes_panel<'a>(state: &'a ReferencePanel, shown: Shown<'a>) -> Element<'a> {
@@ -569,7 +559,7 @@ fn footnotes_panel<'a>(state: &'a ReferencePanel, shown: Shown<'a>) -> Element<'
             widget::text::caption("Every footnote follows the text, from a new page.").into(),
         );
     }
-    wrap(header("Footnotes", "Close Footnotes"), body)
+    wrap(header("Footnotes"), body)
 }
 
 #[cfg(test)]

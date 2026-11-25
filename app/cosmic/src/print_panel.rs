@@ -52,7 +52,7 @@ impl PrintOption {
         (
             Self::DocDescription,
             "With doc description",
-            "A cover sheet listing Doc Info.",
+            "A cover sheet listing the Document Properties.",
         ),
         (
             Self::WithNotes,
@@ -107,7 +107,7 @@ impl Addition {
         (Self::Bookmarks, "Bookmarks from outline levels"),
         (
             Self::Properties,
-            "Doc Info as properties; Ami Pro's page numbers",
+            "Document Properties as the PDF's properties; Ami Pro's page numbers",
         ),
         (Self::Archival, "PDF/A-2b, for archiving"),
     ];
@@ -190,19 +190,11 @@ pub fn panel<'a>(
     additions: PdfAdditions,
     whole_set: Option<bool>,
 ) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Print").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(PrintAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Print")
-            .on_press(send(PrintAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Print",
+        Some(send(PrintAction::Back)),
+        send(PrintAction::Close),
+    );
     let mut body: Vec<Element<'a, Message>> = Vec::new();
     // A master document prints its set, as Ami Pro's does (MS6).
     if let Some(whole) = whole_set {
@@ -313,7 +305,7 @@ pub fn panel<'a>(
     ])
     .spacing(6);
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(6).into()),
         widget::divider::horizontal::default().into(),
         buttons.into(),

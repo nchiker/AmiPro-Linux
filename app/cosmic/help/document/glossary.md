@@ -18,4 +18,4 @@ Type the name and press Ctrl+K (Insert › Glossary Record…) to replace it wit
 
 ## The glossary file
 
-The records live in a glossary file, in Ami Pro's format. The panel's **Data File…** chooses another one and **New…** makes a fresh one. Only a file that reads as a glossary is ever changed. Several documents can share one file.
+The records live in a glossary file, in Ami Pro's format. The panel's **Open Data File…** chooses another one and **New Data File…** makes a fresh one. Only a file that reads as a glossary is ever changed. Several documents can share one file.

@@ -17670,3 +17670,97 @@ fn dragging_the_vertical_rulers_margin_markers_sets_the_layout_margins_and_undoe
     runtime.drag(from, from);
     assert_eq!(runtime.app.history.undo_len(), steps);
 }
+
+/// UI review 2026-11 (`UI_SPEC.md` §50): every rail panel has one header
+/// (`chrome::panel_header`): "‹ Styles" brings back the Styles list with the
+/// rail open, and the X closes the panel and the rail. Clicked through the
+/// real widgets for every panel a command opens (before, nine panels had
+/// "‹ Styles", the others none, and Paragraph Properties' X kept the rail
+/// open).
+#[test]
+fn every_panel_header_has_styles_back_and_an_x_that_closes_the_rail() {
+    use crate::rail_panels::RailPanel;
+    let (mut app, frame) = table_app();
+    let target = at(cell(&app.document, frame, 0, 0), 0, 0);
+    move_to(&mut app, target, 1, false);
+    let mut rt = Runtime::new(app);
+    if !rt.app.rail_open() {
+        rt.send(Message::Command(CommandId::StylesPanel));
+    }
+    let left = cosmic::iced::mouse::Button::Left;
+    // The header row: where the Styles list's own X (which hides the
+    // rail) is.
+    let header_y = (120..=260)
+        .step_by(4)
+        .find(|y| {
+            (150..=240).step_by(4).any(|x| {
+                rt.click_unrun(left, cosmic::iced::Point::new(x as f32, *y as f32))
+                    .iter()
+                    .any(|message| matches!(message, Message::Command(CommandId::StylesPanel)))
+            })
+        })
+        .expect("the Styles list's X") as f32;
+    // From the right, the first press on the header row that publishes a
+    // message `wanted` takes (the ruler beside the rail publishes its own,
+    // which are not run).
+    let find = |rt: &mut Runtime, wanted: &dyn Fn(&Message) -> bool| {
+        (150..=420).rev().step_by(3).find_map(|x| {
+            rt.click_unrun(left, cosmic::iced::Point::new(x as f32, header_y))
+                .into_iter()
+                .find(|message| wanted(message))
+        })
+    };
+    let is_back = |message: &Message| {
+        matches!(message, Message::RailBack(_)) || format!("{message:?}").contains("Back")
+    };
+    let is_close =
+        |message: &Message| !is_back(message) && format!("{message:?}").contains("Close");
+    let commands = [
+        CommandId::ModifyCurrentStyle,
+        CommandId::PageLayout,
+        CommandId::ParagraphProperties,
+        CommandId::TableProperties,
+        CommandId::Field,
+        CommandId::Notes,
+        CommandId::ContentsIndex,
+        CommandId::MasterDocument,
+        CommandId::PrintEnvelope,
+        CommandId::Merge,
+        CommandId::MarkGlossary,
+        CommandId::Language,
+        CommandId::DocumentProperties,
+        CommandId::ImportFolder,
+        CommandId::ExportFolder,
+        CommandId::PrintOptions,
+        CommandId::PasteSpecial,
+        CommandId::Links,
+        CommandId::OutlineNavigator,
+        CommandId::Sort,
+        CommandId::Charting,
+        CommandId::Equations,
+        CommandId::CheckForUpdates,
+        CommandId::RecoverDocuments,
+        CommandId::HelpContents,
+    ];
+    for command in commands {
+        rt.send(Message::Command(command));
+        let panel = rt.app.rail_panel();
+        assert_ne!(panel, RailPanel::Styles, "{command:?} opens a panel");
+        assert!(rt.app.rail_open());
+        let back = find(&mut rt, &is_back).unwrap_or_else(|| panic!("{panel:?}: ‹ Styles"));
+        rt.send(back);
+        assert!(
+            rt.app.rail_open(),
+            "{panel:?}: ‹ Styles keeps the rail open"
+        );
+        assert_eq!(rt.app.rail_panel(), RailPanel::Styles, "{panel:?}: back");
+        rt.send(Message::Command(command));
+        assert_eq!(rt.app.rail_panel(), panel);
+        let close = find(&mut rt, &is_close).unwrap_or_else(|| panic!("{panel:?}: the X"));
+        rt.send(close);
+        assert!(!rt.app.rail_open(), "{panel:?}: the X closes the rail");
+        assert!(!rt.app.rail_state_set(panel), "{panel:?}: and the panel");
+        rt.send(Message::Command(CommandId::StylesPanel));
+        assert_eq!(rt.app.rail_panel(), RailPanel::Styles);
+    }
+}

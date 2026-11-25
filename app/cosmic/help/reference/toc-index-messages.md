@@ -19,6 +19,6 @@ These are the messages shown while you build a table of contents or an index, an
 
 ## Glossary
 
-- **That file exists: choose it with Data File…** New… will not overwrite a file. Use Data File… to open the existing one, or choose another name.
+- **That file exists: choose it with Open Data File…** New Data File… will not overwrite a file. Use Open Data File… to open the existing one, or choose another name.
 
 For the same messages across a master document, see [Master document messages](master-documents-messages).

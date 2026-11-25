@@ -143,8 +143,8 @@ const LEADERS: [(CellLeader, &str); 4] = [
 const STYLES: [(TableStyle, &str); 5] = [
     (TableStyle::Grid, "Grid"),
     (TableStyle::Outline, "Outline"),
-    (TableStyle::HeaderRow, "Header"),
-    (TableStyle::BandedRows, "Banded"),
+    (TableStyle::HeaderRow, "Header Row"),
+    (TableStyle::BandedRows, "Banded Rows"),
     (TableStyle::Plain, "Plain"),
 ];
 
@@ -633,19 +633,11 @@ pub fn panel<'a>(
     colours: Context<'a>,
     cell: &crate::table_formula::CellInfo,
 ) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Table Properties").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(TableAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Table Properties")
-            .on_press(send(TableAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Table Properties",
+        Some(send(TableAction::Back)),
+        send(TableAction::Close),
+    );
     let table = &at.table;
     let range = &at.raw;
     let place = if range.is_single() {
@@ -907,7 +899,7 @@ pub fn panel<'a>(
         );
     }
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(6).into()),
     ])
     .spacing(8)

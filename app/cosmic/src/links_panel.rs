@@ -126,17 +126,8 @@ fn send(action: LinksAction) -> Message {
 
 /// The panel.
 pub fn panel<'a>(state: &LinksPanel, rows: &[LinkRow]) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Links").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close the Links panel")
-            .on_press(send(LinksAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
-    let mut children: Vec<Element<'a, Message>> = vec![header.into()];
+    let header = crate::chrome::panel_header("Links", None, send(LinksAction::Close));
+    let mut children: Vec<Element<'a, Message>> = vec![header];
     if rows.is_empty() {
         children.push(widget::text::body(EMPTY).into());
     }

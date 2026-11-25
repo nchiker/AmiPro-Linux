@@ -222,7 +222,7 @@ fn length_row(
     row(vec![
         widget::text::body(label).width(Length::Fixed(88.0)).into(),
         input(state, field),
-        widget::text::caption("in.").into(),
+        widget::text::caption("in").into(),
     ])
 }
 
@@ -273,7 +273,7 @@ fn spacing(state: &ParagraphProperties) -> Vec<Element<'static, Message>> {
     ];
     if line == 3 {
         custom.push(input(state, Field::Custom));
-        custom.push(widget::text::caption("in.").into());
+        custom.push(widget::text::caption("in").into());
     }
     vec![
         origin(state.shown.own_spacing),
@@ -341,16 +341,8 @@ fn breaks(state: &ParagraphProperties) -> Vec<Element<'static, Message>> {
 }
 
 pub fn panel(state: &ParagraphProperties) -> Element<'_, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Paragraph Properties").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Paragraph Properties")
-            .on_press(send(ParagraphAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header =
+        crate::chrome::panel_header("Paragraph Properties", None, send(ParagraphAction::Close));
     let shown = &state.shown;
     let mut body: Vec<Element<'_, Message>> = vec![
         widget::text::body(if shown.paragraphs > 1 {
@@ -407,7 +399,7 @@ pub fn panel(state: &ParagraphProperties) -> Element<'_, Message> {
             .into(),
     );
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(8).into()),
     ])
     .spacing(8)
@@ -581,8 +573,12 @@ impl crate::AmiProApp {
                 self.open_style_properties(None);
                 return;
             }
+            // The X closes the rail, as on every panel (UI review 2026-11).
             ParagraphAction::Close => {
                 session.paragraph_properties = None;
+                if self.rail_open() {
+                    self.toggle_rail();
+                }
                 return;
             }
         };

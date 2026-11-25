@@ -357,7 +357,7 @@ impl AmiProApp {
         };
         let problem = if new {
             if path.exists() {
-                Some("That file exists: choose it with Data File…".to_string())
+                Some("That file exists: choose it with Open Data File…".to_string())
             } else {
                 let sheet =
                     amipro_formats::find_style_sheet(None, "_DEFAULT.STY", &self.style_folders())

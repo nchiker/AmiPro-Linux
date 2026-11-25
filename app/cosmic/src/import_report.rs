@@ -47,19 +47,11 @@ pub fn summary(report: &Report) -> String {
 }
 
 pub fn panel(report: &Report) -> Element<'_, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Import Report").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(ReportAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Import Report")
-            .on_press(send(ReportAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Import Report",
+        Some(send(ReportAction::Back)),
+        send(ReportAction::Close),
+    );
     let mut body: Vec<Element<'_, Message>> = vec![
         widget::text::caption(format!("{} ({})", report.file, report.format))
             .wrapping(cosmic::iced::widget::text::Wrapping::WordOrGlyph)
@@ -109,7 +101,7 @@ pub fn panel(report: &Report) -> Element<'_, Message> {
         .height(32)
         .on_press(send(ReportAction::Copy));
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(8).into()),
         widget::divider::horizontal::default().into(),
         copy.into(),

@@ -309,17 +309,7 @@ pub struct SpellingShown<'a> {
 }
 
 fn header(title: &'static str) -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading(title).into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Proofing")
-            .on_press(send(ProofingAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+    crate::chrome::panel_header(title, None, send(ProofingAction::Close))
 }
 
 fn row(children: Vec<Element<'_>>) -> Element<'_> {
@@ -327,6 +317,18 @@ fn row(children: Vec<Element<'_>>) -> Element<'_> {
         .spacing(6)
         .align_y(cosmic::iced::Alignment::Center)
         .into()
+}
+
+/// The panel's main action: a full-width accent button, as Print…, Sort,
+/// Import, and Export are (UI review 2026-11).
+fn primary(label: &str, message: Option<Message>) -> Element<'static> {
+    widget::button::custom(
+        widget::container(widget::text::body(label.to_owned())).center_x(Length::Fill),
+    )
+    .class(cosmic::theme::Button::Suggested)
+    .width(Length::Fill)
+    .on_press_maybe(message)
+    .into()
 }
 
 /// A full-width button (libcosmic's text buttons size their label only).
@@ -347,16 +349,8 @@ fn section<'a>(
     toggle: ProofingAction,
     body: Vec<Element<'a>>,
 ) -> Element<'a> {
-    let mut children: Vec<Element<'a>> = vec![
-        widget::button::custom(widget::text::body(format!(
-            "{} {title}",
-            if open { "▾" } else { "▸" }
-        )))
-        .class(cosmic::theme::Button::Text)
-        .width(Length::Fill)
-        .on_press(send(toggle))
-        .into(),
-    ];
+    let mut children: Vec<Element<'a>> =
+        vec![crate::chrome::section_toggle(title, open, send(toggle))];
     if open {
         children.push(
             widget::column::with_children(body)
@@ -394,7 +388,10 @@ fn pages(page: Page) -> Element<'static> {
 pub fn spelling_page<'a>(state: &'a ProofingPanel, shown: SpellingShown<'a>) -> Element<'a> {
     let mut body: Vec<Element<'a>> = vec![pages(state.page)];
     match state.spelling.as_ref() {
-        None => body.push(wide("Start Spell Check", Some(send(ProofingAction::Start)))),
+        None => body.push(primary(
+            "Start Spell Check",
+            Some(send(ProofingAction::Start)),
+        )),
         Some(check) => match &check.state {
             SpellState::Loading => {
                 body.push(widget::text::body("Loading the dictionary…").into());
@@ -713,7 +710,7 @@ pub fn grammar_page<'a>(state: &'a ProofingPanel, shown: GrammarShown) -> Elemen
     ]));
     let explanations = shown.options & GrammarOption::Explanations.bit() != 0;
     match state.grammar.as_ref() {
-        None => body.push(wide(
+        None => body.push(primary(
             "Start Grammar Check",
             Some(send(ProofingAction::StartGrammar)),
         )),

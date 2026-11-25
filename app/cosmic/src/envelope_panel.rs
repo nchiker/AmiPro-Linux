@@ -324,7 +324,7 @@ pub fn panel<'a>(
     body.push(
         widget::row::with_children(vec![
             feed("Left", Feed::Left),
-            feed("Centre", Feed::Centre),
+            feed("Center", Feed::Centre),
             feed("Right", Feed::Right),
         ])
         .spacing(4)
@@ -376,18 +376,9 @@ pub fn panel<'a>(
     if let Some(message) = &state.message {
         body.push(widget::text::caption(message.clone()).into());
     }
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Envelope").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Envelope")
-            .on_press(send(EnvelopeAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header("Envelope", None, send(EnvelopeAction::Close));
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(8).into()),
     ])
     .spacing(8)

@@ -244,18 +244,9 @@ pub fn size_text(bytes: u64) -> String {
 
 /// The panel.
 pub fn panel<'a>(state: &'a UpdatesState, installed: &str) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Updates").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close the Updates panel")
-            .on_press(send(UpdatesAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header("Check for Updates", None, send(UpdatesAction::Close));
     let mut children: Vec<Element<'a, Message>> = vec![
-        header.into(),
+        header,
         widget::text::body(format!("Installed version: {installed}")).into(),
     ];
     children.extend(body(&state.status));

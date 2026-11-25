@@ -82,10 +82,10 @@ pub fn panel<'a>(state: &'a GlossaryPanel, shown: Shown<'a>) -> Element<'a> {
         .into(),
     );
     body.push(row(vec![
-        widget::button::standard("Data File…")
+        widget::button::standard("Open Data File…")
             .on_press(send(GlossaryAction::ChooseFile))
             .into(),
-        widget::button::standard("New…")
+        widget::button::standard("New Data File…")
             .on_press(send(GlossaryAction::NewFile))
             .into(),
     ]));
@@ -169,17 +169,7 @@ pub fn panel<'a>(state: &'a GlossaryPanel, shown: Shown<'a>) -> Element<'a> {
         body.push(widget::text::caption(message.clone()).into());
     }
     widget::column::with_children(vec![
-        widget::row::with_children(vec![
-            widget::text::heading("Glossary").into(),
-            widget::space::horizontal().into(),
-            widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-                .extra_small()
-                .name("Close Glossary")
-                .on_press(send(GlossaryAction::Close))
-                .into(),
-        ])
-        .align_y(cosmic::iced::Alignment::Center)
-        .into(),
+        crate::chrome::panel_header("Glossary", None, send(GlossaryAction::Close)),
         crate::rail_scroller(widget::column::with_children(body).spacing(8).into()),
     ])
     .spacing(8)

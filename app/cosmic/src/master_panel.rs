@@ -77,17 +77,7 @@ pub struct Shown<'a> {
 }
 
 fn header() -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading("Master Document").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Master Document")
-            .on_press(send(MasterAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+    crate::chrome::panel_header("Master Document", None, send(MasterAction::Close))
 }
 
 fn wide(label: &str, message: Option<Message>) -> Element<'static> {

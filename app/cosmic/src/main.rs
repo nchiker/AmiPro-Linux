@@ -3290,6 +3290,10 @@ impl DerefMut for AmiProApp {
 
 #[derive(Clone, Debug)]
 enum Message {
+    /// A rail panel's "‹ Styles": its own close message, then the rail
+    /// open again on the Styles list (`chrome::panel_header`).
+    #[cfg(feature = "page-surface")]
+    RailBack(Box<Message>),
     /// Nothing to change: asks the runtime for a new frame (see
     /// [`scroll_workspace`]).
     Repaint,
@@ -5364,6 +5368,14 @@ impl AmiProApp {
             #[cfg(feature = "page-surface")]
             Message::Find(action) => return self.update_find(action),
             Message::Escape => return self.escape(),
+            #[cfg(feature = "page-surface")]
+            Message::RailBack(close) => {
+                let task = self.handle_message(*close);
+                if !self.rail_open() {
+                    self.toggle_rail();
+                }
+                return task;
+            }
             #[cfg(feature = "page-surface")]
             Message::FieldPrompt(action) => self.answer_field_prompt(action),
             #[cfg(feature = "page-surface")]

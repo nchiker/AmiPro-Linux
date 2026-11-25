@@ -274,17 +274,9 @@ fn send(action: PasteSpecialAction) -> Message {
 
 /// The panel.
 pub fn panel<'a>(state: &PasteSpecial) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Paste Special").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Paste Special")
-            .on_press(send(PasteSpecialAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
-    let mut children: Vec<Element<'a, Message>> = vec![header.into()];
+    let header =
+        crate::chrome::panel_header("Paste Special", None, send(PasteSpecialAction::Close));
+    let mut children: Vec<Element<'a, Message>> = vec![header];
     children.push(widget::text::caption("Formats on the clipboard").into());
     if state.empty() {
         children.push(widget::text::body(EMPTY).into());
@@ -314,7 +306,7 @@ pub fn panel<'a>(state: &PasteSpecial) -> Element<'a, Message> {
         );
     }
     children.push(
-        widget::button::standard("Paste")
+        widget::button::suggested("Paste")
             .on_press_maybe(
                 state
                     .selected

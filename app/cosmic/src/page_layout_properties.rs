@@ -800,7 +800,7 @@ fn length_row(
     row(vec![
         widget::text::body(text).width(Length::Fixed(88.0)).into(),
         input(state, field, 72.0),
-        caption("in."),
+        caption("in"),
     ])
 }
 
@@ -912,7 +912,7 @@ fn tab_rows(
             .width(Length::Fixed(96.0))
             .into(),
             input(state, Field::Tab(band, index), 60.0),
-            caption("in."),
+            caption("in"),
             widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
                 .extra_small()
                 .name("Remove this tab")
@@ -1048,22 +1048,11 @@ pub fn panel<'a>(
     document: &Document,
     colours: Context<'a>,
 ) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Page Layout Properties").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(LayoutAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Page Layout Properties")
-            .tooltip(crate::chrome::command_tooltip(
-                crate::CommandId::StylesPanel,
-            ))
-            .on_press(send(LayoutAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Page Layout Properties",
+        Some(send(LayoutAction::Back)),
+        send(LayoutAction::Close),
+    );
     let names: Vec<String> = document
         .layouts()
         .iter()
@@ -1184,7 +1173,7 @@ pub fn panel<'a>(
             .into(),
     ]));
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(6).into()),
     ])
     .spacing(8)

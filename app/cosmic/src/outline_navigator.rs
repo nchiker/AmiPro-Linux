@@ -143,17 +143,9 @@ pub fn panel<'a>(
     entries: &[Entry],
     current: Option<usize>,
 ) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Outline").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close the Outline navigator")
-            .on_press(send(NavigatorAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
-    let mut rows: Vec<Element<'a, Message>> = vec![header.into()];
+    let header =
+        crate::chrome::panel_header("Outline Navigator", None, send(NavigatorAction::Close));
+    let mut rows: Vec<Element<'a, Message>> = vec![header];
     if entries.is_empty() {
         rows.push(
             widget::text::body(

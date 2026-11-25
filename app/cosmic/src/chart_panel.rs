@@ -549,17 +549,7 @@ fn send(action: ChartAction) -> Message {
 // -------------------------------------------------------------------- view
 
 fn header() -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading("Chart").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close the Chart panel")
-            .on_press(send(ChartAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+    crate::chrome::panel_header("Charting", None, send(ChartAction::Close))
 }
 
 fn wide(label: &str, suggested: bool, message: Option<Message>) -> Element<'static> {

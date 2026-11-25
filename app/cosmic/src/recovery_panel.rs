@@ -121,17 +121,9 @@ pub fn entry_title(entry: &Entry) -> String {
 
 /// The panel.
 pub fn panel<'a>(state: &'a RecoveryState) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Recover documents").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close the Recover documents panel")
-            .on_press(send(RecoveryAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
-    let mut children: Vec<Element<'a, Message>> = vec![header.into()];
+    let header =
+        crate::chrome::panel_header("Recover Documents", None, send(RecoveryAction::Close));
+    let mut children: Vec<Element<'a, Message>> = vec![header];
     if state.found.is_empty() {
         children.push(widget::text::body("No documents to recover.").into());
     } else {

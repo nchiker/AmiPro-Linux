@@ -201,17 +201,7 @@ pub const RIGHT_LEADERS: [&str; 4] = ["None", ".....", "-----", "_____"];
 pub const AFTER_LEADERS: [&str; 2] = ["None", ", (comma)"];
 
 fn header() -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading("Contents & Index").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Contents & Index")
-            .on_press(send(ContentsAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+    crate::chrome::panel_header("TOC and Index", None, send(ContentsAction::Close))
 }
 
 fn row(children: Vec<Element<'_>>) -> Element<'_> {
@@ -221,11 +211,13 @@ fn row(children: Vec<Element<'_>>) -> Element<'_> {
         .into()
 }
 
-fn wide(label: &str, message: Option<Message>) -> Element<'static> {
+/// The panel's main action: a full-width accent button, as Print…, Sort,
+/// Import, and Export are (UI review 2026-11).
+fn primary(label: &str, message: Option<Message>) -> Element<'static> {
     widget::button::custom(
         widget::container(widget::text::body(label.to_owned())).center_x(Length::Fill),
     )
-    .class(cosmic::theme::Button::Standard)
+    .class(cosmic::theme::Button::Suggested)
     .width(Length::Fill)
     .on_press_maybe(message)
     .into()
@@ -392,7 +384,7 @@ fn contents_page<'a>(state: &'a ContentsPanel, shown: &Shown<'a>, body: &mut Vec
         state.toc_place,
         ContentsAction::TocPlace,
     ));
-    body.push(wide(
+    body.push(primary(
         if shown.has_toc && state.toc_place != TocChoice::NewDocument {
             "Update Contents"
         } else {
@@ -436,7 +428,7 @@ fn index_page<'a>(state: &'a ContentsPanel, shown: &Shown<'a>, body: &mut Vec<El
         state.index_place,
         ContentsAction::IndexPlace,
     ));
-    body.push(wide(
+    body.push(primary(
         "Generate Index",
         (!shown.entries.is_empty()).then(|| send(ContentsAction::GenerateIndex)),
     ));

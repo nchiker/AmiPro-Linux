@@ -171,17 +171,7 @@ fn send(action: MergeAction) -> Message {
 }
 
 fn header() -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading("Merge").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Merge")
-            .on_press(send(MergeAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+    crate::chrome::panel_header("Merge", None, send(MergeAction::Close))
 }
 
 fn wide(label: &str, message: Option<Message>) -> Element<'static> {

@@ -172,17 +172,7 @@ pub struct Shown {
 }
 
 fn header() -> Element<'static> {
-    widget::row::with_children(vec![
-        widget::text::heading("Sort").into(),
-        widget::space::horizontal().into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Sort")
-            .on_press(send(SortAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center)
-    .into()
+    crate::chrome::panel_header("Sort", None, send(SortAction::Close))
 }
 
 fn radio<'a, T: Copy + Eq + 'a>(

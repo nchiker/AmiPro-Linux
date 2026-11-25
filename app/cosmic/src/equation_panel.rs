@@ -335,19 +335,11 @@ fn palette_group(templates: &'static [Template]) -> Element<'static> {
 
 /// The rail panel: the palette and the options.
 pub fn panel(state: &EquationPanel) -> Element<'_> {
-    let mut body: Vec<Element<'_>> = vec![
-        widget::row::with_children(vec![
-            widget::text::heading("Equation").into(),
-            widget::space::horizontal().into(),
-            widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-                .extra_small()
-                .name("Close the Equation panel")
-                .on_press(send(EquationAction::Close))
-                .into(),
-        ])
-        .align_y(cosmic::iced::Alignment::Center)
-        .into(),
-    ];
+    let mut body: Vec<Element<'_>> = vec![crate::chrome::panel_header(
+        "Equations",
+        None,
+        send(EquationAction::Close),
+    )];
     if let Some(notice) = &state.notice {
         body.push(widget::text::caption(notice.clone()).into());
     }

@@ -1004,7 +1004,7 @@ fn length_row(
     row(vec![
         widget::text::body(text).width(Length::Fixed(88.0)).into(),
         input(state, field, 72.0),
-        caption("in."),
+        caption("in"),
     ])
 }
 
@@ -1123,7 +1123,7 @@ fn tabs(state: &StyleProperties) -> Vec<Element<'static, Message>> {
                 .width(Length::Fixed(96.0))
                 .into(),
                 input(state, Field::Tab(index), 60.0),
-                caption("in."),
+                caption("in"),
                 widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
                     .extra_small()
                     .name("Remove this tab")
@@ -1180,7 +1180,7 @@ fn spacing(state: &StyleProperties) -> Vec<Element<'static, Message>> {
     ];
     if line == 3 {
         custom.push(input(state, Field::Custom, 72.0));
-        custom.push(caption("in."));
+        custom.push(caption("in"));
     }
     vec![
         choices(
@@ -1486,22 +1486,11 @@ pub fn panel<'a>(
     colours: Context<'a>,
 ) -> Element<'a, Message> {
     let listed = listed_styles(styles);
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Style Properties").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(StyleAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Style Properties")
-            .tooltip(crate::chrome::command_tooltip(
-                crate::CommandId::StylesPanel,
-            ))
-            .on_press(send(StyleAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Style Properties",
+        Some(send(StyleAction::Back)),
+        send(StyleAction::Close),
+    );
     let mut body: Vec<Element<'a, Message>> = vec![row(vec![
         widget::text::body("Style").into(),
         dropdown(
@@ -1595,7 +1584,7 @@ pub fn panel<'a>(
         }
     }
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(6).into()),
     ])
     .spacing(8)

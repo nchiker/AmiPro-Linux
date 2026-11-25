@@ -7,8 +7,10 @@
 //!
 //! - Every opener (a menu command, a ruler action, a shortcut) calls
 //!   `close_rail_panels` first and then sets its own state, so the panel
-//!   opened last is the one that shows. Closing a panel (its X, Esc) clears
-//!   its state, and the rail goes back to the Styles list.
+//!   opened last is the one that shows. Closing a panel clears its state:
+//!   its header's "‹ Styles" shows the Styles list, its X closes the rail
+//!   as well (`chrome::panel_header`, UI review 2026-11), and the rail
+//!   opens on the Styles list next time.
 //! - Opening a panel also deselects the frames, so that Frame Properties,
 //!   which follows the selection by itself, does not hide it. Selecting a
 //!   frame while another panel is open shows Frame Properties again (the

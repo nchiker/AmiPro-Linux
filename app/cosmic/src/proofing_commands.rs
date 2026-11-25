@@ -975,8 +975,12 @@ impl AmiProApp {
 
     pub(crate) fn update_proofing(&mut self, action: ProofingAction) -> Task {
         match action {
+            // The X closes the rail, as on every panel (UI review 2026-11).
             ProofingAction::Close => {
                 self.proofing = None;
+                if self.rail_open() {
+                    self.toggle_rail();
+                }
             }
             ProofingAction::Page(page) => {
                 if let Some(panel) = self.proofing.as_mut() {

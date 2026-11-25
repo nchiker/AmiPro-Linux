@@ -282,19 +282,11 @@ fn folder_row<'a>(
 
 pub fn panel<'a>(state: &ImportFolder) -> Element<'a, Message> {
     let running = state.running.is_some();
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Import Folder").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(FolderAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Import Folder")
-            .on_press(send(FolderAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Import Folder",
+        Some(send(FolderAction::Back)),
+        send(FolderAction::Close),
+    );
     let mut body: Vec<Element<'a, Message>> = vec![
         folder_row(
             "From",
@@ -365,7 +357,7 @@ pub fn panel<'a>(state: &ImportFolder) -> Element<'a, Message> {
             .into()
     };
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(8).into()),
         widget::divider::horizontal::default().into(),
         button,

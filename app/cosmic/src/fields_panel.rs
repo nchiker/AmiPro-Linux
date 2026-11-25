@@ -658,19 +658,11 @@ pub struct Shown<'a> {
 }
 
 pub fn panel<'a>(state: &FieldsPanel, shown: Shown<'a>) -> Element<'a, Message> {
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Fields").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(FieldsAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Fields")
-            .on_press(send(FieldsAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Fields",
+        Some(send(FieldsAction::Back)),
+        send(FieldsAction::Close),
+    );
     let mut body: Vec<Element<'a, Message>> = Vec::new();
     let folder = |section: Section, title: &'static str| -> Element<'a, Message> {
         let open = state.open.contains(&section);
@@ -913,7 +905,7 @@ pub fn panel<'a>(state: &FieldsPanel, shown: Shown<'a>) -> Element<'a, Message> 
         );
     }
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(6).into()),
     ])
     .spacing(8)

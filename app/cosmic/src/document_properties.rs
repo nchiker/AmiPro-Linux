@@ -252,19 +252,11 @@ pub fn panel<'a>(
     facts: Facts,
 ) -> Element<'a, Message> {
     let info = document.info();
-    let header = widget::row::with_children(vec![
-        widget::text::heading("Document Properties").into(),
-        widget::space::horizontal().into(),
-        widget::button::text("‹ Styles")
-            .on_press(send(PropertiesAction::Back))
-            .into(),
-        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
-            .extra_small()
-            .name("Close Document Properties")
-            .on_press(send(PropertiesAction::Close))
-            .into(),
-    ])
-    .align_y(cosmic::iced::Alignment::Center);
+    let header = crate::chrome::panel_header(
+        "Document Properties",
+        Some(send(PropertiesAction::Back)),
+        send(PropertiesAction::Close),
+    );
     let mut body: Vec<Element<'a, Message>> = Vec::new();
     for (section, title) in Section::ALL {
         let open = state.open.contains(&section);
@@ -382,7 +374,7 @@ pub fn panel<'a>(
         );
     }
     widget::column::with_children(vec![
-        header.into(),
+        header,
         crate::rail_scroller(widget::column::with_children(body).spacing(6).into()),
     ])
     .spacing(8)

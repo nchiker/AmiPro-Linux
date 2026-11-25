@@ -564,6 +564,67 @@ pub fn status_bar_model(
     }
 }
 
+/// A rail panel's header, the same on every panel (UI review 2026-11,
+/// `UI_SPEC.md` §50, as §15 and §18 first drew it): the title, "‹ Styles"
+/// back to the Styles list with the rail open, and an X that closes the
+/// panel and the rail. `back` is the panel's own back action when it has
+/// one; otherwise "‹ Styles" runs `close` and opens the rail again
+/// ([`crate::Message::RailBack`]).
+#[cfg(feature = "page-surface")]
+pub fn panel_header<'a>(
+    title: &'static str,
+    back: Option<crate::Message>,
+    close: crate::Message,
+) -> cosmic::Element<'a, crate::Message> {
+    use cosmic::widget;
+    let back = back.unwrap_or_else(|| crate::Message::RailBack(Box::new(close.clone())));
+    widget::row::with_children(vec![
+        widget::text::heading(title).into(),
+        widget::space::horizontal().into(),
+        widget::button::text("‹ Styles").on_press(back).into(),
+        widget::button::icon(widget::icon::from_name("window-close-symbolic"))
+            .extra_small()
+            .name(format!("Close {title}"))
+            .tooltip(command_tooltip(CommandId::StylesPanel))
+            .on_press(close)
+            .into(),
+    ])
+    .align_y(cosmic::iced::Alignment::Center)
+    .into()
+}
+
+/// A rail panel's folding section title: a disclosure arrow and the title
+/// as a heading, the whole row a button (as Document, Page Layout, Style,
+/// Table, and Frame Properties draw theirs).
+#[cfg(feature = "page-surface")]
+pub fn section_toggle<'a>(
+    title: impl Into<String>,
+    open: bool,
+    toggle: crate::Message,
+) -> cosmic::Element<'a, crate::Message> {
+    use cosmic::widget;
+    widget::button::custom(
+        widget::row::with_children(vec![
+            widget::icon::from_name(if open {
+                "pan-down-symbolic"
+            } else {
+                "pan-end-symbolic"
+            })
+            .size(16)
+            .icon()
+            .into(),
+            widget::text::heading(title.into()).into(),
+        ])
+        .spacing(6)
+        .align_y(cosmic::iced::Alignment::Center),
+    )
+    .class(cosmic::theme::Button::Text)
+    .padding([4, 0])
+    .width(cosmic::iced::Length::Fill)
+    .on_press(toggle)
+    .into()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

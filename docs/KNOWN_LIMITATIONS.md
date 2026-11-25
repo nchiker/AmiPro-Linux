@@ -104,7 +104,7 @@ feature is in `FEATURE_PARITY.md`; this page is the user-facing summary.
 
 Built and tested automatically, but waiting for a physical check: table data
 (formulas, Quick Add, Sort), objects (OLE, Paste Special, charts, equations),
-Markdown, the Documents folder, the update check against a later release,
+Markdown, the Documents folder,
 crash recovery after a killed process, First line bold, and the status bar's
 Face and Size lists.
 

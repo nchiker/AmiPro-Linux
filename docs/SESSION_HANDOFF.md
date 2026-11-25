@@ -71,4 +71,5 @@ visible IME preedit with a real input method.
 
 ## Open
 
-- Release 0.1.3 carries this work.
+- Release 0.1.3 carries this work and is published. Physical PASS (user,
+  2026-11-25): Help > Check for Updates updated the installed 0.1.2 to 0.1.3.

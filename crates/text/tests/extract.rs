@@ -33,8 +33,8 @@ fn safe(bytes: &[u8], limits: &Limits) -> Extracted {
 }
 
 #[test]
-fn version_is_one() {
-    assert_eq!(VERSION, 1);
+fn version_is_two() {
+    assert_eq!(VERSION, 2);
     assert_eq!(Limits::default().max_bytes, 8 << 20);
     assert_eq!(Limits::default().max_chars, 1_000_000);
 }
@@ -282,4 +282,114 @@ fn non_utf8_native_is_damaged() {
         safe(&bytes, &Limits::default()),
         Extracted::Unreadable(Reason::Damaged)
     );
+}
+
+const SAM_HEAD: &str = "[ver]\n\t4\n";
+
+/// Runs `extract_text` on a 256 KB stack, returning how long it took.
+fn small_stack(bytes: Vec<u8>) -> (Extracted, std::time::Duration) {
+    std::thread::Builder::new()
+        .stack_size(256 << 10)
+        .spawn(move || {
+            let start = std::time::Instant::now();
+            let result = extract_text(&bytes, &Limits::default());
+            (result, start.elapsed())
+        })
+        .unwrap()
+        .join()
+        .expect("extract_text overflowed the stack or panicked")
+}
+
+fn nested_notes(levels: usize) -> Vec<u8> {
+    format!(
+        "{SAM_HEAD}[edoc]\n{}deep text\n\n{}",
+        "<:N1\n".repeat(levels),
+        ">\n".repeat(levels + 1)
+    )
+    .into_bytes()
+}
+
+#[test]
+fn nested_notes_never_overflow_the_stack() {
+    for levels in [10, 1_000, 100_000] {
+        let (result, took) = small_stack(nested_notes(levels));
+        assert!(
+            matches!(result, Extracted::Text { .. }),
+            "{levels}: {result:?}"
+        );
+        // 1 s optimised; unoptimised builds are about 25 times slower.
+        let limit = if cfg!(debug_assertions) { 6.0 } else { 1.0 };
+        assert!(took.as_secs_f64() < limit, "{levels} levels took {took:?}");
+    }
+}
+
+#[test]
+fn many_styles_are_refused_not_built() {
+    let mut sam = String::from(SAM_HEAD);
+    for index in 0..10_000 {
+        sam.push_str(&format!("[tag]\n\tS{index}\n"));
+    }
+    sam.push_str("[edoc]\nline\n\n>\n");
+    assert_eq!(
+        safe(sam.as_bytes(), &Limits::default()),
+        Extracted::Unreadable(Reason::Damaged)
+    );
+}
+
+#[test]
+fn many_sam_paragraphs_are_refused() {
+    let sam = format!("{SAM_HEAD}[edoc]\n{}>\n", "x\n\n".repeat(150_000));
+    assert_eq!(
+        safe(sam.as_bytes(), &Limits::default()),
+        Extracted::Unreadable(Reason::Damaged)
+    );
+}
+
+fn native_with(extra: &str) -> Vec<u8> {
+    let base = String::from_utf8(native("T", &["a"])).unwrap();
+    let (head, tail) = base.split_once("flow\t").unwrap();
+    // IDs far above the counter are invalid, so raise the counter too.
+    let head = head
+        .replacen("ids\t", "ids\t99999999 ", 1)
+        .replacen(' ', "", 1);
+    let mut out = format!("{head}flow\t{tail}");
+    out.push_str(extra);
+    out.into_bytes()
+}
+
+#[test]
+fn many_native_flows_and_paragraphs_are_refused() {
+    let flows: String = (0..30_000)
+        .map(|index| {
+            format!(
+                "flow\t{}\nparagraph\t{}\t1\tb\n",
+                1000 + index,
+                100_000 + index
+            )
+        })
+        .collect();
+    let (result, took) = small_stack(native_with(&flows));
+    assert_eq!(result, Extracted::Unreadable(Reason::Damaged));
+    assert!(took.as_secs_f64() < 1.0);
+    let paragraphs: String = (0..150_000)
+        .map(|index| format!("paragraph\t{}\t1\tb\n", 100_000 + index))
+        .collect();
+    assert_eq!(
+        safe(&native_with(&paragraphs), &Limits::default()),
+        Extracted::Unreadable(Reason::Damaged)
+    );
+}
+
+#[test]
+fn text_stops_at_max_chars_across_many_flows() {
+    let paragraphs: Vec<String> = (0..2_000).map(|index| format!("line {index}")).collect();
+    let refs: Vec<&str> = paragraphs.iter().map(String::as_str).collect();
+    let bytes = native("T", &refs);
+    let limits = Limits {
+        max_chars: 50,
+        ..Limits::default()
+    };
+    let (_, text, truncated) = text_of(safe(&bytes, &limits));
+    assert_eq!(text.chars().count(), 50);
+    assert!(truncated);
 }

@@ -8,7 +8,7 @@ use amipro_document::Document;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 /// Bump when the extracted text changes for the same input.
-pub const VERSION: u32 = 1;
+pub const VERSION: u32 = 2;
 
 /// What may be read and returned.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -108,17 +108,25 @@ fn read_document(bytes: &[u8], kind: Kind) -> Option<Document> {
 
 fn build(document: &Document, kind: Kind, limits: &Limits) -> Extracted {
     let main = document.main_flow_id();
-    let mut parts = vec![document.main_flow().plain_text()];
-    parts.extend(
+    // The main flow, then the others in the model's order. Nothing is collected past `max_chars`: a flow's
+    // text is read straight from its paragraphs, never joined first.
+    let flows = std::iter::once(document.main_flow()).chain(
         document
             .flows()
             .filter(|(id, _)| *id != main)
-            .map(|(_, flow)| flow.plain_text()),
+            .map(|(_, flow)| flow),
     );
     let mut text = String::new();
     let mut truncated = false;
     let mut chars = 0usize;
-    'parts: for part in parts.iter().filter(|part| !part.trim().is_empty()) {
+    'flows: for flow in flows {
+        let paragraphs = &flow.paragraphs;
+        if paragraphs
+            .iter()
+            .all(|paragraph| paragraph.text.trim().is_empty())
+        {
+            continue;
+        }
         if chars > 0 {
             if chars >= limits.max_chars {
                 truncated = true;
@@ -127,13 +135,16 @@ fn build(document: &Document, kind: Kind, limits: &Limits) -> Extracted {
             text.push('\n');
             chars += 1;
         }
-        for character in part.chars() {
-            if chars >= limits.max_chars {
-                truncated = true;
-                break 'parts;
+        for (index, paragraph) in paragraphs.iter().enumerate() {
+            let separator = (index > 0).then_some('\n');
+            for character in separator.into_iter().chain(paragraph.text.chars()) {
+                if chars >= limits.max_chars {
+                    truncated = true;
+                    break 'flows;
+                }
+                text.push(character);
+                chars += 1;
             }
-            text.push(character);
-            chars += 1;
         }
     }
     Extracted::Text {

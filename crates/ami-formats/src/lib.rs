@@ -42,6 +42,12 @@ pub use build::StructureStats;
 pub const MAX_LEGACY_BYTES: usize = 64 * 1024 * 1024;
 pub const MAX_LEGACY_LINES: usize = 2_000_000;
 pub const MAX_LINE_BYTES: usize = 1024 * 1024;
+/// Most sections a file may hold (a real document or style sheet has a few thousand), and most `[tag]` styles.
+/// Each costs far more memory than its bytes in the file.
+pub const MAX_LEGACY_SECTIONS: usize = 50_000;
+pub const MAX_LEGACY_STYLES: usize = 4_096;
+/// Most paragraphs (the body, frame text, and table cells together) an import reads.
+pub const MAX_LEGACY_PARAGRAPHS: usize = 100_000;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LegacyKind {
@@ -76,6 +82,9 @@ pub struct ImportReport {
 pub enum ParseError {
     TooLarge,
     TooManyLines,
+    TooManySections,
+    TooManyStyles,
+    TooManyParagraphs,
     LineTooLong(usize),
     DataBeforeSection(usize),
     InvalidSection(usize),
@@ -89,6 +98,9 @@ impl fmt::Display for ParseError {
         match self {
             Self::TooLarge => f.write_str("legacy input exceeds 64 MiB"),
             Self::TooManyLines => f.write_str("legacy input has too many lines"),
+            Self::TooManySections => f.write_str("legacy input has too many sections"),
+            Self::TooManyStyles => f.write_str("legacy input has too many styles"),
+            Self::TooManyParagraphs => f.write_str("legacy input has too many paragraphs"),
             Self::LineTooLong(line) => write!(f, "legacy input line {line} exceeds 1 MiB"),
             Self::DataBeforeSection(line) => write!(f, "data before first section at line {line}"),
             Self::InvalidSection(line) => write!(f, "invalid section header at line {line}"),
@@ -151,6 +163,7 @@ pub fn parse(input: &[u8], kind: LegacyKind) -> Result<(LegacyFile, ImportReport
     };
     let mut sections: Vec<Section> = Vec::new();
     let mut in_body = false;
+    let mut styles_seen = 0usize;
     let mut binary_after_body = None;
     for (zero_index, raw_line) in text.lines().enumerate() {
         let line_number = zero_index + 1;
@@ -184,6 +197,15 @@ pub fn parse(input: &[u8], kind: LegacyKind) -> Result<(LegacyFile, ImportReport
                 return Err(ParseError::InvalidSection(line_number));
             }
             in_body |= trimmed.eq_ignore_ascii_case("[edoc]");
+            if sections.len() >= MAX_LEGACY_SECTIONS {
+                return Err(ParseError::TooManySections);
+            }
+            if trimmed.eq_ignore_ascii_case("[tag]") {
+                styles_seen += 1;
+                if styles_seen > MAX_LEGACY_STYLES {
+                    return Err(ParseError::TooManyStyles);
+                }
+            }
             sections.push(Section {
                 name: trimmed[1..trimmed.len() - 1].to_owned(),
                 values: vec![],
@@ -488,6 +510,22 @@ pub fn import_sam(
         _ => !structure.layouts.is_empty(),
     };
     let (body, _) = text::split_body(lines[body_start + 1..].iter().copied());
+    let frame_paragraphs: usize = structure
+        .frames
+        .iter()
+        .map(|frame| match &frame.content {
+            structure::RawContent::Text(paragraphs) => paragraphs.len(),
+            structure::RawContent::Table(table) => table
+                .cells
+                .iter()
+                .map(|cell| cell.paragraphs.len() + cell.extra.len())
+                .sum(),
+            _ => 0,
+        })
+        .sum();
+    if body.len() + frame_paragraphs > MAX_LEGACY_PARAGRAPHS {
+        return Err(ImportError::Parse(ParseError::TooManyParagraphs));
+    }
     let mid_line = text::controls_ending_mid_line(lines[body_start + 1..].iter().copied());
     let mut built = build::build(title.into(), styles, style_ids, &structure, &body, sam);
     if mid_line > 0 {

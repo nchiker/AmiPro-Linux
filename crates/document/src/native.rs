@@ -1448,6 +1448,13 @@ fn finish_page(
         .transpose()
 }
 
+/// Most styles, flows, frames, and paragraphs a native file may hold. A real document has tens to a few
+/// thousand; a file is untrusted and each record costs memory far beyond its bytes.
+const MAX_STYLES: usize = 4_096;
+const MAX_FLOWS: usize = 20_000;
+const MAX_FRAMES: usize = 10_000;
+const MAX_PARAGRAPHS: usize = 100_000;
+
 pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
     let mut lines = input.lines().enumerate();
     match lines.next() {
@@ -1491,6 +1498,7 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
     let mut frames: Vec<FrameBuilder> = Vec::new();
     let mut stack: Option<Vec<FrameId>> = None;
     let mut flows: Vec<(FlowId, Vec<Paragraph>)> = Vec::new();
+    let mut paragraph_count = 0usize;
     let mut paragraph = ParagraphBuilder::default();
     let mut last_line = 1;
 
@@ -1622,6 +1630,9 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
                     first_line_bold: false,
                     kept: StyleKept::default(),
                 };
+                if styles.len() >= MAX_STYLES {
+                    return Err(decoder.error("too many styles"));
+                }
                 if styles.insert(id, style).is_some() {
                     return Err(decoder.error("duplicate style ID"));
                 }
@@ -2106,6 +2117,9 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
             }
             "frame" => {
                 decoder.expect_len(3)?;
+                if frames.len() >= MAX_FRAMES {
+                    return Err(decoder.error("too many frames"));
+                }
                 frames.push(FrameBuilder {
                     id: FrameId(decoder.id(1)?),
                     group: decoder.optional_id(2)?.map(GroupId),
@@ -2142,10 +2156,17 @@ pub(crate) fn decode(input: &str) -> Result<Document, DocumentError> {
                         .1
                         .push(done);
                 }
+                if flows.len() >= MAX_FLOWS {
+                    return Err(decoder.error("too many flows"));
+                }
                 flows.push((FlowId(decoder.id(1)?), Vec::new()));
             }
             "paragraph" => {
                 decoder.expect_len(4)?;
+                paragraph_count += 1;
+                if paragraph_count > MAX_PARAGRAPHS {
+                    return Err(decoder.error("too many paragraphs"));
+                }
                 let (_, paragraphs) = flows
                     .last_mut()
                     .ok_or_else(|| decoder.error("paragraph without a flow"))?;

@@ -105,7 +105,14 @@ pub(crate) struct ParseContext {
     /// The number of anchored frame records (`<:A n>`/`<:t n>` index them).
     pub anchored_frames: usize,
     pub used_anchors: BTreeSet<usize>,
+    /// How many notes, footnotes, or floating headers hold this text.
+    pub nesting: usize,
 }
+
+/// Text-holding controls (notes, footnotes, floating headers) nested deeper
+/// than this stay legacy marks, their inner text dropped: the reader is
+/// recursive and a file chooses the depth. Ami Pro's own files nest one or two.
+pub(crate) const MAX_NESTING: usize = 4;
 
 impl ParseContext {
     pub(crate) fn outside_main() -> Self {
@@ -113,6 +120,7 @@ impl ParseContext {
             main: false,
             anchored_frames: 0,
             used_anchors: BTreeSet::new(),
+            nesting: 0,
         }
     }
 }
@@ -140,6 +148,10 @@ pub(crate) fn split_body<'a>(lines: impl Iterator<Item = &'a str>) -> (Vec<Strin
     let mut consumed = 0;
     for line in lines {
         consumed += 1;
+        if paragraphs.len() > crate::MAX_LEGACY_PARAGRAPHS {
+            // Over the limit: the import refuses the file; stop copying it.
+            break;
+        }
         if depth == 0 {
             if line == ">" || line.trim().eq_ignore_ascii_case("[embedded]") {
                 break;
@@ -678,6 +690,9 @@ fn control_meaning(control: &str, report: &mut TextReport, context: &mut ParseCo
         return Meaning::Unmapped;
     };
     let arguments = chars.as_str();
+    if context.nesting >= MAX_NESTING && matches!(kind, 'H' | 'h' | 'N' | 'F') {
+        return Meaning::Unmapped;
+    }
     if !context.main && matches!(kind, 'A' | 't' | 'c' | 'p' | 'H' | 'h' | 'F') {
         // Anchors, breaks, floating headers, and footnotes belong to the
         // main text only.
@@ -724,13 +739,14 @@ fn control_meaning(control: &str, report: &mut TextReport, context: &mut ParseCo
             }
             _ => Meaning::Unmapped,
         },
-        'H' | 'h' => floating(kind, arguments, report).map_or(Meaning::Unmapped, Meaning::Object),
-        'N' => note(arguments, report).map_or(Meaning::Unmapped, Meaning::Object),
+        'H' | 'h' => floating(kind, arguments, report, context.nesting)
+            .map_or(Meaning::Unmapped, Meaning::Object),
+        'N' => note(arguments, report, context.nesting).map_or(Meaning::Unmapped, Meaning::Object),
         // A footnote has no fields: its paragraphs follow at once
         // (`11b8:030a`; VM fixture RNF1).
         'F' => match arguments.strip_prefix('\n') {
             Some(body) => Meaning::Object(PendingObject::Footnote {
-                paragraphs: inner_paragraphs(body, report),
+                paragraphs: inner_paragraphs(body, report, context.nesting),
             }),
             None => Meaning::Unmapped,
         },
@@ -861,7 +877,12 @@ fn canonical_number(text: &str) -> Option<u32> {
 /// A floating header or footer: `<:H` or `<:h`, a flag byte (1 header,
 /// 2 footer, 4 left pages, 8 right pages; V17, V18), a line break, its
 /// paragraphs, and the control's closing `>` line.
-fn floating(kind: char, arguments: &str, report: &mut TextReport) -> Option<PendingObject> {
+fn floating(
+    kind: char,
+    arguments: &str,
+    report: &mut TextReport,
+    nesting: usize,
+) -> Option<PendingObject> {
     let (flags, rest) = flag_byte(arguments)?;
     if flags & !0x0F != 0 {
         return None;
@@ -880,16 +901,17 @@ fn floating(kind: char, arguments: &str, report: &mut TextReport) -> Option<Pend
     Some(PendingObject::Floating {
         kind,
         pages,
-        paragraphs: inner_paragraphs(body, report),
+        paragraphs: inner_paragraphs(body, report, nesting),
     })
 }
 
 /// The paragraphs of a control that holds text (a floating header, a note,
 /// a footnote): its lines up to the one before the closing `>` line.
-fn inner_paragraphs(body: &str, report: &mut TextReport) -> Vec<ParsedParagraph> {
+fn inner_paragraphs(body: &str, report: &mut TextReport, nesting: usize) -> Vec<ParsedParagraph> {
     let body = body.strip_suffix('\n').unwrap_or(body);
     let (raw_paragraphs, _) = split_body(body.split('\n'));
     let mut inner = ParseContext::outside_main();
+    inner.nesting = nesting + 1;
     raw_paragraphs
         .iter()
         .map(|paragraph| parse_paragraph(paragraph, report, &mut inner))
@@ -901,7 +923,7 @@ fn inner_paragraphs(body: &str, report: &mut TextReport) -> Vec<ParsedParagraph>
 /// main text, split on commas; a line break; its paragraphs (`11b8:030a`;
 /// VM fixtures RNN1–RNN3). The main flag is where the note stands, which
 /// the writer works out.
-fn note(arguments: &str, report: &mut TextReport) -> Option<PendingObject> {
+fn note(arguments: &str, report: &mut TextReport, nesting: usize) -> Option<PendingObject> {
     let (fields, body) = arguments.split_once('\n')?;
     let fields: Vec<&str> = fields.split(',').collect();
     let time = canonical_long(fields[0])?;
@@ -928,7 +950,7 @@ fn note(arguments: &str, report: &mut TextReport) -> Option<PendingObject> {
     };
     Some(PendingObject::Note {
         note,
-        paragraphs: inner_paragraphs(body, report),
+        paragraphs: inner_paragraphs(body, report, nesting),
     })
 }
 
@@ -979,6 +1001,7 @@ mod tests {
             main: true,
             anchored_frames: 3,
             used_anchors: BTreeSet::new(),
+            nesting: 0,
         }
     }
 

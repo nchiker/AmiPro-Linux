@@ -222,6 +222,7 @@ pub(crate) fn build(
         main: true,
         anchored_frames: anchored_records,
         used_anchors: BTreeSet::new(),
+        nesting: 0,
     };
     let body: Vec<ParsedParagraph> = body
         .iter()

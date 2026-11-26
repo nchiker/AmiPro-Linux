@@ -3551,3 +3551,13 @@ conventions: `UI_SPEC.md` §50, "Modal dialogs". Decisions:
 - **Form parts** (`dialog_frame.rs`): one 170 px label column, headings,
   hints, "in" after lengths, standard third buttons; Insert Table's Layout…
   button became a folding section.
+
+## 2026-11-26: `amipro-text` crate (text of a document, from bytes)
+
+- `crates/text` (`amipro-text`) returns a document's plain text for search from bytes alone, for Stack (the Android
+  document app), which vendors it with `amipro-document` and `amipro-formats`. It depends only on those two.
+- Content decides the kind (`sniff`): `AMIPRO-LINUX/3` first line is native, `[ver]` first (after blank lines or a byte
+  order mark) is SAM, `[encrypt]` is protected and never yields text. Text order is the main flow, then the other
+  flows, one line per paragraph, blank flows left out. Bad input gives `Unreadable`, never a panic (a caught panic is
+  `Damaged`). `VERSION` is bumped whenever the text for the same input changes.
+- No change to the formats or document crates: `import_sam` and `Document::decode_native` already take bytes.

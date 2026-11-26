@@ -36,6 +36,7 @@ No top-level `src/`. A dependency-free core Cargo workspace (edition 2024) plus 
 | `crates/layout` | `amipro-layout` | The layout engine: `Shaper` trait, line breaker, pages, frames, tables across pages, footnotes, numbering, hyphenation, master sets |
 | `crates/pictures` | `amipro-pictures` | Readers of stored pictures (DIB, WMF, EMF, screen images), Ami Pro's drawings (`sdw`, `svg`), OLE objects (`ole`), image adjustment (`adjust`), charts (`chart`, `chart_gen`), equations (`equation`) |
 | `crates/exchange` | `amipro-exchange` | Export and import: DOCX, ODT, RTF, Markdown, text, XLSX/ODS sheets; zip and XML readers; the neutral exchange document |
+| `crates/text` | `amipro-text` | Plain text of a SAM or native document from bytes (`sniff`, `extract_text`), for search; used by Stack; depends only on `amipro-document` and `amipro-formats` |
 | `app/cosmic` | `amipro-cosmic` | libcosmic app (rev `dbc62f2`, cosmic-text 0.19); own `Cargo.lock`, excluded from the workspace |
 | `tools/` | n/a | ISO extractor, `ghidra/`, `vm/`, `verify.sh`, `corpus.sh`, `bench-ab.sh`, `package-deb.sh`, `release.sh` (`experiments/` is not adopted) |
 | `Reference/` | n/a | **Gitignored** private ISO and samples. Never commit or embed |

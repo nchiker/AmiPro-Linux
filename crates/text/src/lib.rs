@@ -8,7 +8,7 @@ use amipro_document::Document;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 /// Bump when the extracted text changes for the same input.
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 3;
 
 /// What may be read and returned.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

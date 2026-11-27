@@ -33,8 +33,8 @@ fn safe(bytes: &[u8], limits: &Limits) -> Extracted {
 }
 
 #[test]
-fn version_is_two() {
-    assert_eq!(VERSION, 2);
+fn version_is_three() {
+    assert_eq!(VERSION, 3);
     assert_eq!(Limits::default().max_bytes, 8 << 20);
     assert_eq!(Limits::default().max_chars, 1_000_000);
 }
@@ -392,4 +392,22 @@ fn text_stops_at_max_chars_across_many_flows() {
     let (_, text, truncated) = text_of(safe(&bytes, &limits));
     assert_eq!(text.chars().count(), 50);
     assert!(truncated);
+}
+
+/// A style name of many `<` without any `>` made every escape search scan the rest of the line (quadratic).
+#[test]
+fn unterminated_escapes_stay_linear() {
+    let mut sam = b"[ver]\r\n\t4\r\n[tag]\r\n\tBody".to_vec();
+    for _ in 0..8 {
+        sam.extend(b"<:B".repeat(300_000));
+        sam.extend(b"\r\n[tag]\r\n\tBody");
+    }
+    sam.extend(b"\r\n[edoc]\r\n@Body@<:B<:B\r\n");
+    let started = std::time::Instant::now();
+    let _ = safe(&sam, &Limits::default());
+    assert!(
+        started.elapsed().as_secs_f32() < 2.0,
+        "took {:?}",
+        started.elapsed()
+    );
 }

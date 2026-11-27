@@ -273,7 +273,10 @@ pub(crate) fn leading_escape(text: &str) -> Option<(u8, &str)> {
     if let Some(after) = rest.strip_prefix("*>>") {
         return Some((0x1E, after));
     }
-    let end = rest.find('>')?;
+    // The longest escape body is two characters (`*A`), so the closing `>`
+    // is within the first three bytes. A bounded search keeps a line of
+    // many `<` without any `>` linear instead of quadratic.
+    let end = rest.bytes().take(3).position(|byte| byte == b'>')?;
     Some((escape_byte(&rest[..end])?, &rest[end + 1..]))
 }
 
